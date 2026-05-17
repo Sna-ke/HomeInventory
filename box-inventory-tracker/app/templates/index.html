@@ -423,6 +423,25 @@ tr:active td { background: var(--surface2); }
 
 /* ── Misc ── */
 .empty { color: var(--muted); font-family: var(--mono); font-size: 13px; padding: 40px 16px; text-align: center; }
+
+/* ── Identify suggestion chips ── */
+.suggest-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--surface2); border: 1px solid var(--accent);
+  color: var(--accent); font-family: var(--sans); font-weight: 700;
+  font-size: 13px; letter-spacing: .5px;
+  padding: 6px 10px; cursor: pointer; transition: all .15s;
+}
+.suggest-chip:hover, .suggest-chip:active { background: var(--accent); color: #000; }
+
+/* ── Spinner ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin .7s linear infinite;
+  vertical-align: middle;
+}
 .badge { font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); padding: 1px 6px; color: var(--muted); }
 .hidden { display: none !important; }
 .img-upload-input { display: none; }
@@ -650,15 +669,33 @@ tr:active td { background: var(--surface2); }
   <div class="modal">
     <h3>Add Item to Box</h3>
 
+    <!-- Identify by photo (shown only when vision backend is configured) -->
+    <div id="atb-identify-section" style="display:none;margin-bottom:16px;">
+      <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">
+          Identify by Photo
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="atb-identify-btn" onclick="triggerIdentifyPhoto()">
+            📷 Take / Choose Photo
+          </button>
+          <span id="atb-identify-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></span>
+        </div>
+        <input type="file" id="atb-identify-input" accept="image/*" capture="environment" style="display:none"
+          onchange="handleIdentifyPhoto(this)">
+        <!-- Suggestion chips appear here after identification -->
+        <div id="atb-suggestions-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      </div>
+    </div>
+
     <div class="field">
-      <label>Item</label>
+      <label>Item Name</label>
       <div class="ac-wrap">
-        <input type="text" id="atb-search" placeholder="Search or type new item name…"
+        <input type="text" id="atb-search" placeholder="Search or type item name…"
           oninput="searchItemsAC(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
         <div id="atb-suggestions" class="ac-list"></div>
         <input type="hidden" id="atb-item-id">
       </div>
-      <!-- Shows which existing item is selected -->
       <div id="atb-selected-badge" style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--accent);font-family:var(--mono);font-size:12px;color:var(--accent);align-items:center;gap:8px;">
         <span id="atb-selected-name"></span>
         <button onclick="clearATBItem()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
@@ -685,7 +722,7 @@ tr:active td { background: var(--surface2); }
     </div>
 
     <div class="field">
-      <label>Photo (optional)</label>
+      <label>Attach Photo to Item (optional)</label>
       <div id="atb-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
       <button type="button" class="btn btn-secondary btn-sm" onclick="triggerATBPhoto()">📷 Add Photo</button>
       <input type="file" id="atb-photo-input" accept="image/*" multiple style="display:none"
@@ -711,9 +748,9 @@ tr:active td { background: var(--surface2); }
         <option value="40x30">40 × 30 mm — Small tag</option>
         <option value="40x40">40 × 40 mm — Square</option>
         <option value="50x50">50 × 50 mm — Square</option>
-        <option value="40x60">40 × 60 mm — Standard</option>
+        <option value="40x60" selected>40 × 60 mm — Standard ★</option>
         <option value="40x70">40 × 70 mm — Standard</option>
-        <option value="50x70" selected>50 × 70 mm — Standard ★</option>
+        <option value="50x70">50 × 70 mm — Standard</option>
         <option value="50x80">50 × 80 mm — Large</option>
       </select>
     </div>
@@ -1154,6 +1191,99 @@ async function editBoxItem(boxItemId, currentQty, currentNotes) {
   openBoxDetail(currentBoxId);
 }
 
+// ── Vision / Identify ─────────────────────────────────────────────────────
+let visionConfig = { backend: 'none', ready: false };
+
+async function loadVisionConfig() {
+  try {
+    visionConfig = await api('/api/vision-config');
+    const sec = document.getElementById('atb-identify-section');
+    if (visionConfig.ready) {
+      sec.style.display = 'block';
+      const label = visionConfig.backend === 'ollama'
+        ? `🤖 Ollama (${visionConfig.model})`
+        : '☁️ Anthropic Claude';
+      document.getElementById('atb-identify-status').textContent = label;
+    } else {
+      sec.style.display = 'none';
+    }
+  } catch(e) {
+    // Vision not available — that's fine, silently hide
+  }
+}
+
+function triggerIdentifyPhoto() {
+  const inp = document.getElementById('atb-identify-input');
+  inp.value = '';
+  inp.click();
+}
+
+async function handleIdentifyPhoto(input) {
+  if (!input.files.length) return;
+  const file = input.files[0];
+  const statusEl = document.getElementById('atb-identify-status');
+  const chipsEl = document.getElementById('atb-suggestions-chips');
+  const btn = document.getElementById('atb-identify-btn');
+
+  chipsEl.innerHTML = '';
+  statusEl.innerHTML = '<span class="spinner"></span> Identifying…';
+  btn.disabled = true;
+
+  // Also stage this photo as an item photo (user took the pic for a reason)
+  atbPendingPhotos.push(file);
+  const url = URL.createObjectURL(file);
+  const idx = atbPendingPhotos.length - 1;
+  const div = document.createElement('div');
+  div.className = 'gallery-item';
+  div.id = `atb-pending-${idx}`;
+  div.innerHTML = `<img src="${url}"><button class="del-img" onclick="removeATBPhoto(${idx})">✕</button>`;
+  document.getElementById('atb-photo-preview').appendChild(div);
+
+  try {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/identify', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Identification failed');
+
+    const suggestions = data.suggestions || [];
+    if (!suggestions.length) {
+      statusEl.textContent = 'No items detected — type a name below';
+      btn.disabled = false;
+      return;
+    }
+
+    statusEl.textContent = 'Tap a suggestion or type your own:';
+    suggestions.forEach(name => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'suggest-chip';
+      chip.textContent = name;
+      chip.addEventListener('click', () => {
+        // Put the suggestion into the search field and try to match an existing item
+        document.getElementById('atb-search').value = name;
+        document.getElementById('atb-item-id').value = '';
+        setATBSelection(null, null, null); // reset badge so search field shows
+        document.getElementById('atb-search').value = name;
+        // Trigger a search to see if item exists
+        searchItemsAC(name);
+        chip.style.background = 'var(--accent)';
+        chip.style.color = '#000';
+        // Scroll to item field
+        document.getElementById('atb-search').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        document.getElementById('atb-search').focus();
+      });
+      chipsEl.appendChild(chip);
+    });
+  } catch(e) {
+    statusEl.textContent = `Error: ${e.message}`;
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // ── Add Item to Box ────────────────────────────────────────────────────────
 let atbPendingPhotos = []; // File objects staged before the item is saved
 
@@ -1167,6 +1297,14 @@ function openAddToBoxModal(boxId) {
   document.getElementById('atb-notes').value = '';
   document.getElementById('atb-photo-preview').innerHTML = '';
   document.getElementById('atb-photo-input').value = '';
+  document.getElementById('atb-identify-input').value = '';
+  document.getElementById('atb-suggestions-chips').innerHTML = '';
+  if (visionConfig.ready) {
+    const label = visionConfig.backend === 'ollama'
+      ? `🤖 Ollama (${visionConfig.model})`
+      : '☁️ Anthropic Claude';
+    document.getElementById('atb-identify-status').textContent = label;
+  }
   document.getElementById('atb-suggestions').classList.remove('open');
   document.getElementById('atb-cat-suggestions').classList.remove('open');
   setATBSelection(null, null, null); // reset selected-item badge
@@ -1633,6 +1771,7 @@ document.addEventListener('click', e => {
 (async () => {
   await loadRooms();
   loadBoxes();
+  loadVisionConfig(); // non-blocking — vision is optional
 })();
 </script>
 </body>

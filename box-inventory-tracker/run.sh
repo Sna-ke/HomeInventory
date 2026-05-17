@@ -11,12 +11,17 @@ export DB_USER=$(bashio::services "mysql" "username")
 export DB_PASSWORD=$(bashio::services "mysql" "password")
 export DB_NAME="box_inventory"
 
+export VISION_BACKEND=$(bashio::config 'vision_backend')
+export ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
+export OLLAMA_URL=$(bashio::config 'ollama_url')
+export OLLAMA_MODEL=$(bashio::config 'ollama_model')
+
 bashio::log.info "Starting Box Inventory Tracker..."
 bashio::log.info "Connecting to MariaDB at ${DB_HOST}:${DB_PORT}"
+bashio::log.info "Vision backend: ${VISION_BACKEND}"
 
 cd /app
 
-# Create DB + tables if needed, then apply any schema migrations
 python3 -c "from server import init_db, migrate_db; init_db(); migrate_db()"
 
 exec gunicorn \

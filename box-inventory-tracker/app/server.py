@@ -2,13 +2,17 @@ import os
 import sys
 import time
 import uuid
+import base64
 import logging
 import mimetypes
+import io
 from pathlib import Path
 
 import pymysql
+import requests as http_requests
 from flask import Flask, request, jsonify, render_template, send_file, abort
 from flask_cors import CORS
+from PIL import Image
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -744,6 +748,138 @@ def search():
             return jsonify(cur.fetchall())
     finally:
         conn.close()
+
+
+# ── Vision / Item Identification ──────────────────────────────────────────
+
+VISION_BACKEND = os.environ.get("VISION_BACKEND", "none").lower()
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://homeassistant.local:11434").rstrip("/")
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llava").strip()
+
+IDENTIFY_PROMPT = (
+    "You are helping label moving boxes. Look at this photo and identify the "
+    "physical item(s) visible. Return ONLY a JSON array of up to 5 short item "
+    "name strings, most specific first. Each name should be 1-4 words, suitable "
+    "as a box inventory label (e.g. 'Rice cooker', 'Coffee mug', 'HDMI cable'). "
+    "No explanations, no markdown — just the raw JSON array."
+)
+
+MAX_IDENTIFY_BYTES = 5 * 1024 * 1024  # 5 MB after resize
+
+
+def compress_image_for_vision(file_bytes: bytes, mime: str) -> tuple[bytes, str]:
+    """Resize and compress image to keep API costs low. Returns (bytes, mime)."""
+    try:
+        img = Image.open(io.BytesIO(file_bytes))
+        img = img.convert("RGB")
+        # Resize so longest edge <= 1024px
+        w, h = img.size
+        if max(w, h) > 1024:
+            scale = 1024 / max(w, h)
+            img = img.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG", quality=82, optimize=True)
+        return buf.getvalue(), "image/jpeg"
+    except Exception as e:
+        logger.warning(f"Image compression failed: {e}, sending original")
+        return file_bytes, mime
+
+
+def identify_via_anthropic(img_bytes: bytes, mime: str) -> list[str]:
+    import anthropic
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+    b64 = base64.standard_b64encode(img_bytes).decode()
+    msg = client.messages.create(
+        model="claude-sonnet-4-20250514",
+        max_tokens=256,
+        messages=[{
+            "role": "user",
+            "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}},
+                {"type": "text", "text": IDENTIFY_PROMPT},
+            ],
+        }],
+    )
+    import json
+    raw = msg.content[0].text.strip()
+    # Strip any accidental markdown fences
+    raw = raw.strip("`").strip()
+    if raw.startswith("json"):
+        raw = raw[4:].strip()
+    return json.loads(raw)
+
+
+def identify_via_ollama(img_bytes: bytes, mime: str) -> list[str]:
+    import json
+    b64 = base64.standard_b64encode(img_bytes).decode()
+    resp = http_requests.post(
+        f"{OLLAMA_URL}/api/generate",
+        json={
+            "model": OLLAMA_MODEL,
+            "prompt": IDENTIFY_PROMPT,
+            "images": [b64],
+            "stream": False,
+            "options": {"temperature": 0.1},
+        },
+        timeout=60,
+    )
+    resp.raise_for_status()
+    raw = resp.json().get("response", "").strip()
+    raw = raw.strip("`").strip()
+    if raw.startswith("json"):
+        raw = raw[4:].strip()
+    return json.loads(raw)
+
+
+@app.route("/api/vision-config", methods=["GET"])
+def vision_config():
+    """Let the frontend know what's configured without exposing the key."""
+    backend = VISION_BACKEND
+    ready = False
+    if backend == "anthropic" and ANTHROPIC_API_KEY:
+        ready = True
+    elif backend == "ollama" and OLLAMA_URL:
+        ready = True
+    return jsonify({"backend": backend, "ready": ready, "model": OLLAMA_MODEL if backend == "ollama" else None})
+
+
+@app.route("/api/identify", methods=["POST"])
+def identify_item():
+    if VISION_BACKEND == "none":
+        return jsonify({"error": "Vision backend not configured"}), 503
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    f = request.files["file"]
+    mime = f.mimetype or mimetypes.guess_type(f.filename or "")[0] or "image/jpeg"
+    raw_bytes = f.read()
+
+    if len(raw_bytes) > 20 * 1024 * 1024:
+        return jsonify({"error": "Image too large (max 20 MB)"}), 413
+
+    img_bytes, img_mime = compress_image_for_vision(raw_bytes, mime)
+
+    try:
+        if VISION_BACKEND == "anthropic":
+            if not ANTHROPIC_API_KEY:
+                return jsonify({"error": "Anthropic API key not set"}), 503
+            names = identify_via_anthropic(img_bytes, img_mime)
+        elif VISION_BACKEND == "ollama":
+            names = identify_via_ollama(img_bytes, img_mime)
+        else:
+            return jsonify({"error": "Unknown vision backend"}), 503
+
+        if not isinstance(names, list):
+            raise ValueError("Model did not return a list")
+        # Sanitise — keep only strings, max 5, max 60 chars each
+        names = [str(n).strip()[:60] for n in names if n][:5]
+        return jsonify({"suggestions": names})
+
+    except Exception as e:
+        logger.error(f"Vision identify error ({VISION_BACKEND}): {e}")
+        return jsonify({"error": f"Identification failed: {str(e)}"}), 500
 
 
 # ── Frontend ───────────────────────────────────────────────────────────────

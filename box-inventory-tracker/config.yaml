@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.2.0"
+version: "1.3.0"
 slug: "box_inventory"
 init: false
 arch:
@@ -25,7 +25,15 @@ ports:
   5000/tcp: 5000
 ports_description:
   5000/tcp: "Web UI"
-options: {}
-schema: {}
+options:
+  vision_backend: "none"
+  anthropic_api_key: ""
+  ollama_url: "http://homeassistant.local:11434"
+  ollama_model: "llava"
+schema:
+  vision_backend: "list(none|anthropic|ollama)"
+  anthropic_api_key: str
+  ollama_url: str
+  ollama_model: str
 panel_icon: mdi:package-variant-closed
 panel_title: Box Inventory
