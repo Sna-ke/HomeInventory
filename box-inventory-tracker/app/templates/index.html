@@ -853,22 +853,33 @@ async function openBoxDetail(id) {
   if (sb) sb.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
-  const itemsHtml = box.items.length
-    ? box.items.map(i => `
-        <div class="item-row">
-          <div class="item-row-info">
-            <div class="item-row-name">${esc(i.name)}</div>
-            <div class="item-row-meta">
-              ${i.category ? `<span class="chip cat">${esc(i.category)}</span>` : ''}
-              ${i.notes ? `· ${esc(i.notes)}` : ''}
-            </div>
+  // Build item rows using data-* so no string data ever touches onclick attributes
+  let itemRowsEl = document.createElement('div');
+  if (box.items.length) {
+    box.items.forEach(i => {
+      const row = document.createElement('div');
+      row.className = 'item-row';
+      row.innerHTML = `
+        <div class="item-row-info">
+          <div class="item-row-name">${esc(i.name)}</div>
+          <div class="item-row-meta">
+            ${i.category ? `<span class="chip cat">${esc(i.category)}</span>` : ''}
+            ${i.notes ? `· ${esc(i.notes)}` : ''}
           </div>
-          <div class="item-row-qty">×${i.quantity}</div>
-          <button class="btn-icon" onclick="editBoxItem(${i.box_item_id}, ${i.quantity}, ${JSON.stringify(i.notes||'')})">✏️</button>
-          <button class="btn-icon danger" onclick="removeBoxItem(${i.box_item_id})">🗑</button>
         </div>
-      `).join('')
-    : '<div class="empty">No items yet.</div>';
+        <div class="item-row-qty">×${i.quantity}</div>
+        <button class="btn-icon" data-action="edit-box-item"
+          data-id="${i.box_item_id}" data-qty="${i.quantity}">✏️</button>
+        <button class="btn-icon danger" data-action="remove-box-item"
+          data-id="${i.box_item_id}">🗑</button>`;
+      // Store notes safely as a dataset property (handles any characters)
+      row.querySelector('[data-action="edit-box-item"]').dataset.notes = i.notes || '';
+      itemRowsEl.appendChild(row);
+    });
+  } else {
+    itemRowsEl.innerHTML = '<div class="empty">No items yet.</div>';
+  }
+  const itemsHtml = itemRowsEl.innerHTML;
 
   const imagesHtml = renderGallery(box.images, 'box', box.id);
 
@@ -892,7 +903,7 @@ async function openBoxDetail(id) {
 
       <div class="section-hdr">
         <h3>Photos</h3>
-        <button class="btn btn-secondary btn-sm" onclick="triggerImageUpload('box',${box.id},()=>openBoxDetail(${box.id}))">+ Photo</button>
+        <button class="btn btn-secondary btn-sm" data-action="upload-box-photo" data-box-id="${box.id}">+ Photo</button>
       </div>
       <div id="gallery-box-${box.id}" class="gallery">${imagesHtml}</div>
 
@@ -906,13 +917,72 @@ async function openBoxDetail(id) {
 }
 
 function renderGallery(images, entityType, entityId) {
-  return images.map(img => `
-    <div class="gallery-item" id="img-${img.id}">
-      <img src="${img.url}" loading="lazy" onclick="viewImage('${img.url}')">
-      <button class="del-img" onclick="deleteImage(${img.id},'${entityType}',${entityId})">✕</button>
-    </div>
-  `).join('');
+  // Build via DOM to avoid putting URLs/strings inside onclick attributes
+  const wrap = document.createElement('div');
+  images.forEach(img => {
+    const item = document.createElement('div');
+    item.className = 'gallery-item';
+    item.id = `img-${img.id}`;
+
+    const imgEl = document.createElement('img');
+    imgEl.src = img.url;
+    imgEl.loading = 'lazy';
+    imgEl.dataset.action = 'view-image';
+    imgEl.dataset.url = img.url;
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'del-img';
+    delBtn.textContent = '✕';
+    delBtn.dataset.action = 'delete-image';
+    delBtn.dataset.imageId = img.id;
+    delBtn.dataset.entityType = entityType;
+    delBtn.dataset.entityId = entityId;
+
+    item.appendChild(imgEl);
+    item.appendChild(delBtn);
+    wrap.appendChild(item);
+  });
+  return wrap.innerHTML;
 }
+
+// Delegated listener for the box-detail panel — handles all data-action buttons
+// so we never have to put strings inside onclick="" attributes.
+document.getElementById('panel-box-detail').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+  const action = btn.dataset.action;
+
+  if (action === 'remove-box-item') {
+    if (!confirm('Remove this item from the box?')) return;
+    await api(`/api/box-items/${btn.dataset.id}`, { method:'DELETE' });
+    toast('Item removed');
+    openBoxDetail(currentBoxId);
+
+  } else if (action === 'edit-box-item') {
+    const qty = prompt('Quantity:', btn.dataset.qty);
+    if (qty === null) return;
+    const notes = prompt('Notes:', btn.dataset.notes);
+    await api(`/api/box-items/${btn.dataset.id}`, {
+      method:'PUT',
+      body: JSON.stringify({ quantity: parseInt(qty)||1, notes })
+    });
+    toast('Updated');
+    openBoxDetail(currentBoxId);
+
+  } else if (action === 'view-image') {
+    viewImage(btn.dataset.url);
+
+  } else if (action === 'delete-image') {
+    if (!confirm('Delete this photo?')) return;
+    await api(`/api/images/${btn.dataset.imageId}`, { method:'DELETE' });
+    toast('Photo deleted');
+    if (btn.dataset.entityType === 'box') openBoxDetail(parseInt(btn.dataset.entityId));
+
+  } else if (action === 'upload-box-photo') {
+    const boxId = parseInt(btn.dataset.boxId);
+    triggerImageUpload('box', boxId, () => openBoxDetail(boxId));
+  }
+});
 
 async function removeBoxItem(boxItemId) {
   if (!confirm('Remove this item from the box?')) return;
