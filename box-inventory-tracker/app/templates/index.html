@@ -979,33 +979,50 @@ function clearATBItem() {
 }
 
 async function searchItemsAC(q) {
-  // Don't search if an item is already selected (input is hidden, but just in case)
+  // Don't search if an item is already selected
   if (document.getElementById('atb-item-id').value) return;
   const list = document.getElementById('atb-suggestions');
   if (!q.trim()) { list.classList.remove('open'); return; }
   const items = await api(`/api/items?q=${encodeURIComponent(q)}`);
-  // Use mousedown instead of click so it fires before the input's blur event
-  const rows = items.map(i => `
-    <div class="ac-item" onmousedown="event.preventDefault()" onclick="selectATBItem(${i.id}, ${JSON.stringify(i.name)}, ${JSON.stringify(i.category||'')})">
-      <span>${esc(i.name)}</span>
-      <small>${esc(i.category||'')}</small>
-    </div>
-  `).join('');
-  const createRow = `<div class="ac-item ac-create" onmousedown="event.preventDefault()" onclick="useATBNewItem()">+ Create "<span id="atb-create-label">${esc(q)}</span>"</div>`;
-  list.innerHTML = rows + createRow;
+
+  // Use data-* attributes instead of inline onclick with interpolated strings —
+  // inline onclick breaks on any item name containing quotes or apostrophes.
+  const rows = items.map(i => {
+    const div = document.createElement('div');
+    div.className = 'ac-item';
+    div.dataset.itemId = i.id;
+    div.dataset.itemName = i.name;
+    div.dataset.itemCat = i.category || '';
+    div.innerHTML = `<span>${esc(i.name)}</span><small>${esc(i.category||'')}</small>`;
+    return div.outerHTML;
+  }).join('');
+
+  const createDiv = document.createElement('div');
+  createDiv.className = 'ac-item ac-create';
+  createDiv.dataset.createNew = '1';
+  createDiv.textContent = `+ Create "${q}"`;
+
+  list.innerHTML = rows;
+  list.appendChild(createDiv);
   list.classList.add('open');
 }
 
-function selectATBItem(id, name, cat) {
-  document.getElementById('atb-suggestions').classList.remove('open');
-  setATBSelection(id, name, cat);
-}
-
-function useATBNewItem() {
-  // Keep the typed text as the item name, don't select an existing item
-  document.getElementById('atb-item-id').value = '';
-  document.getElementById('atb-suggestions').classList.remove('open');
-}
+// Single delegated listener on the suggestions list — avoids all inline-onclick quoting issues
+document.getElementById('atb-suggestions').addEventListener('mousedown', e => {
+  e.preventDefault(); // prevent input blur before click registers
+});
+document.getElementById('atb-suggestions').addEventListener('click', e => {
+  const item = e.target.closest('.ac-item');
+  if (!item) return;
+  if (item.dataset.createNew) {
+    // User wants to create a new item with the typed name
+    document.getElementById('atb-item-id').value = '';
+    document.getElementById('atb-suggestions').classList.remove('open');
+  } else {
+    setATBSelection(item.dataset.itemId, item.dataset.itemName, item.dataset.itemCat);
+    document.getElementById('atb-suggestions').classList.remove('open');
+  }
+});
 
 // Photo handling for the ATB modal
 function triggerATBPhoto() {
@@ -1150,23 +1167,45 @@ async function searchCategories(q, listId) {
   const cats = await api(`/api/categories?q=${encodeURIComponent(q)}`);
   const matches = cats.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
   const exact = matches.some(c => c.name.toLowerCase() === q.toLowerCase());
-  let html = matches.map(c =>
-    `<div class="ac-item" onclick="selectCategory('${esc(c.name)}','${listId}')">${esc(c.name)}</div>`
-  ).join('');
-  if (!exact && q.trim())
-    html += `<div class="ac-item ac-create" onclick="selectCategory('${esc(q)}','${listId}')">+ Create "${esc(q)}"</div>`;
-  if (!html) { list.classList.remove('open'); return; }
-  list.innerHTML = html;
+
+  // Build items with data-* to avoid quoting issues in onclick attributes
+  list.innerHTML = '';
+  matches.forEach(c => {
+    const div = document.createElement('div');
+    div.className = 'ac-item';
+    div.dataset.catName = c.name;
+    div.dataset.listId = listId;
+    div.textContent = c.name;
+    list.appendChild(div);
+  });
+  if (!exact && q.trim()) {
+    const div = document.createElement('div');
+    div.className = 'ac-item ac-create';
+    div.dataset.catName = q;
+    div.dataset.listId = listId;
+    div.textContent = `+ Create "${q}"`;
+    list.appendChild(div);
+  }
+  if (!list.children.length) { list.classList.remove('open'); return; }
   list.classList.add('open');
 }
 
-function selectCategory(name, listId) {
-  // Find the input associated with this suggestion list
+// Delegated listener for all category suggestion lists
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('.ac-list') && e.target.closest('.ac-item[data-cat-name]')) {
+    e.preventDefault();
+  }
+});
+document.addEventListener('click', e => {
+  const item = e.target.closest('.ac-item[data-cat-name]');
+  if (!item) return;
+  const name = item.dataset.catName;
+  const listId = item.dataset.listId;
   const list = document.getElementById(listId);
   const input = list.previousElementSibling;
   input.value = name;
   list.classList.remove('open');
-}
+});
 
 // ── Images ─────────────────────────────────────────────────────────────────
 function triggerImageUpload(entityType, entityId, refreshFn) {
