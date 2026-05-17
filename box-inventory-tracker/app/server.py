@@ -12,15 +12,20 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 CORS(app)
 
+DB_NAME = os.environ.get("DB_NAME", "box_inventory")
+
 DB_CONFIG = {
     "host": os.environ.get("DB_HOST", "core-mariadb"),
     "port": int(os.environ.get("DB_PORT", 3306)),
     "user": os.environ.get("DB_USER", "homeassistant"),
     "password": os.environ.get("DB_PASSWORD", ""),
-    "database": os.environ.get("DB_NAME", "box_inventory"),
+    "database": DB_NAME,
     "charset": "utf8mb4",
     "cursorclass": pymysql.cursors.DictCursor,
 }
+
+# Same config but without 'database' - used to CREATE the DB on first run
+DB_CONFIG_NO_DB = {k: v for k, v in DB_CONFIG.items() if k != "database"}
 
 
 def get_db():
@@ -28,9 +33,20 @@ def get_db():
 
 
 def init_db():
-    """Create tables if they don't exist."""
+    """Create the database if needed, then create tables."""
     for attempt in range(10):
         try:
+            # Step 1: connect without selecting a DB so we can CREATE it
+            conn = pymysql.connect(**DB_CONFIG_NO_DB)
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"CREATE DATABASE IF NOT EXISTS `{DB_NAME}` "
+                    "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
+            conn.commit()
+            conn.close()
+
+            # Step 2: connect to the DB and create tables
             conn = get_db()
             with conn.cursor() as cur:
                 cur.execute("""
@@ -98,7 +114,7 @@ def next_box_number():
         conn.close()
 
 
-# ── Rooms ──────────────────────────────────────────────────────────────────
+# Rooms
 
 @app.route("/api/rooms", methods=["GET"])
 def get_rooms():
@@ -168,7 +184,7 @@ def delete_room(room_id):
         conn.close()
 
 
-# ── Boxes ──────────────────────────────────────────────────────────────────
+# Boxes
 
 @app.route("/api/boxes", methods=["GET"])
 def get_boxes():
@@ -286,7 +302,7 @@ def delete_box(box_id):
         conn.close()
 
 
-# ── Items ──────────────────────────────────────────────────────────────────
+# Items
 
 @app.route("/api/items", methods=["GET"])
 def get_items():
@@ -381,7 +397,7 @@ def delete_item(item_id):
         conn.close()
 
 
-# ── Box Items (contents) ───────────────────────────────────────────────────
+# Box Items
 
 @app.route("/api/boxes/<int:box_id>/items", methods=["POST"])
 def add_item_to_box(box_id):
@@ -434,7 +450,7 @@ def remove_box_item(box_item_id):
         conn.close()
 
 
-# ── Search ─────────────────────────────────────────────────────────────────
+# Search
 
 @app.route("/api/search", methods=["GET"])
 def search():
@@ -461,7 +477,7 @@ def search():
         conn.close()
 
 
-# ── Frontend ───────────────────────────────────────────────────────────────
+# Frontend
 
 @app.route("/")
 def index():

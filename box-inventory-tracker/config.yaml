@@ -17,21 +17,13 @@ build_from:
   i386: "ghcr.io/home-assistant/i386-base:latest"
 startup: application
 boot: auto
+services:
+  - mysql:want
 ports:
   5000/tcp: 5000
 ports_description:
   5000/tcp: "Web UI"
-options:
-  db_host: "core-mariadb"
-  db_port: 3306
-  db_name: "box_inventory"
-  db_user: "homeassistant"
-  db_password: ""
-schema:
-  db_host: str
-  db_port: int
-  db_name: str
-  db_user: str
-  db_password: str
+options: {}
+schema: {}
 panel_icon: mdi:package-variant-closed
 panel_title: Box Inventory
