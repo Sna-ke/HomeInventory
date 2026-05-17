@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.0.2"
+version: "1.1.0"
 slug: "box_inventory"
 init: false
 arch:
@@ -19,6 +19,8 @@ startup: application
 boot: auto
 services:
   - mysql:want
+map:
+  - data:rw
 ports:
   5000/tcp: 5000
 ports_description:
