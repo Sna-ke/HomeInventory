@@ -1,8 +1,5 @@
 #!/usr/bin/with-contenv bashio
 
-# The Supervisor injects these environment variables automatically
-# when services: mysql:want is declared in config.yaml and
-# the MariaDB add-on is installed and running.
 if ! bashio::services.available "mysql"; then
     bashio::log.fatal "MariaDB service is not available. Please install and start the MariaDB add-on."
     exit 1
@@ -18,4 +15,13 @@ bashio::log.info "Starting Box Inventory Tracker..."
 bashio::log.info "Connecting to MariaDB at ${DB_HOST}:${DB_PORT}"
 
 cd /app
-python3 server.py
+
+# Initialize the database (create DB + tables if needed)
+python3 -c "from server import init_db; init_db()"
+
+# Run with Gunicorn instead of Flask's dev server
+exec gunicorn \
+    --bind 0.0.0.0:5000 \
+    --workers 2 \
+    --log-level info \
+    server:app

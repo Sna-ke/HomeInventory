@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.0.1"
+version: "1.0.2"
 slug: "box_inventory"
 init: false
 arch:
