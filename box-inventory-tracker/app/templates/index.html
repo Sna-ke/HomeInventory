@@ -350,10 +350,66 @@ tr:active td { background: var(--surface2); }
 .hidden { display: none !important; }
 .img-upload-input { display: none; }
 
+
+/* ── Tablet (640px+): better modals, slightly larger gallery ── */
 @media (min-width: 640px) {
+  .modal-backdrop { padding: 20px; }
+  .modal { border-radius: 0; }
   .panel { padding: 20px 24px; }
   .card-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
   .gallery-item, .gallery-add { width: 100px; height: 100px; }
+  .ac-item:hover { background: var(--border); }
+  tr:hover td { background: var(--surface2); }
+  .card:hover { border-color: var(--accent); }
+  .result-row:hover { background: var(--surface2); }
+  .room-row:hover { background: var(--surface2); }
+}
+
+/* ── Desktop (900px+): sidebar nav replaces bottom tab bar ── */
+@media (min-width: 900px) {
+  /* Show sidebar, hide bottom tabs */
+  .tabbar { display: none; }
+  .sidebar {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: var(--nav-h); bottom: 0; left: 0;
+    width: 200px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 0;
+    z-index: 50;
+  }
+  .sidebar button {
+    display: block; width: 100%; text-align: left;
+    background: none; border: none; border-left: 3px solid transparent;
+    color: var(--muted); font-family: var(--sans); font-size: 15px;
+    font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+    padding: 11px 20px; cursor: pointer; transition: all .15s;
+  }
+  .sidebar button:hover { color: var(--text); background: var(--surface2); }
+  .sidebar button.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
+
+  /* Push content right of sidebar, remove bottom offset */
+  .content {
+    left: 200px;
+    bottom: 0;
+  }
+
+  /* Wider topbar search */
+  .topbar .search-box { max-width: 480px; }
+
+  /* Bigger card grid with more columns */
+  .card-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+  /* Larger gallery thumbnails */
+  .gallery-item, .gallery-add { width: 120px; height: 120px; }
+
+  /* Constrain detail views so they don't stretch too wide */
+  .detail { max-width: 860px; }
+
+  /* Panel padding */
+  .panel { padding: 28px 32px; }
 }
 </style>
 </head>
@@ -363,6 +419,14 @@ tr:active td { background: var(--surface2); }
   <h1>BOX<span>TRACK</span></h1>
   <input class="search-box" id="globalSearch" type="search" placeholder="🔍 Search…" oninput="handleSearch(this.value)">
 </div>
+
+
+<!-- Sidebar nav (desktop only, hidden on mobile via CSS) -->
+<nav class="sidebar" style="display:none;">
+  <button id="sidebar-boxes" class="active" onclick="showPanel('boxes')">📦 Boxes</button>
+  <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
+  <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
+</nav>
 
 <div class="content" id="mainContent">
 
@@ -605,10 +669,15 @@ function toast(msg, isErr = false) {
 // ── Navigation ─────────────────────────────────────────────────────────────
 function showPanel(name) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active'));
+  // Deactivate both nav types
+  document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById(`panel-${name}`).classList.add('active');
+  // Activate bottom tab
   const tab = document.getElementById(`tab-${name}`);
   if (tab) tab.classList.add('active');
+  // Activate sidebar button
+  const sideBtn = document.getElementById(`sidebar-${name}`);
+  if (sideBtn) sideBtn.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
   if (name === 'boxes') loadBoxes();
@@ -757,8 +826,13 @@ async function openBoxDetail(id) {
   const box = await api(`/api/boxes/${id}`);
 
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-box-detail').classList.add('active');
+  // Keep "Boxes" highlighted in nav while viewing a box
+  const tb = document.getElementById('tab-boxes');
+  if (tb) tb.classList.add('active');
+  const sb = document.getElementById('sidebar-boxes');
+  if (sb) sb.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
   const itemsHtml = box.items.length
@@ -1066,7 +1140,7 @@ function handleSearch(q) {
 async function doSearch(q) {
   const results = await api(`/api/search?q=${encodeURIComponent(q)}`);
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tabbar button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-search').classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 

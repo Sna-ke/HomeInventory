@@ -126,6 +126,84 @@ def init_db():
     sys.exit(1)
 
 
+
+def migrate_db():
+    """Apply schema migrations for databases created by older versions."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+
+            # Migration 1: boxes.description (added v1.1.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'boxes' AND COLUMN_NAME = 'description'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding boxes.description column")
+                cur.execute("ALTER TABLE boxes ADD COLUMN description TEXT AFTER label")
+
+            # Migration 2: items.category TEXT -> normalized category_id FK (added v1.1.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'items' AND COLUMN_NAME = 'category'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] > 0:
+                logger.info("Migration: normalizing items.category -> categories table")
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS categories (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL UNIQUE COLLATE utf8mb4_unicode_ci,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cur.execute("""
+                    SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'items' AND COLUMN_NAME = 'category_id'
+                """, (DB_NAME,))
+                if cur.fetchone()["n"] == 0:
+                    cur.execute("ALTER TABLE items ADD COLUMN category_id INT AFTER name")
+                # Seed categories from existing text values
+                cur.execute("SELECT DISTINCT category FROM items WHERE category IS NOT NULL AND category != ''")
+                for row in cur.fetchall():
+                    cat_name = (row.get("category") or "").strip()
+                    if cat_name:
+                        cur.execute("INSERT IGNORE INTO categories (name) VALUES (%s)", (cat_name,))
+                conn.commit()
+                # Back-fill category_id
+                cur.execute("""
+                    UPDATE items i
+                    JOIN categories c ON c.name = TRIM(i.category)
+                    SET i.category_id = c.id
+                    WHERE i.category IS NOT NULL AND i.category != ''
+                """)
+                conn.commit()
+                cur.execute("ALTER TABLE items DROP COLUMN category")
+                logger.info("Migration: items.category migration complete")
+
+            # Migration 3: images table (added v1.1.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'images'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating images table")
+                cur.execute("""
+                    CREATE TABLE images (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        filename VARCHAR(255) NOT NULL,
+                        original_name VARCHAR(255),
+                        mime_type VARCHAR(100),
+                        entity_type ENUM('box','item') NOT NULL,
+                        entity_id INT NOT NULL,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+        conn.commit()
+        logger.info("Database migrations complete.")
+    finally:
+        conn.close()
+
 def next_box_number():
     conn = get_db()
     try:

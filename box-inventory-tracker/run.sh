@@ -16,10 +16,9 @@ bashio::log.info "Connecting to MariaDB at ${DB_HOST}:${DB_PORT}"
 
 cd /app
 
-# Initialize the database (create DB + tables if needed)
-python3 -c "from server import init_db; init_db()"
+# Create DB + tables if needed, then apply any schema migrations
+python3 -c "from server import init_db, migrate_db; init_db(); migrate_db()"
 
-# Run with Gunicorn instead of Flask's dev server
 exec gunicorn \
     --bind 0.0.0.0:5000 \
     --workers 2 \
