@@ -566,34 +566,52 @@ tr:active td { background: var(--surface2); }
 <div id="modal-atb" class="modal-backdrop">
   <div class="modal">
     <h3>Add Item to Box</h3>
+
     <div class="field">
       <label>Item</label>
       <div class="ac-wrap">
         <input type="text" id="atb-search" placeholder="Search or type new item name…"
-          oninput="searchItemsAC(this.value)" autocomplete="off">
+          oninput="searchItemsAC(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
         <div id="atb-suggestions" class="ac-list"></div>
         <input type="hidden" id="atb-item-id">
       </div>
+      <!-- Shows which existing item is selected -->
+      <div id="atb-selected-badge" style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--accent);font-family:var(--mono);font-size:12px;color:var(--accent);align-items:center;gap:8px;">
+        <span id="atb-selected-name"></span>
+        <button onclick="clearATBItem()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
+      </div>
     </div>
-    <div class="field">
-      <label>Category <span style="color:var(--muted);font-size:11px;">(if creating new item)</span></label>
+
+    <div class="field" id="atb-category-field">
+      <label>Category <span style="color:var(--muted);font-size:11px;">(new items only)</span></label>
       <div class="ac-wrap">
         <input type="text" id="atb-category" placeholder="e.g. Kitchen"
           oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off">
         <div id="atb-cat-suggestions" class="ac-list"></div>
       </div>
     </div>
+
     <div class="field">
       <label>Quantity</label>
       <input type="number" id="atb-qty" value="1" min="1">
     </div>
+
     <div class="field">
       <label>Notes (optional)</label>
       <input type="text" id="atb-notes" placeholder="e.g. cables in side pocket">
     </div>
+
+    <div class="field">
+      <label>Photo (optional)</label>
+      <div id="atb-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="triggerATBPhoto()">📷 Add Photo</button>
+      <input type="file" id="atb-photo-input" accept="image/*" multiple style="display:none"
+        onchange="handleATBPhotoSelect(this)">
+    </div>
+
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-atb')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="confirmAddToBox()">Add</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmAddToBox()">Add to Box</button>
     </div>
   </div>
 </div>
@@ -916,43 +934,119 @@ async function editBoxItem(boxItemId, currentQty, currentNotes) {
 }
 
 // ── Add Item to Box ────────────────────────────────────────────────────────
+let atbPendingPhotos = []; // File objects staged before the item is saved
+
 function openAddToBoxModal(boxId) {
   addToBoxId = boxId;
+  atbPendingPhotos = [];
   document.getElementById('atb-search').value = '';
   document.getElementById('atb-item-id').value = '';
   document.getElementById('atb-category').value = '';
   document.getElementById('atb-qty').value = '1';
   document.getElementById('atb-notes').value = '';
+  document.getElementById('atb-photo-preview').innerHTML = '';
+  document.getElementById('atb-photo-input').value = '';
   document.getElementById('atb-suggestions').classList.remove('open');
   document.getElementById('atb-cat-suggestions').classList.remove('open');
+  setATBSelection(null, null, null); // reset selected-item badge
   openModal('modal-atb');
 }
 
+// Show/hide the "selected item" badge and category field
+function setATBSelection(id, name, cat) {
+  const badge = document.getElementById('atb-selected-badge');
+  const catField = document.getElementById('atb-category-field');
+  const searchInput = document.getElementById('atb-search');
+  if (id) {
+    document.getElementById('atb-item-id').value = id;
+    document.getElementById('atb-selected-name').textContent = name + (cat ? ' · ' + cat : '');
+    badge.style.display = 'flex';
+    searchInput.style.display = 'none';
+    catField.style.display = 'none'; // category already set on existing item
+  } else {
+    document.getElementById('atb-item-id').value = '';
+    badge.style.display = 'none';
+    searchInput.style.display = '';
+    catField.style.display = '';
+  }
+}
+
+function clearATBItem() {
+  setATBSelection(null, null, null);
+  const inp = document.getElementById('atb-search');
+  inp.value = '';
+  inp.focus();
+}
+
 async function searchItemsAC(q) {
+  // Don't search if an item is already selected (input is hidden, but just in case)
+  if (document.getElementById('atb-item-id').value) return;
   const list = document.getElementById('atb-suggestions');
-  document.getElementById('atb-item-id').value = '';
   if (!q.trim()) { list.classList.remove('open'); return; }
   const items = await api(`/api/items?q=${encodeURIComponent(q)}`);
-  const html = items.map(i => `
-    <div class="ac-item" onclick="selectATBItem(${i.id}, ${JSON.stringify(i.name)}, ${JSON.stringify(i.category||'')})">
+  // Use mousedown instead of click so it fires before the input's blur event
+  const rows = items.map(i => `
+    <div class="ac-item" onmousedown="event.preventDefault()" onclick="selectATBItem(${i.id}, ${JSON.stringify(i.name)}, ${JSON.stringify(i.category||'')})">
       <span>${esc(i.name)}</span>
       <small>${esc(i.category||'')}</small>
     </div>
   `).join('');
-  list.innerHTML = html + `<div class="ac-item ac-create" onclick="clearATBItemId()">+ Create "${esc(q)}"</div>`;
+  const createRow = `<div class="ac-item ac-create" onmousedown="event.preventDefault()" onclick="useATBNewItem()">+ Create "<span id="atb-create-label">${esc(q)}</span>"</div>`;
+  list.innerHTML = rows + createRow;
   list.classList.add('open');
 }
 
 function selectATBItem(id, name, cat) {
-  document.getElementById('atb-search').value = name;
-  document.getElementById('atb-item-id').value = id;
-  document.getElementById('atb-category').value = cat;
+  document.getElementById('atb-suggestions').classList.remove('open');
+  setATBSelection(id, name, cat);
+}
+
+function useATBNewItem() {
+  // Keep the typed text as the item name, don't select an existing item
+  document.getElementById('atb-item-id').value = '';
   document.getElementById('atb-suggestions').classList.remove('open');
 }
 
-function clearATBItemId() {
-  document.getElementById('atb-item-id').value = '';
-  document.getElementById('atb-suggestions').classList.remove('open');
+// Photo handling for the ATB modal
+function triggerATBPhoto() {
+  const inp = document.getElementById('atb-photo-input');
+  inp.value = '';
+  inp.click();
+}
+
+function handleATBPhotoSelect(input) {
+  const preview = document.getElementById('atb-photo-preview');
+  for (const file of input.files) {
+    atbPendingPhotos.push(file);
+    const url = URL.createObjectURL(file);
+    const idx = atbPendingPhotos.length - 1;
+    const div = document.createElement('div');
+    div.className = 'gallery-item';
+    div.id = `atb-pending-${idx}`;
+    div.innerHTML = `<img src="${url}"><button class="del-img" onclick="removeATBPhoto(${idx})">✕</button>`;
+    preview.appendChild(div);
+  }
+}
+
+function removeATBPhoto(idx) {
+  atbPendingPhotos[idx] = null; // null = removed
+  const el = document.getElementById(`atb-pending-${idx}`);
+  if (el) el.remove();
+}
+
+async function uploadPendingPhotos(itemId) {
+  for (const file of atbPendingPhotos) {
+    if (!file) continue;
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('entity_type', 'item');
+    fd.append('entity_id', itemId);
+    try {
+      await fetch('/api/images/upload', { method: 'POST', body: fd });
+    } catch(e) {
+      toast(`Photo upload failed: ${e.message}`, true);
+    }
+  }
 }
 
 async function confirmAddToBox() {
@@ -962,16 +1056,24 @@ async function confirmAddToBox() {
   const category = document.getElementById('atb-category').value.trim();
 
   if (!item_id) {
+    // Creating a new item
     const name = document.getElementById('atb-search').value.trim();
     if (!name) { toast('Enter an item name', true); return; }
     const newItem = await api('/api/items', { method:'POST', body:JSON.stringify({name, category}) });
     item_id = newItem.id;
   }
+
+  // Upload any staged photos against the item
+  const photoCount = atbPendingPhotos.filter(Boolean).length;
+  if (photoCount > 0) {
+    await uploadPendingPhotos(item_id);
+  }
+
   await api(`/api/boxes/${addToBoxId}/items`, {
     method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
   });
   closeModal('modal-atb');
-  toast('Item added');
+  toast(`Item added${photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : ''}`);
   openBoxDetail(addToBoxId);
 }
 
