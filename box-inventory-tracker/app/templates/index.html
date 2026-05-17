@@ -338,10 +338,87 @@ tr:active td { background: var(--surface2); }
 .print-num { font-family: 'Barlow Condensed', sans-serif; font-size: 48px; font-weight: 900; color: #000; line-height: 1; }
 .print-label { font-size: 16px; font-weight: 700; color: #333; max-width: 200px; word-break: break-word; margin: 0 auto; }
 
+/* ── View toggle ── */
+.view-toggle {
+  display: flex; border: 1px solid var(--border); overflow: hidden;
+}
+.view-btn {
+  background: var(--surface2); border: none; color: var(--muted);
+  font-size: 16px; padding: 6px 10px; cursor: pointer; transition: all .15s;
+  line-height: 1;
+}
+.view-btn.active { background: var(--accent); color: #000; }
+.view-btn:not(.active):hover { color: var(--text); }
+
+/* ── Box list view ── */
+.box-list { display: flex; flex-direction: column; gap: 6px; }
+.box-list-row {
+  background: var(--surface); border: 1px solid var(--border);
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center; gap: 12px;
+  padding: 10px 14px; cursor: pointer; transition: border-color .15s;
+}
+.box-list-row:hover { border-color: var(--accent); }
+.box-list-num {
+  font-family: var(--mono); font-size: 12px;
+  background: var(--accent); color: #000;
+  padding: 3px 6px; text-align: center; font-weight: bold;
+  white-space: nowrap;
+}
+.box-list-info { min-width: 0; }
+.box-list-title { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.box-list-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 2px; }
+.box-list-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ── Label print preview ── */
+.label-preview {
+  background: #fff; color: #000;
+  display: inline-flex; flex-direction: row;
+  align-items: stretch;
+  border: 2px dashed var(--border);
+  /* size set dynamically via style */
+  overflow: hidden;
+  gap: 0;
+}
+.label-left {
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: center; padding: 6px;
+  border-right: 1px solid #ccc;
+  flex-shrink: 0;
+}
+.label-qr-wrap { background: #fff; }
+.label-box-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900; color: #000; line-height: 1;
+  text-align: center; margin-top: 4px;
+}
+.label-right {
+  flex: 1; min-width: 0; display: flex; flex-direction: column;
+  justify-content: center; padding: 6px 8px; gap: 3px;
+}
+.label-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; color: #000; line-height: 1.2;
+  word-break: break-word;
+}
+.label-body {
+  font-family: 'Barlow Condensed', sans-serif;
+  color: #333; line-height: 1.3; word-break: break-word;
+}
+.label-room {
+  font-family: monospace; color: #666;
+  word-break: break-word;
+}
+
 @media print {
   body * { visibility: hidden; }
-  .print-preview, .print-preview * { visibility: visible; }
-  .print-preview { position: fixed; top: 0; left: 0; border: none; padding: 8px; }
+  #print-target, #print-target * { visibility: visible; }
+  #print-target {
+    position: fixed; top: 0; left: 0;
+    border: none !important;
+    margin: 0 !important;
+  }
 }
 
 /* ── Misc ── */
@@ -434,7 +511,13 @@ tr:active td { background: var(--surface2); }
   <div id="panel-boxes" class="panel active">
     <div class="panel-hdr">
       <h2>Boxes</h2>
-      <button class="btn btn-primary btn-sm" onclick="openBoxModal()">+ New</button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <div class="view-toggle">
+          <button id="view-grid-btn" class="view-btn active" title="Grid view" onclick="setBoxView('grid')">⊞</button>
+          <button id="view-list-btn" class="view-btn" title="List view" onclick="setBoxView('list')">☰</button>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openBoxModal()">+ New</button>
+      </div>
     </div>
     <div style="margin-bottom:12px;">
       <select id="roomFilter" onchange="loadBoxes()"
@@ -442,7 +525,7 @@ tr:active td { background: var(--surface2); }
         <option value="">All Rooms</option>
       </select>
     </div>
-    <div id="boxes-grid" class="card-grid"></div>
+    <div id="boxes-grid"></div>
   </div>
 
   <!-- BOX DETAIL -->
@@ -620,10 +703,24 @@ tr:active td { background: var(--surface2); }
 <div id="modal-print" class="modal-backdrop">
   <div class="modal print-wrap">
     <h3>Print Label</h3>
-    <div class="print-preview" id="print-target">
-      <div class="print-qr" id="qr-container"></div>
-      <div class="print-num" id="print-box-num"></div>
-      <div class="print-label" id="print-box-label"></div>
+    <div class="field" style="text-align:left;max-width:340px;margin:0 auto 16px;">
+      <label>Label Size (Niimbot B1)</label>
+      <select id="label-size-select" onchange="updateLabelPreview()"
+        style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:15px;padding:9px 12px;width:100%;-webkit-appearance:none;border-radius:0;outline:none;">
+        <option value="50x30">50 × 30 mm — Small tag</option>
+        <option value="40x30">40 × 30 mm — Small tag</option>
+        <option value="40x40">40 × 40 mm — Square</option>
+        <option value="50x50">50 × 50 mm — Square</option>
+        <option value="40x60">40 × 60 mm — Standard</option>
+        <option value="40x70">40 × 70 mm — Standard</option>
+        <option value="50x70" selected>50 × 70 mm — Standard ★</option>
+        <option value="50x80">50 × 80 mm — Large</option>
+      </select>
+    </div>
+    <div id="print-preview-wrap" style="text-align:center;">
+      <div class="print-preview" id="print-target">
+        <!-- filled by updateLabelPreview() -->
+      </div>
     </div>
     <div class="modal-actions" style="justify-content:center;margin-top:14px;">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-print')">Close</button>
@@ -648,6 +745,8 @@ let currentBoxId = null;
 let addToBoxId = null;
 let uploadTarget = null; // { entity_type, entity_id, refresh }
 let searchTimer = null;
+let boxView = 'grid'; // 'grid' | 'list'
+let currentPrintBox = null; // box object held for label re-render on size change
 
 // ── API ────────────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
@@ -761,35 +860,87 @@ async function deleteRoom(id) {
 }
 
 // ── Boxes ──────────────────────────────────────────────────────────────────
+function setBoxView(v) {
+  boxView = v;
+  document.getElementById('view-grid-btn').classList.toggle('active', v === 'grid');
+  document.getElementById('view-list-btn').classList.toggle('active', v === 'list');
+  renderBoxes(window._lastBoxes || []);
+}
+
 async function loadBoxes() {
   await loadRooms();
   const roomId = document.getElementById('roomFilter').value;
   const url = roomId ? `/api/boxes?room_id=${roomId}` : '/api/boxes';
   const boxes = await api(url);
-  const grid = document.getElementById('boxes-grid');
+  window._lastBoxes = boxes;
+  renderBoxes(boxes);
+}
+
+function renderBoxes(boxes) {
+  const container = document.getElementById('boxes-grid');
   if (!boxes.length) {
-    grid.innerHTML = '<div class="empty">No boxes yet. Tap + New to create one.</div>'; return;
+    container.className = '';
+    container.innerHTML = '<div class="empty">No boxes yet. Tap + New to create one.</div>';
+    return;
   }
-  grid.innerHTML = boxes.map(b => `
-    <div class="card" onclick="openBoxDetail(${b.id})">
-      <div class="card-thumb">
-        ${b.thumb_url
-          ? `<img src="${b.thumb_url}" alt="box photo" loading="lazy">`
-          : `<span>📦</span>`}
-      </div>
-      <div class="card-body">
-        <div class="card-num">BOX ${b.box_number}</div>
-        <div class="card-title">${esc(b.label || 'Unlabelled')}</div>
-        <div class="card-meta">${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'} · ${b.item_count} type${b.item_count!=1?'s':''}</div>
-        ${b.description ? `<div class="card-desc">${esc(b.description.substring(0,80))}${b.description.length>80?'…':''}</div>` : ''}
-        <div class="card-actions" onclick="event.stopPropagation()">
-          <button class="btn btn-sm btn-secondary" onclick="openBoxModal(${b.id})">Edit</button>
-          <button class="btn btn-sm btn-primary" onclick="openPrintModal(${b.id})">🖨</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteBox(${b.id})">Delete</button>
+
+  if (boxView === 'list') {
+    container.className = 'box-list';
+    container.innerHTML = '';
+    boxes.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'box-list-row';
+      row.innerHTML = `
+        <div class="box-list-num">BOX<br>${b.box_number}</div>
+        <div class="box-list-info">
+          <div class="box-list-title">${esc(b.label || 'Unlabelled')}</div>
+          <div class="box-list-meta">${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'} · ${b.item_count} type${b.item_count!=1?'s':''}</div>
         </div>
-      </div>
-    </div>
-  `).join('');
+        <div class="box-list-actions">
+          <button class="btn btn-sm btn-primary">🖨</button>
+          <button class="btn btn-sm btn-danger">Del</button>
+        </div>`;
+      // delegated — avoid onclick string interpolation
+      row.dataset.boxId = b.id;
+      row.querySelector('.box-list-info').addEventListener('click', () => openBoxDetail(b.id));
+      row.querySelector('.box-list-num').addEventListener('click', () => openBoxDetail(b.id));
+      row.querySelectorAll('.box-list-actions button')[0].addEventListener('click', e => { e.stopPropagation(); openPrintModal(b.id); });
+      row.querySelectorAll('.box-list-actions button')[1].addEventListener('click', e => { e.stopPropagation(); deleteBox(b.id); });
+      container.appendChild(row);
+    });
+  } else {
+    container.className = 'card-grid';
+    container.innerHTML = '';
+    boxes.forEach(b => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-thumb">
+          ${b.thumb_url ? `<img src="${b.thumb_url}" alt="box photo" loading="lazy">` : `<span>📦</span>`}
+        </div>
+        <div class="card-body">
+          <div class="card-num">BOX ${b.box_number}</div>
+          <div class="card-title">${esc(b.label || 'Unlabelled')}</div>
+          <div class="card-meta">${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'} · ${b.item_count} type${b.item_count!=1?'s':''}</div>
+          ${b.description ? `<div class="card-desc">${esc(b.description.substring(0,80))}${b.description.length>80?'…':''}</div>` : ''}
+          <div class="card-actions"></div>
+        </div>`;
+      // Actions via JS to avoid interpolation
+      const actions = card.querySelector('.card-actions');
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn btn-sm btn-secondary'; editBtn.textContent = 'Edit';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); openBoxModal(b.id); });
+      const printBtn = document.createElement('button');
+      printBtn.className = 'btn btn-sm btn-primary'; printBtn.textContent = '🖨';
+      printBtn.addEventListener('click', e => { e.stopPropagation(); openPrintModal(b.id); });
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-sm btn-danger'; delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); deleteBox(b.id); });
+      actions.appendChild(editBtn); actions.appendChild(printBtn); actions.appendChild(delBtn);
+      card.addEventListener('click', () => openBoxDetail(b.id));
+      container.appendChild(card);
+    });
+  }
 }
 
 function openBoxModal(id = null) {
@@ -1327,18 +1478,115 @@ function viewImage(url) {
 }
 
 // ── Print / QR ─────────────────────────────────────────────────────────────
+// Niimbot B1 label sizes: { key: [widthMM, heightMM] }
+// We render at 96 DPI screen preview (~3.78px per mm), but print CSS uses mm directly.
+const LABEL_SIZES = {
+  '50x30': [50, 30], '40x30': [40, 30], '40x40': [40, 40], '50x50': [50, 50],
+  '40x60': [40, 60], '40x70': [40, 70], '50x70': [50, 70], '50x80': [50, 80],
+};
+const MM_TO_PX = 3.3; // approx screen preview scale
+
 async function openPrintModal(boxId) {
   const box = await api(`/api/boxes/${boxId}`);
-  const qrEl = document.getElementById('qr-container');
-  qrEl.innerHTML = '';
-  new QRCode(qrEl, {
-    text: `${location.origin}/?box=${box.box_number}`,
-    width: 150, height: 150,
-    correctLevel: QRCode.CorrectLevel.M
-  });
-  document.getElementById('print-box-num').textContent = `BOX ${box.box_number}`;
-  document.getElementById('print-box-label').textContent = box.label || box.room_name || '';
+  currentPrintBox = box;
   openModal('modal-print');
+  updateLabelPreview();
+}
+
+function updateLabelPreview() {
+  if (!currentPrintBox) return;
+  const box = currentPrintBox;
+  const sizeKey = document.getElementById('label-size-select').value;
+  const [wMM, hMM] = LABEL_SIZES[sizeKey] || [50, 70];
+  const isLandscape = wMM >= hMM; // e.g. 50x30 is landscape, 50x70 is portrait
+
+  // Body text: prefer description, fall back to unique categories
+  let bodyText = box.description || '';
+  if (!bodyText && box.items && box.items.length) {
+    const cats = [...new Set(box.items.map(i => i.category).filter(Boolean))];
+    bodyText = cats.length ? cats.join(', ') : '';
+  }
+
+  const qrSize = Math.round(Math.min(wMM, hMM) * MM_TO_PX * (isLandscape ? 0.7 : 0.45));
+  const numSize = Math.max(10, Math.round(qrSize * 0.32));
+  const titleSize = Math.max(9, Math.round(Math.min(wMM, hMM) * MM_TO_PX * 0.12));
+  const bodySize = Math.max(7, Math.round(titleSize * 0.8));
+
+  const target = document.getElementById('print-target');
+  // Set preview dimensions (screen px) and print dimensions (mm via data attrs)
+  const pxW = Math.round(wMM * MM_TO_PX);
+  const pxH = Math.round(hMM * MM_TO_PX);
+  target.className = 'label-preview';
+  target.style.cssText = `width:${pxW}px;height:${pxH}px;flex-direction:${isLandscape ? 'row' : 'column'};`;
+  target.dataset.printW = wMM;
+  target.dataset.printH = hMM;
+
+  // Left/top section: QR + box number
+  const leftDiv = document.createElement('div');
+  leftDiv.className = 'label-left';
+  if (isLandscape) {
+    leftDiv.style.cssText = `width:${Math.round(pxH * 1.05)}px;`;
+  } else {
+    leftDiv.style.cssText = `height:${Math.round(pxW * 0.6)}px;flex-direction:row;gap:6px;border-right:none;border-bottom:1px solid #ccc;`;
+  }
+
+  const qrWrap = document.createElement('div');
+  qrWrap.className = 'label-qr-wrap';
+  qrWrap.id = 'qr-container';
+  new QRCode(qrWrap, {
+    text: `${location.origin}/?box=${box.box_number}`,
+    width: qrSize, height: qrSize,
+    correctLevel: QRCode.CorrectLevel.M,
+  });
+
+  const numEl = document.createElement('div');
+  numEl.className = 'label-box-num';
+  numEl.style.fontSize = numSize + 'px';
+  numEl.textContent = `BOX ${box.box_number}`;
+
+  leftDiv.appendChild(qrWrap);
+  leftDiv.appendChild(numEl);
+
+  // Right/bottom section: label + body text
+  const rightDiv = document.createElement('div');
+  rightDiv.className = 'label-right';
+
+  if (box.label) {
+    const titleEl = document.createElement('div');
+    titleEl.className = 'label-title';
+    titleEl.style.fontSize = titleSize + 'px';
+    titleEl.textContent = box.label;
+    rightDiv.appendChild(titleEl);
+  }
+
+  if (bodyText) {
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'label-body';
+    bodyEl.style.fontSize = bodySize + 'px';
+    bodyEl.textContent = bodyText.length > 120 ? bodyText.substring(0, 120) + '…' : bodyText;
+    rightDiv.appendChild(bodyEl);
+  }
+
+  if (box.room_name) {
+    const roomEl = document.createElement('div');
+    roomEl.className = 'label-room';
+    roomEl.style.fontSize = Math.max(6, bodySize - 1) + 'px';
+    roomEl.textContent = `📍 ${box.room_name}`;
+    rightDiv.appendChild(roomEl);
+  }
+
+  target.innerHTML = '';
+  target.appendChild(leftDiv);
+  target.appendChild(rightDiv);
+
+  // Inject a dynamic @page rule for printing at the correct size
+  let styleEl = document.getElementById('print-page-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'print-page-style';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `@media print { @page { size: ${wMM}mm ${hMM}mm; margin: 0; } }`;
 }
 
 // ── Global Search ──────────────────────────────────────────────────────────
