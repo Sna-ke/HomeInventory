@@ -424,6 +424,60 @@ tr:active td { background: var(--surface2); }
 /* ── Misc ── */
 .empty { color: var(--muted); font-family: var(--mono); font-size: 13px; padding: 40px 16px; text-align: center; }
 
+/* ── Qty stepper ── */
+.qty-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); font-size: 22px; font-weight: 700;
+  width: 48px; height: 48px; cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; touch-action: manipulation; user-select: none;
+}
+.qty-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
+.qty-cell {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--mono); font-size: 13px;
+  text-align: center; padding: 7px 2px; cursor: pointer;
+  transition: all .12s;
+}
+.qty-cell:hover, .qty-cell:active { background: var(--accent); color: #000; border-color: var(--accent); }
+.qty-cell.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* ── Inline qty controls in item rows ── */
+.item-qty-control {
+  display: flex; align-items: center; gap: 0; flex-shrink: 0;
+}
+.item-qty-btn {
+  background: var(--surface2); border: 1px solid var(--border);
+  color: var(--muted); font-size: 16px; font-weight: 700;
+  width: 30px; height: 30px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s; touch-action: manipulation;
+  flex-shrink: 0;
+}
+.item-qty-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
+.item-qty-num {
+  font-family: var(--mono); font-size: 15px; font-weight: bold;
+  color: var(--accent); min-width: 32px; text-align: center;
+  cursor: pointer; padding: 0 2px; position: relative;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  height: 30px; line-height: 30px;
+}
+.item-qty-dropdown {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--surface2); border: 1px solid var(--accent);
+  z-index: 200; display: none;
+  display: grid; grid-template-columns: repeat(5,1fr); gap: 2px;
+  padding: 4px; min-width: 160px;
+}
+.item-qty-dropdown.open { display: grid; }
+.item-qty-option {
+  font-family: var(--mono); font-size: 13px; text-align: center;
+  padding: 6px 4px; cursor: pointer; background: var(--surface);
+  border: 1px solid var(--border); transition: all .1s;
+}
+.item-qty-option:hover, .item-qty-option:active,
+.item-qty-option.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+
 /* ── Identify suggestion chips ── */
 .suggest-chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -766,6 +820,49 @@ tr:active td { background: var(--surface2); }
   </div>
 </div>
 
+<!-- Edit box-item modal -->
+<div id="modal-edit-item" class="modal-backdrop">
+  <div class="modal">
+    <h3>Edit Item</h3>
+    <input type="hidden" id="edit-item-box-item-id">
+
+    <div class="field">
+      <label>Item</label>
+      <div id="edit-item-name-display"
+        style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);
+               font-size:16px;font-weight:700;color:var(--text);">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Quantity</label>
+      <div style="display:flex;align-items:center;gap:0;">
+        <button type="button" class="qty-btn" id="edit-qty-minus">−</button>
+        <div style="position:relative;flex:1;">
+          <input type="number" id="edit-item-qty" min="0" max="99" value="1"
+            style="width:100%;text-align:center;font-size:22px;font-weight:700;
+                   font-family:var(--mono);padding:10px 4px;border-left:none;border-right:none;">
+        </div>
+        <button type="button" class="qty-btn" id="edit-qty-plus">+</button>
+      </div>
+      <div id="edit-qty-grid" style="display:none;margin-top:6px;">
+        <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;" id="edit-qty-cells"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <input type="text" id="edit-item-notes" placeholder="e.g. cables in side pocket">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-edit-item')">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="edit-item-remove-btn">Remove</button>
+      <button class="btn btn-primary btn-sm" onclick="saveEditBoxItem()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- Hidden file input for image uploads -->
 <input type="file" id="img-input" class="img-upload-input"
   accept="image/*" capture="environment" multiple
@@ -1041,27 +1138,101 @@ async function openBoxDetail(id) {
   if (sb) sb.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
-  // Build item rows using data-* so no string data ever touches onclick attributes
-  let itemRowsEl = document.createElement('div');
+  // Build item rows using DOM — never inline data in HTML strings
+  const itemRowsEl = document.createElement('div');
   if (box.items.length) {
     box.items.forEach(i => {
       const row = document.createElement('div');
       row.className = 'item-row';
-      row.innerHTML = `
-        <div class="item-row-info">
-          <div class="item-row-name">${esc(i.name)}</div>
-          <div class="item-row-meta">
-            ${i.category ? `<span class="chip cat">${esc(i.category)}</span>` : ''}
-            ${i.notes ? `· ${esc(i.notes)}` : ''}
-          </div>
-        </div>
-        <div class="item-row-qty">×${i.quantity}</div>
-        <button class="btn-icon" data-action="edit-box-item"
-          data-id="${i.box_item_id}" data-qty="${i.quantity}">✏️</button>
-        <button class="btn-icon danger" data-action="remove-box-item"
-          data-id="${i.box_item_id}">🗑</button>`;
-      // Store notes safely as a dataset property (handles any characters)
-      row.querySelector('[data-action="edit-box-item"]').dataset.notes = i.notes || '';
+
+      // Info section
+      const info = document.createElement('div');
+      info.className = 'item-row-info';
+      const nameEl = document.createElement('div');
+      nameEl.className = 'item-row-name';
+      nameEl.textContent = i.name;
+      const metaEl = document.createElement('div');
+      metaEl.className = 'item-row-meta';
+      if (i.category) {
+        const chip = document.createElement('span');
+        chip.className = 'chip cat';
+        chip.textContent = i.category;
+        metaEl.appendChild(chip);
+      }
+      if (i.notes) {
+        const noteSpan = document.createElement('span');
+        noteSpan.textContent = ' · ' + i.notes;
+        metaEl.appendChild(noteSpan);
+      }
+      info.appendChild(nameEl);
+      info.appendChild(metaEl);
+
+      // Inline qty control: [−] [num▾] [+]
+      const qtyCtrl = document.createElement('div');
+      qtyCtrl.className = 'item-qty-control';
+
+      const minusBtn = document.createElement('button');
+      minusBtn.className = 'item-qty-btn';
+      minusBtn.textContent = '−';
+      minusBtn.dataset.action = 'qty-minus';
+      minusBtn.dataset.id = i.box_item_id;
+
+      const numWrap = document.createElement('div');
+      numWrap.style.position = 'relative';
+
+      const numEl = document.createElement('div');
+      numEl.className = 'item-qty-num';
+      numEl.textContent = i.quantity;
+      numEl.dataset.action = 'qty-pick';
+      numEl.dataset.id = i.box_item_id;
+      numEl.dataset.qty = i.quantity;
+
+      // Dropdown grid 0–99
+      const dropdown = document.createElement('div');
+      dropdown.className = 'item-qty-dropdown';
+      dropdown.id = `qty-dd-${i.box_item_id}`;
+      for (let n = 0; n <= 99; n++) {
+        const opt = document.createElement('div');
+        opt.className = 'item-qty-option' + (n === i.quantity ? ' selected' : '');
+        opt.textContent = n;
+        opt.dataset.action = 'qty-select';
+        opt.dataset.id = i.box_item_id;
+        opt.dataset.val = n;
+        dropdown.appendChild(opt);
+      }
+
+      const plusBtn = document.createElement('button');
+      plusBtn.className = 'item-qty-btn';
+      plusBtn.textContent = '+';
+      plusBtn.dataset.action = 'qty-plus';
+      plusBtn.dataset.id = i.box_item_id;
+
+      numWrap.appendChild(numEl);
+      numWrap.appendChild(dropdown);
+      qtyCtrl.appendChild(minusBtn);
+      qtyCtrl.appendChild(numWrap);
+      qtyCtrl.appendChild(plusBtn);
+
+      // Edit & remove buttons
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-icon';
+      editBtn.dataset.action = 'edit-box-item';
+      editBtn.dataset.id = i.box_item_id;
+      editBtn.dataset.qty = i.quantity;
+      editBtn.dataset.notes = i.notes || '';
+      editBtn.dataset.name = i.name;
+      editBtn.textContent = '✏️';
+
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-icon danger';
+      delBtn.dataset.action = 'remove-box-item';
+      delBtn.dataset.id = i.box_item_id;
+      delBtn.textContent = '🗑';
+
+      row.appendChild(info);
+      row.appendChild(qtyCtrl);
+      row.appendChild(editBtn);
+      row.appendChild(delBtn);
       itemRowsEl.appendChild(row);
     });
   } else {
@@ -1133,8 +1304,14 @@ function renderGallery(images, entityType, entityId) {
   return wrap.innerHTML;
 }
 
-// Delegated listener for the box-detail panel — handles all data-action buttons
-// so we never have to put strings inside onclick="" attributes.
+// Close any open qty dropdowns when clicking outside
+document.addEventListener('click', e => {
+  if (!e.target.closest('.item-qty-control')) {
+    document.querySelectorAll('.item-qty-dropdown.open').forEach(d => d.classList.remove('open'));
+  }
+});
+
+// Delegated listener for the box-detail panel
 document.getElementById('panel-box-detail').addEventListener('click', async e => {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
@@ -1147,15 +1324,34 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
     openBoxDetail(currentBoxId);
 
   } else if (action === 'edit-box-item') {
-    const qty = prompt('Quantity:', btn.dataset.qty);
-    if (qty === null) return;
-    const notes = prompt('Notes:', btn.dataset.notes);
-    await api(`/api/box-items/${btn.dataset.id}`, {
-      method:'PUT',
-      body: JSON.stringify({ quantity: parseInt(qty)||1, notes })
-    });
-    toast('Updated');
-    openBoxDetail(currentBoxId);
+    openEditBoxItemModal(btn.dataset.id, btn.dataset.qty, btn.dataset.notes, btn.dataset.name);
+
+  } else if (action === 'qty-minus') {
+    const numEl = btn.closest('.item-qty-control').querySelector('.item-qty-num');
+    const cur = parseInt(numEl.textContent) || 0;
+    const next = Math.max(0, cur - 1);
+    await patchQty(btn.dataset.id, next, numEl);
+
+  } else if (action === 'qty-plus') {
+    const numEl = btn.closest('.item-qty-control').querySelector('.item-qty-num');
+    const cur = parseInt(numEl.textContent) || 0;
+    const next = Math.min(99, cur + 1);
+    await patchQty(btn.dataset.id, next, numEl);
+
+  } else if (action === 'qty-pick') {
+    // Toggle the dropdown
+    const dd = document.getElementById(`qty-dd-${btn.dataset.id}`);
+    const wasOpen = dd.classList.contains('open');
+    document.querySelectorAll('.item-qty-dropdown.open').forEach(d => d.classList.remove('open'));
+    if (!wasOpen) dd.classList.add('open');
+
+  } else if (action === 'qty-select') {
+    e.stopPropagation();
+    const val = parseInt(btn.dataset.val);
+    const dd = btn.closest('.item-qty-dropdown');
+    dd.classList.remove('open');
+    const numEl = dd.previousElementSibling; // the .item-qty-num div
+    await patchQty(btn.dataset.id, val, numEl);
 
   } else if (action === 'view-image') {
     viewImage(btn.dataset.url);
@@ -1172,22 +1368,101 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
   }
 });
 
+async function patchQty(boxItemId, newQty, numEl) {
+  // Optimistic update of the display number
+  numEl.textContent = newQty;
+  numEl.dataset.qty = newQty;
+  // Update selected state in dropdown
+  const dd = document.getElementById(`qty-dd-${boxItemId}`);
+  if (dd) {
+    dd.querySelectorAll('.item-qty-option').forEach(o => {
+      o.classList.toggle('selected', parseInt(o.dataset.val) === newQty);
+    });
+  }
+  try {
+    // Get current notes from the edit button's data
+    const editBtn = numEl.closest('.item-row')?.querySelector('[data-action="edit-box-item"]');
+    const notes = editBtn ? editBtn.dataset.notes : '';
+    await api(`/api/box-items/${boxItemId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity: newQty, notes })
+    });
+    // Update edit button's cached qty
+    if (editBtn) editBtn.dataset.qty = newQty;
+  } catch(err) {
+    toast('Failed to update quantity', true);
+    openBoxDetail(currentBoxId); // refresh to get real state
+  }
+}
+
+function openEditBoxItemModal(boxItemId, qty, notes, name) {
+  document.getElementById('edit-item-box-item-id').value = boxItemId;
+  document.getElementById('edit-item-name-display').textContent = name || '';
+  document.getElementById('edit-item-qty').value = qty || 1;
+  document.getElementById('edit-item-notes').value = notes || '';
+  document.getElementById('edit-qty-grid').style.display = 'none';
+
+  // Build qty number grid 0–99
+  const cells = document.getElementById('edit-qty-cells');
+  cells.innerHTML = '';
+  for (let n = 0; n <= 99; n++) {
+    const c = document.createElement('div');
+    c.className = 'qty-cell' + (n === parseInt(qty) ? ' selected' : '');
+    c.textContent = n;
+    c.addEventListener('click', () => {
+      document.getElementById('edit-item-qty').value = n;
+      cells.querySelectorAll('.qty-cell').forEach(x => x.classList.remove('selected'));
+      c.classList.add('selected');
+      document.getElementById('edit-qty-grid').style.display = 'none';
+    });
+    cells.appendChild(c);
+  }
+
+  // Minus / plus buttons in modal
+  document.getElementById('edit-qty-minus').onclick = () => {
+    const inp = document.getElementById('edit-item-qty');
+    inp.value = Math.max(0, (parseInt(inp.value)||0) - 1);
+  };
+  document.getElementById('edit-qty-plus').onclick = () => {
+    const inp = document.getElementById('edit-item-qty');
+    inp.value = Math.min(99, (parseInt(inp.value)||0) + 1);
+  };
+
+  // Tap the number to toggle the grid
+  document.getElementById('edit-item-qty').addEventListener('click', () => {
+    const grid = document.getElementById('edit-qty-grid');
+    grid.style.display = grid.style.display === 'none' ? 'block' : 'none';
+  }, { once: false });
+
+  // Remove button wired to box item id
+  document.getElementById('edit-item-remove-btn').onclick = async () => {
+    if (!confirm('Remove this item from the box?')) return;
+    closeModal('modal-edit-item');
+    await api(`/api/box-items/${boxItemId}`, { method: 'DELETE' });
+    toast('Item removed');
+    openBoxDetail(currentBoxId);
+  };
+
+  openModal('modal-edit-item');
+}
+
+async function saveEditBoxItem() {
+  const boxItemId = document.getElementById('edit-item-box-item-id').value;
+  const qty = parseInt(document.getElementById('edit-item-qty').value) || 0;
+  const notes = document.getElementById('edit-item-notes').value.trim();
+  await api(`/api/box-items/${boxItemId}`, {
+    method: 'PUT',
+    body: JSON.stringify({ quantity: qty, notes })
+  });
+  closeModal('modal-edit-item');
+  toast('Updated');
+  openBoxDetail(currentBoxId);
+}
+
 async function removeBoxItem(boxItemId) {
   if (!confirm('Remove this item from the box?')) return;
   await api(`/api/box-items/${boxItemId}`, { method:'DELETE' });
   toast('Item removed');
-  openBoxDetail(currentBoxId);
-}
-
-async function editBoxItem(boxItemId, currentQty, currentNotes) {
-  const qty = prompt('Quantity:', currentQty);
-  if (qty === null) return;
-  const notes = prompt('Notes:', currentNotes);
-  await api(`/api/box-items/${boxItemId}`, {
-    method:'PUT',
-    body: JSON.stringify({ quantity: parseInt(qty)||1, notes })
-  });
-  toast('Updated');
   openBoxDetail(currentBoxId);
 }
 
