@@ -1,0 +1,7 @@
+{
+  "name": "Box Inventory Tracker",
+  "description": "Track packed items in boxes across rooms with QR code label printing. Uses MariaDB for storage.",
+  "url": "https://github.com/your-repo/ha-box-inventory",
+  "codenotation": "other",
+  "homeassistant": "2024.1.0"
+}
