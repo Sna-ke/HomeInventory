@@ -241,9 +241,22 @@ body {
 /* ── Items list (inside box detail) ── */
 .item-row {
   background: var(--surface); border: 1px solid var(--border);
-  padding: 10px 12px; margin-bottom: 6px;
+  padding: 8px 12px 8px 8px; margin-bottom: 6px;
   display: flex; align-items: center; gap: 10px;
 }
+.item-row-thumb {
+  width: 48px; height: 48px; flex-shrink: 0;
+  overflow: hidden; position: relative; cursor: pointer;
+  background: var(--surface2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+.item-row-thumb img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.item-row-thumb .no-photo {
+  font-size: 22px; color: var(--border); transition: color .15s;
+}
+.item-row-thumb:hover .no-photo { color: var(--accent); }
 .item-row-info { flex: 1; min-width: 0; }
 .item-row-name { font-size: 15px; font-weight: 700; }
 .item-row-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
@@ -1333,6 +1346,28 @@ async function openBoxDetail(id) {
       const row = document.createElement('div');
       row.className = 'item-row';
 
+      // Thumbnail — shows item photo if exists, camera icon if not
+      const thumb = document.createElement('div');
+      thumb.className = 'item-row-thumb';
+      thumb.dataset.itemId = i.item_id;
+      if (i.thumb_url) {
+        const img = document.createElement('img');
+        img.src = i.thumb_url;
+        img.loading = 'lazy';
+        img.alt = i.name;
+        thumb.appendChild(img);
+        thumb.dataset.action = 'item-thumb-view';
+        thumb.dataset.url = i.thumb_url;
+        thumb.title = 'View photo';
+      } else {
+        const icon = document.createElement('span');
+        icon.className = 'no-photo';
+        icon.textContent = '📷';
+        thumb.appendChild(icon);
+        thumb.dataset.action = 'item-thumb-upload';
+        thumb.title = 'Add photo';
+      }
+
       // Info section
       const info = document.createElement('div');
       info.className = 'item-row-info';
@@ -1417,6 +1452,7 @@ async function openBoxDetail(id) {
       delBtn.dataset.id = i.box_item_id;
       delBtn.textContent = '🗑';
 
+      row.appendChild(thumb);
       row.appendChild(info);
       row.appendChild(qtyCtrl);
       row.appendChild(editBtn);
@@ -1553,8 +1589,70 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
   } else if (action === 'upload-box-photo') {
     const boxId = parseInt(btn.dataset.boxId);
     triggerImageUpload('box', boxId, () => openBoxDetail(boxId));
+
+  } else if (action === 'item-thumb-view') {
+    // Tap existing photo — show full image with option to delete/replace
+    showItemPhotoOverlay(btn.dataset.url, parseInt(btn.dataset.itemId));
+
+  } else if (action === 'item-thumb-upload') {
+    // Tap camera icon — upload a new photo for this item
+    triggerImageUpload('item', parseInt(btn.dataset.itemId), () => openBoxDetail(currentBoxId));
   }
 });
+
+function showItemPhotoOverlay(url, itemId) {
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position:'fixed', inset:'0', background:'rgba(0,0,0,.92)',
+    zIndex:'500', display:'flex', flexDirection:'column',
+    alignItems:'center', justifyContent:'center', gap:'16px',
+  });
+
+  const img = document.createElement('img');
+  img.src = url;
+  Object.assign(img.style, {
+    maxWidth:'92vw', maxHeight:'75vh', objectFit:'contain',
+  });
+
+  const btnRow = document.createElement('div');
+  btnRow.style.cssText = 'display:flex;gap:12px;';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'btn btn-secondary btn-sm';
+  closeBtn.textContent = '✕ Close';
+  closeBtn.addEventListener('click', () => overlay.remove());
+
+  const replaceBtn = document.createElement('button');
+  replaceBtn.className = 'btn btn-secondary btn-sm';
+  replaceBtn.textContent = '🔄 Replace';
+  replaceBtn.addEventListener('click', () => {
+    overlay.remove();
+    triggerImageUpload('item', itemId, () => openBoxDetail(currentBoxId));
+  });
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn btn-danger btn-sm';
+  deleteBtn.textContent = '🗑 Delete Photo';
+  deleteBtn.addEventListener('click', async () => {
+    // Extract image id from URL /api/images/123
+    const imageId = url.split('/').pop();
+    if (!confirm('Delete this photo?')) return;
+    await api(`/api/images/${imageId}`, { method: 'DELETE' });
+    overlay.remove();
+    toast('Photo deleted');
+    openBoxDetail(currentBoxId);
+  });
+
+  btnRow.appendChild(closeBtn);
+  btnRow.appendChild(replaceBtn);
+  btnRow.appendChild(deleteBtn);
+  overlay.appendChild(img);
+  overlay.appendChild(btnRow);
+
+  // Tap backdrop (not buttons/image) to close
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
 
 async function patchQty(boxItemId, newQty, numEl) {
   // Optimistic update of the display number

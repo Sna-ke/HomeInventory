@@ -499,7 +499,11 @@ def get_box(box_id):
             cur.execute("""
                 SELECT bi.id as box_item_id, bi.quantity, bi.notes,
                        i.id as item_id, i.name,
-                       c.id as category_id, c.name as category
+                       c.id as category_id, c.name as category,
+                       (SELECT CONCAT('/api/images/', img.id)
+                        FROM images img
+                        WHERE img.entity_type = 'item' AND img.entity_id = i.id
+                        ORDER BY img.created_at LIMIT 1) as thumb_url
                 FROM box_items bi
                 JOIN items i ON i.id = bi.item_id
                 LEFT JOIN categories c ON c.id = i.category_id
