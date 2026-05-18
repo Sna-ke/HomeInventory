@@ -2226,9 +2226,7 @@ function resetATBModal() {
       : '☁️ Anthropic Claude';
     document.getElementById('atb-identify-status').textContent = label;
   }
-  document.getElementById('atb-suggestions').classList.remove('open');
-  document.getElementById('atb-cat-suggestions').classList.remove('open');
-  document.getElementById('atb-box-suggestions').classList.remove('open');
+  closeAllATBDropdowns();
   setATBSelection(null, null, null);
   openModal('modal-atb');
 }
@@ -2304,10 +2302,16 @@ function renderBoxSuggestions(boxes, list) {
   else list.classList.remove('open');
 }
 
+function closeAllATBDropdowns() {
+  document.getElementById('atb-suggestions').classList.remove('open');
+  document.getElementById('atb-cat-suggestions').classList.remove('open');
+  document.getElementById('atb-box-suggestions').classList.remove('open');
+}
+
 async function showInitialBoxSuggestions() {
   if (document.getElementById('atb-box-selected-badge').style.display === 'flex') return;
+  closeAllATBDropdowns();
   const list = document.getElementById('atb-box-suggestions');
-  if (list.classList.contains('open')) return; // already showing
   const boxes = await getBoxesCached();
   const sorted = sortByRecency(boxes, recentBoxIds, 'id');
   renderBoxSuggestions(sorted.slice(0, 5), list);
@@ -2410,9 +2414,8 @@ function renderItemSuggestions(items, list, showCreate, createLabel) {
 
 async function showInitialItemSuggestions() {
   if (document.getElementById('atb-item-id').value) return;
+  closeAllATBDropdowns();
   const list = document.getElementById('atb-suggestions');
-  if (list.classList.contains('open')) return;
-  // Use allItems if loaded, otherwise fetch
   let items = allItems && allItems.length ? allItems : await api('/api/items');
   const sorted = sortByRecency(items, recentItemIds, 'id');
   renderItemSuggestions(sorted.slice(0, 5), list, false, null);
