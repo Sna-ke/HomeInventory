@@ -2822,7 +2822,7 @@ function updateLabelPreview() {
   const box = currentPrintBox;
   const sizeKey = document.getElementById('label-size-select').value;
   let [wMM, hMM] = LABEL_SIZES[sizeKey] || [40, 60];
-  // Apply orientation override — swap dims if label size is not already the right way
+  // Apply orientation override
   const naturalLandscape = wMM >= hMM;
   if (labelOrientation === 'landscape' && !naturalLandscape) { [wMM, hMM] = [hMM, wMM]; }
   if (labelOrientation === 'portrait'  &&  naturalLandscape && wMM !== hMM) { [wMM, hMM] = [hMM, wMM]; }
@@ -2835,27 +2835,53 @@ function updateLabelPreview() {
     bodyText = cats.length ? cats.join(', ') : '';
   }
 
-  const qrSize = Math.round(Math.min(wMM, hMM) * MM_TO_PX * (isLandscape ? 0.7 : 0.45));
-  const numSize = Math.max(10, Math.round(qrSize * 0.32));
-  const titleSize = Math.max(9, Math.round(Math.min(wMM, hMM) * MM_TO_PX * 0.12));
-  const bodySize = Math.max(7, Math.round(titleSize * 0.8));
-
-  const target = document.getElementById('print-target');
-  // Set preview dimensions (screen px) and print dimensions (mm via data attrs)
   const pxW = Math.round(wMM * MM_TO_PX);
   const pxH = Math.round(hMM * MM_TO_PX);
+  const shortPx = Math.min(pxW, pxH);
+  const longPx  = Math.max(pxW, pxH);
+
+  // ── Layout constants ─────────────────────────────────────────────────────
+  // The QR+number column is a fixed fraction of the SHORT edge.
+  // Content (title + body) gets the rest — prioritising readability.
+  //
+  //  Portrait  (40×60): QR zone = top 45% of height, content below
+  //  Landscape (60×40): QR zone = left column, width = ~38% of total width
+  //                     (roughly a square of short-edge size × 0.85)
+  //                     Content column gets the remaining 62% — much more room
+
+  let qrPx, qrColPx;
+  if (isLandscape) {
+    // QR column width = 85% of the short (height) dimension
+    qrColPx = Math.round(shortPx * 0.85);
+    qrPx    = Math.round(shortPx * 0.62); // QR smaller than the column
+  } else {
+    // QR zone height = 55% of short (width) dimension
+    qrColPx = Math.round(shortPx * 0.55);
+    qrPx    = Math.round(shortPx * 0.42);
+  }
+
+  // Text area dimensions (what's left after the QR column)
+  const textAreaPx = isLandscape ? (longPx - qrColPx) : longPx;
+
+  // Font sizes scaled to the text area
+  const titleSize = Math.max(8,  Math.round(textAreaPx * (isLandscape ? 0.095 : 0.07)));
+  const bodySize  = Math.max(6,  Math.round(titleSize * 0.82));
+  const numSize   = Math.max(8,  Math.round(qrPx * 0.28));
+
+  const target = document.getElementById('print-target');
   target.className = 'label-preview';
   target.style.cssText = `width:${pxW}px;height:${pxH}px;flex-direction:${isLandscape ? 'row' : 'column'};`;
   target.dataset.printW = wMM;
   target.dataset.printH = hMM;
 
-  // Left/top section: QR + box number
+  // ── QR + number section ───────────────────────────────────────────────────
   const leftDiv = document.createElement('div');
   leftDiv.className = 'label-left';
   if (isLandscape) {
-    leftDiv.style.cssText = `width:${Math.round(pxH * 1.05)}px;`;
+    leftDiv.style.cssText = `width:${qrColPx}px;flex-shrink:0;`;
   } else {
-    leftDiv.style.cssText = `height:${Math.round(pxW * 0.6)}px;flex-direction:row;gap:6px;border-right:none;border-bottom:1px solid #ccc;`;
+    leftDiv.style.cssText = `height:${qrColPx}px;flex-direction:row;gap:5px;
+      border-right:none;border-bottom:1px solid #ccc;flex-shrink:0;`;
   }
 
   const qrWrap = document.createElement('div');
@@ -2863,7 +2889,7 @@ function updateLabelPreview() {
   qrWrap.id = 'qr-container';
   new QRCode(qrWrap, {
     text: `${location.origin}/?box=${box.box_number}`,
-    width: qrSize, height: qrSize,
+    width: qrPx, height: qrPx,
     correctLevel: QRCode.CorrectLevel.M,
   });
 
@@ -2875,9 +2901,11 @@ function updateLabelPreview() {
   leftDiv.appendChild(qrWrap);
   leftDiv.appendChild(numEl);
 
-  // Right/bottom section: label + body text
+  // ── Content section ───────────────────────────────────────────────────────
   const rightDiv = document.createElement('div');
   rightDiv.className = 'label-right';
+  // Give the content section explicit padding so text doesn't crowd the edge
+  rightDiv.style.padding = '5px 6px';
 
   if (box.label) {
     const titleEl = document.createElement('div');
@@ -2891,7 +2919,8 @@ function updateLabelPreview() {
     const bodyEl = document.createElement('div');
     bodyEl.className = 'label-body';
     bodyEl.style.fontSize = bodySize + 'px';
-    bodyEl.textContent = bodyText.length > 120 ? bodyText.substring(0, 120) + '…' : bodyText;
+    const maxChars = isLandscape ? 80 : 120;
+    bodyEl.textContent = bodyText.length > maxChars ? bodyText.substring(0, maxChars) + '…' : bodyText;
     rightDiv.appendChild(bodyEl);
   }
 
