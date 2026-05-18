@@ -27,6 +27,33 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* ── Light mode ── */
+:root.light {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface2: #e8eaed;
+  --border: #c8ccd4;
+  --accent: #d4880a;
+  --accent2: #5a7a00;
+  --danger: #cc2222;
+  --text: #1a1d27;
+  --muted: #6b7280;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark) {
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface2: #e8eaed;
+    --border: #c8ccd4;
+    --accent: #d4880a;
+    --accent2: #5a7a00;
+    --danger: #cc2222;
+    --text: #1a1d27;
+    --muted: #6b7280;
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 html, body { height: 100%; overflow: hidden; }
@@ -458,8 +485,10 @@ tr.item-expand-row .expand-inner {
 }
 .expand-box-row {
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  font-size: 14px;
+  font-size: 14px; transition: background .12s; border-radius: 2px;
+  padding: 3px 4px; margin: 0 -4px;
 }
+.expand-box-row:hover { background: var(--border); }
 .expand-box-num {
   font-family: var(--mono); font-size: 11px;
   background: var(--accent); color: #000; padding: 1px 6px; flex-shrink: 0;
@@ -638,6 +667,12 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 <div class="topbar">
   <h1>BOX<span>TRACK</span></h1>
   <input class="search-box" id="globalSearch" type="search" placeholder="🔍 Search…" oninput="handleSearch(this.value)">
+  <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
+    style="background:none;border:1px solid var(--border);color:var(--muted);
+           font-size:16px;padding:6px 9px;cursor:pointer;flex-shrink:0;
+           transition:color .15s,border-color .15s;margin-left:8px;">
+    🌙
+  </button>
 </div>
 
 
@@ -897,19 +932,30 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 <div id="modal-print" class="modal-backdrop">
   <div class="modal print-wrap">
     <h3>Print Label</h3>
-    <div class="field" style="text-align:left;max-width:340px;margin:0 auto 16px;">
-      <label>Label Size (Niimbot B1)</label>
-      <select id="label-size-select" onchange="updateLabelPreview()"
-        style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:15px;padding:9px 12px;width:100%;-webkit-appearance:none;border-radius:0;outline:none;">
-        <option value="50x30">50 × 30 mm — Small tag</option>
-        <option value="40x30">40 × 30 mm — Small tag</option>
-        <option value="40x40">40 × 40 mm — Square</option>
-        <option value="50x50">50 × 50 mm — Square</option>
-        <option value="40x60" selected>40 × 60 mm — Standard ★</option>
-        <option value="40x70">40 × 70 mm — Standard</option>
-        <option value="50x70">50 × 70 mm — Standard</option>
-        <option value="50x80">50 × 80 mm — Large</option>
-      </select>
+    <div style="max-width:340px;margin:0 auto 16px;display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:180px;margin-bottom:0;">
+        <label>Label Size (Niimbot B1)</label>
+        <select id="label-size-select" onchange="updateLabelPreview()"
+          style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:15px;padding:9px 12px;width:100%;-webkit-appearance:none;border-radius:0;outline:none;">
+          <option value="50x30">50 × 30 mm — Small</option>
+          <option value="40x30">40 × 30 mm — Small</option>
+          <option value="40x40">40 × 40 mm — Square</option>
+          <option value="50x50">50 × 50 mm — Square</option>
+          <option value="40x60" selected>40 × 60 mm — Standard ★</option>
+          <option value="40x70">40 × 70 mm — Standard</option>
+          <option value="50x70">50 × 70 mm — Standard</option>
+          <option value="50x80">50 × 80 mm — Large</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Orientation</div>
+        <div class="view-toggle">
+          <button id="orient-portrait-btn" class="view-btn active" title="Portrait"
+            onclick="setLabelOrientation('portrait')">▯</button>
+          <button id="orient-landscape-btn" class="view-btn" title="Landscape"
+            onclick="setLabelOrientation('landscape')">▭</button>
+        </div>
+      </div>
     </div>
     <div id="print-preview-wrap" style="text-align:center;">
       <div class="print-preview" id="print-target">
@@ -2084,6 +2130,8 @@ async function toggleItemExpand(itemId, mainTr) {
     item.boxes.forEach(b => {
       const row = document.createElement('div');
       row.className = 'expand-box-row';
+      row.style.cursor = 'pointer';
+      row.title = 'Go to box';
       row.innerHTML = `
         <span class="expand-box-num">BOX ${b.box_number}</span>
         <span class="expand-box-label">${esc(b.label || 'Unlabelled')}</span>
@@ -2091,7 +2139,9 @@ async function toggleItemExpand(itemId, mainTr) {
           ${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'}
           · qty: <strong style="color:var(--accent)">${b.quantity}</strong>
           ${b.notes ? `· ${esc(b.notes)}` : ''}
-        </span>`;
+        </span>
+        <span style="color:var(--muted);font-size:12px;margin-left:auto;">→</span>`;
+      row.addEventListener('click', () => openBoxDetail(b.box_id));
       inner.appendChild(row);
     });
   } catch(e) {
@@ -2247,8 +2297,12 @@ function updateLabelPreview() {
   if (!currentPrintBox) return;
   const box = currentPrintBox;
   const sizeKey = document.getElementById('label-size-select').value;
-  const [wMM, hMM] = LABEL_SIZES[sizeKey] || [50, 70];
-  const isLandscape = wMM >= hMM; // e.g. 50x30 is landscape, 50x70 is portrait
+  let [wMM, hMM] = LABEL_SIZES[sizeKey] || [40, 60];
+  // Apply orientation override — swap dims if label size is not already the right way
+  const naturalLandscape = wMM >= hMM;
+  if (labelOrientation === 'landscape' && !naturalLandscape) { [wMM, hMM] = [hMM, wMM]; }
+  if (labelOrientation === 'portrait'  &&  naturalLandscape && wMM !== hMM) { [wMM, hMM] = [hMM, wMM]; }
+  const isLandscape = wMM >= hMM;
 
   // Body text: prefer description, fall back to unique categories
   let bodyText = box.description || '';
@@ -2527,8 +2581,55 @@ async function confirmDeleteCategory() {
   await loadItems();
 }
 
+// ── Theme ──────────────────────────────────────────────────────────────────
+function initTheme() {
+  // Respect saved preference; fall back to system setting
+  const saved = localStorage.getItem('boxtrack-theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const useDark = saved ? saved === 'dark' : prefersDark;
+  applyTheme(useDark ? 'dark' : 'light', false);
+
+  // Live-update if system setting changes and user hasn't overridden
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (!localStorage.getItem('boxtrack-theme')) {
+      applyTheme(e.matches ? 'dark' : 'light', false);
+    }
+  });
+}
+
+function applyTheme(mode, save = true) {
+  const root = document.documentElement;
+  const btn = document.getElementById('theme-toggle');
+  if (mode === 'light') {
+    root.classList.add('light');
+    root.classList.remove('dark');
+    if (btn) btn.textContent = '☀️';
+  } else {
+    root.classList.add('dark');
+    root.classList.remove('light');
+    if (btn) btn.textContent = '🌙';
+  }
+  if (save) localStorage.setItem('boxtrack-theme', mode);
+}
+
+function toggleTheme() {
+  const isLight = document.documentElement.classList.contains('light');
+  applyTheme(isLight ? 'dark' : 'light');
+}
+
+// ── Label orientation ──────────────────────────────────────────────────────
+let labelOrientation = 'portrait'; // 'portrait' | 'landscape'
+
+function setLabelOrientation(orient) {
+  labelOrientation = orient;
+  document.getElementById('orient-portrait-btn').classList.toggle('active', orient === 'portrait');
+  document.getElementById('orient-landscape-btn').classList.toggle('active', orient === 'landscape');
+  updateLabelPreview();
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
+  initTheme();
   await loadRooms();
   loadBoxes();
   loadVisionConfig(); // non-blocking — vision is optional
