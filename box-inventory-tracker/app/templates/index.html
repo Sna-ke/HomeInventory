@@ -576,6 +576,20 @@ tr.item-expand-row .expand-inner {
 .sort-active { color: var(--accent); }
 td.filter-active { color: var(--accent2); cursor: pointer; }
 
+/* ── Drag-and-drop ── */
+.room-expand.drag-over {
+  outline: 2px dashed var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
+}
+.room-row.drag-over > .room-row-header {
+  border-color: var(--accent);
+}
+.room-box-wrap[draggable="true"] {
+  cursor: grab;
+}
+.room-box-wrap[draggable="true"]:active { cursor: grabbing; }
+.room-box-wrap.dragging { opacity: 0.4; }
+
 /* ── Category list ── */
 .cat-row {
   background: var(--surface); border: 1px solid var(--border);
@@ -807,7 +821,13 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
         <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add</button>
       </div>
     </div>
-    <div id="rooms-list"></div>
+    <div id="rooms-list-occupied"></div>
+    <div id="rooms-empty-section" style="display:none;margin-top:24px;">
+      <div style="font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+                  color:var(--muted);padding-bottom:8px;border-bottom:1px solid var(--border);
+                  margin-bottom:10px;">Empty Rooms</div>
+      <div id="rooms-list-empty"></div>
+    </div>
   </div>
 
   <!-- ITEMS -->
@@ -934,7 +954,8 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <label>Category</label>
       <div class="ac-wrap">
         <input type="text" id="item-category" placeholder="e.g. Kitchen"
-          oninput="searchCategories(this.value, 'cat-suggestions')" autocomplete="off">
+          oninput="searchCategories(this.value, 'cat-suggestions')" autocomplete="off"
+          onblur="setTimeout(()=>document.getElementById('cat-suggestions').classList.remove('open'),150)">
         <div id="cat-suggestions" class="ac-list"></div>
       </div>
     </div>
@@ -957,6 +978,7 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
         <input type="text" id="atb-box-search" placeholder="Search box number or label…"
           oninput="searchBoxesAC(this.value)"
           onfocus="showInitialBoxSuggestions()"
+          onblur="setTimeout(()=>document.getElementById('atb-box-suggestions').classList.remove('open'),150)"
           autocomplete="off">
         <div id="atb-box-suggestions" class="ac-list"></div>
         <div id="atb-box-selected-badge"
@@ -995,6 +1017,7 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
         <input type="text" id="atb-search" placeholder="Search or type item name…"
           oninput="searchItemsAC(this.value)"
           onfocus="showInitialItemSuggestions()"
+          onblur="setTimeout(()=>document.getElementById('atb-suggestions').classList.remove('open'),150)"
           autocomplete="off" autocorrect="off" spellcheck="false">
         <div id="atb-suggestions" class="ac-list"></div>
         <input type="hidden" id="atb-item-id">
@@ -1009,7 +1032,8 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <label>Category <span style="color:var(--muted);font-size:11px;">(new items only)</span></label>
       <div class="ac-wrap">
         <input type="text" id="atb-category" placeholder="e.g. Kitchen"
-          oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off">
+          oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off"
+          onblur="setTimeout(()=>document.getElementById('atb-cat-suggestions').classList.remove('open'),150)">
         <div id="atb-cat-suggestions" class="ac-list"></div>
       </div>
     </div>
@@ -1252,14 +1276,26 @@ async function loadRooms() {
   const prev = f.value;
   f.innerHTML = '<option value="">All Rooms</option>' +
     rooms.map(r => `<option value="${r.id}" ${prev==r.id?'selected':''}>${esc(r.name)}</option>`).join('');
-  // Rooms panel list
-  const list = document.getElementById('rooms-list');
-  if (!list) return; // panel not visible yet
-  if (!rooms.length) { list.innerHTML = '<div class="empty">No rooms or areas yet.</div>'; return; }
-  list.innerHTML = '';
-  rooms.forEach(r => {
+  // Rooms panel — split into occupied / empty, both sorted alphabetically
+  const occupied = document.getElementById('rooms-list-occupied');
+  const emptyList = document.getElementById('rooms-list-empty');
+  const emptySection = document.getElementById('rooms-empty-section');
+  if (!occupied) return;
+
+  const sorted = [...rooms].sort((a,b) => a.name.localeCompare(b.name));
+  const occupiedRooms = sorted.filter(r => r.box_count > 0);
+  const emptyRooms    = sorted.filter(r => r.box_count === 0);
+
+  if (!sorted.length) {
+    occupied.innerHTML = '<div class="empty">No rooms or areas yet.</div>';
+    emptySection.style.display = 'none';
+    return;
+  }
+
+  function buildRoomRow(r) {
     const wrap = document.createElement('div');
     wrap.className = 'room-row';
+    wrap.dataset.roomId = r.id;
 
     const hdr = document.createElement('div');
     hdr.className = 'room-row-header';
@@ -1273,7 +1309,9 @@ async function loadRooms() {
 
     const countEl = document.createElement('div');
     countEl.className = 'room-row-count';
-    countEl.textContent = `${r.box_count} box${r.box_count!=1?'es':''}`;
+    countEl.textContent = r.box_count > 0
+      ? `${r.box_count} box${r.box_count!=1?'es':''}`
+      : 'empty';
 
     // HA area badge
     if (r.ha_area_id) {
@@ -1286,6 +1324,13 @@ async function loadRooms() {
       hdr.appendChild(badge);
     }
 
+    // Add Box button — always visible
+    const addBoxBtn = document.createElement('button');
+    addBoxBtn.className = 'btn btn-sm btn-secondary';
+    addBoxBtn.style.cssText = 'font-size:11px;padding:3px 8px;flex-shrink:0;';
+    addBoxBtn.textContent = '+ Box';
+    addBoxBtn.addEventListener('click', e => { e.stopPropagation(); openAddBoxToRoom(r.id, r.name); });
+
     // Edit/delete — hidden for active HA areas
     if (!r.ha_area_id || !r.ha_synced) {
       const editBtn = document.createElement('button');
@@ -1294,9 +1339,11 @@ async function loadRooms() {
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger'; delBtn.textContent = '🗑';
       delBtn.addEventListener('click', e => { e.stopPropagation(); deleteRoom(r.id); });
-      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
+      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl);
+      hdr.appendChild(addBoxBtn); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
     } else {
       hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl);
+      hdr.appendChild(addBoxBtn);
     }
 
     const expand = document.createElement('div');
@@ -1304,14 +1351,82 @@ async function loadRooms() {
     expand.id = `room-expand-${r.id}`;
     expand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">Loading…</span>';
 
+    // Drop target for drag-and-drop
+    expand.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      expand.classList.add('drag-over');
+    });
+    expand.addEventListener('dragleave', e => {
+      if (!expand.contains(e.relatedTarget)) expand.classList.remove('drag-over');
+    });
+    expand.addEventListener('drop', async e => {
+      e.preventDefault();
+      expand.classList.remove('drag-over');
+      const boxId = parseInt(e.dataTransfer.getData('text/plain'));
+      if (!boxId) return;
+      await moveBoxToRoom(boxId, r.id);
+    });
+    // Also allow drop on the header (for empty rooms where expand isn't shown)
+    hdr.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      wrap.classList.add('drag-over');
+    });
+    hdr.addEventListener('dragleave', e => {
+      if (!wrap.contains(e.relatedTarget)) wrap.classList.remove('drag-over');
+    });
+    hdr.addEventListener('drop', async e => {
+      e.preventDefault();
+      wrap.classList.remove('drag-over');
+      const boxId = parseInt(e.dataTransfer.getData('text/plain'));
+      if (!boxId) return;
+      await moveBoxToRoom(boxId, r.id);
+    });
+
     if (r.box_count > 0) {
       hdr.addEventListener('click', () => toggleRoomExpand(r.id, hdr, chevron, expand));
     }
 
     wrap.appendChild(hdr);
     wrap.appendChild(expand);
-    list.appendChild(wrap);
-  });
+    return wrap;
+  }
+
+  occupied.innerHTML = '';
+  occupiedRooms.forEach(r => occupied.appendChild(buildRoomRow(r)));
+  if (!occupiedRooms.length) occupied.innerHTML = '<div class="empty">No rooms with boxes yet.</div>';
+
+  emptyList.innerHTML = '';
+  emptyRooms.forEach(r => emptyList.appendChild(buildRoomRow(r)));
+  emptySection.style.display = emptyRooms.length ? 'block' : 'none';
+}
+
+async function openAddBoxToRoom(roomId, roomName) {
+  // Open the new-box modal pre-set to this room
+  await loadRooms(); // ensure room list is fresh for the selector
+  openBoxModal(null, roomId);
+}
+
+async function moveBoxToRoom(boxId, roomId) {
+  try {
+    const box = await api(`/api/boxes/${boxId}`);
+    await api(`/api/boxes/${boxId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ label: box.label, description: box.description, room_id: roomId })
+    });
+    // Invalidate cache for both old and new rooms
+    Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
+    toast('Box moved');
+    await loadRooms();
+    // Re-expand the destination room
+    const destExpand = document.getElementById(`room-expand-${roomId}`);
+    const destHdr = destExpand?.previousElementSibling;
+    const destChevron = destHdr?.querySelector('.cat-chevron');
+    if (destExpand && destHdr && destChevron && !destExpand.classList.contains('open')) {
+      toggleRoomExpand(roomId, destHdr, destChevron, destExpand);
+    }
+  } catch(e) { toast(`Move failed: ${e.message}`, true); }
 }
 
 // Tracks which room boxes have been loaded already (cache)
@@ -1370,6 +1485,14 @@ async function toggleRoomExpand(roomId, hdr, chevron, expand) {
     boxes.forEach(b => {
       const wrap = document.createElement('div');
       wrap.className = 'room-box-wrap';
+      wrap.draggable = true;
+      wrap.dataset.boxId = b.id;
+      wrap.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', String(b.id));
+        e.dataTransfer.effectAllowed = 'move';
+        wrap.classList.add('dragging');
+      });
+      wrap.addEventListener('dragend', () => wrap.classList.remove('dragging'));
 
       // The row: [expand zone | nav button]
       const row = document.createElement('div');
@@ -1615,7 +1738,7 @@ function renderBoxes(boxes) {
   }
 }
 
-function openBoxModal(id = null) {
+function openBoxModal(id = null, presetRoomId = null) {
   editingBox = id;
   document.getElementById('modal-box-title').textContent = id ? 'Edit Box' : 'New Box';
   const sel = document.getElementById('box-room');
@@ -1630,7 +1753,7 @@ function openBoxModal(id = null) {
   } else {
     document.getElementById('box-label').value = '';
     document.getElementById('box-description').value = '';
-    sel.value = '';
+    sel.value = presetRoomId || '';
   }
   openModal('modal-box');
 }
