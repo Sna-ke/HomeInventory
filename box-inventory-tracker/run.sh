@@ -16,13 +16,16 @@ export ANTHROPIC_API_KEY=$(bashio::config 'anthropic_api_key')
 export OLLAMA_URL=$(bashio::config 'ollama_url')
 export OLLAMA_MODEL=$(bashio::config 'ollama_model')
 
+# Supervisor token for HA API access (auto-injected when homeassistant_api: true)
+export HA_TOKEN="${SUPERVISOR_TOKEN}"
+
 bashio::log.info "Starting Box Inventory Tracker..."
 bashio::log.info "Connecting to MariaDB at ${DB_HOST}:${DB_PORT}"
 bashio::log.info "Vision backend: ${VISION_BACKEND}"
 
 cd /app
 
-python3 -c "from server import init_db, migrate_db; init_db(); migrate_db()"
+python3 -c "from server import init_db, migrate_db, sync_ha_areas; init_db(); migrate_db(); sync_ha_areas()"
 
 exec gunicorn \
     --bind 0.0.0.0:5000 \

@@ -288,11 +288,48 @@ tr:active td { background: var(--surface2); }
 /* ── Room cards ── */
 .room-row {
   background: var(--surface); border: 1px solid var(--border);
-  padding: 14px 16px; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px; overflow: hidden;
 }
+.room-row-header {
+  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: background .12s;
+}
+.room-row-header:hover { background: var(--surface2); }
+.room-row-header.expanded { background: var(--surface2); border-bottom: 1px solid var(--border); }
 .room-row-name { font-size: 17px; font-weight: 700; flex: 1; }
 .room-row-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.ha-badge {
+  font-family: var(--mono); font-size: 10px; padding: 1px 6px;
+  background: #1a3a5c; border: 1px solid #2a6aad; color: #7ab8f5;
+  flex-shrink: 0;
+}
+.ha-badge.stale { background: #3a2a1a; border-color: #8a5a2a; color: #d4944a; }
+.room-expand {
+  display: none; padding: 10px 14px 14px 14px;
+  background: var(--surface2);
+}
+.room-expand.open { display: block; }
+.room-box-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; margin-bottom: 4px;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; transition: border-color .12s;
+}
+.room-box-row:hover { border-color: var(--accent); }
+.room-box-num {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--accent); color: #000; padding: 1px 6px; flex-shrink: 0;
+}
+.room-box-info { flex: 1; min-width: 0; }
+.room-box-label { font-size: 14px; font-weight: 700; }
+.room-box-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.room-box-expand { display: none; padding: 6px 10px 10px 24px; }
+.room-box-expand.open { display: block; }
+.room-box-item-row {
+  font-size: 13px; padding: 3px 0;
+  border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;
+}
+.room-box-item-row:last-child { border-bottom: none; }
 
 /* ── Modal ── */
 .modal-backdrop {
@@ -728,8 +765,11 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   <!-- ROOMS -->
   <div id="panel-rooms" class="panel">
     <div class="panel-hdr">
-      <h2>Rooms</h2>
-      <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add</button>
+      <h2>Rooms &amp; Areas</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-secondary btn-sm" id="ha-sync-btn" onclick="syncHAAreas()" title="Sync from Home Assistant Areas">⟳ Sync HA</button>
+        <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add</button>
+      </div>
     </div>
     <div id="rooms-list"></div>
   </div>
@@ -1147,22 +1187,181 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 // ── Rooms ──────────────────────────────────────────────────────────────────
 async function loadRooms() {
   rooms = await api('/api/rooms');
-  // Update filter
+  // Update filter dropdown
   const f = document.getElementById('roomFilter');
   const prev = f.value;
   f.innerHTML = '<option value="">All Rooms</option>' +
     rooms.map(r => `<option value="${r.id}" ${prev==r.id?'selected':''}>${esc(r.name)}</option>`).join('');
-  // Rooms panel
+  // Rooms panel list
   const list = document.getElementById('rooms-list');
-  if (!rooms.length) { list.innerHTML = '<div class="empty">No rooms yet.</div>'; return; }
-  list.innerHTML = rooms.map(r => `
-    <div class="room-row">
-      <div class="room-row-name">${esc(r.name)}</div>
-      <div class="room-row-count">${r.box_count} box${r.box_count!=1?'es':''}</div>
-      <button class="btn-icon" onclick="openRoomModal(${r.id})">✏️</button>
-      <button class="btn-icon danger" onclick="deleteRoom(${r.id})">🗑</button>
-    </div>
-  `).join('');
+  if (!list) return; // panel not visible yet
+  if (!rooms.length) { list.innerHTML = '<div class="empty">No rooms or areas yet.</div>'; return; }
+  list.innerHTML = '';
+  rooms.forEach(r => {
+    const wrap = document.createElement('div');
+    wrap.className = 'room-row';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'room-row-header';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'cat-chevron'; chevron.textContent = '▶';
+    chevron.style.visibility = r.box_count > 0 ? 'visible' : 'hidden';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'room-row-name'; nameEl.textContent = r.name;
+
+    const countEl = document.createElement('div');
+    countEl.className = 'room-row-count';
+    countEl.textContent = `${r.box_count} box${r.box_count!=1?'es':''}`;
+
+    // HA area badge
+    if (r.ha_area_id) {
+      const badge = document.createElement('span');
+      badge.className = 'ha-badge' + (r.ha_synced ? '' : ' stale');
+      badge.textContent = r.ha_synced ? 'HA Area' : 'HA (removed)';
+      badge.title = r.ha_synced
+        ? 'Synced from Home Assistant — rename in HA'
+        : 'This area was removed from HA. You can now rename or delete it.';
+      hdr.appendChild(badge);
+    }
+
+    // Edit/delete — hidden for active HA areas
+    if (!r.ha_area_id || !r.ha_synced) {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'btn-icon'; editBtn.textContent = '✏️';
+      editBtn.addEventListener('click', e => { e.stopPropagation(); openRoomModal(r.id); });
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-icon danger'; delBtn.textContent = '🗑';
+      delBtn.addEventListener('click', e => { e.stopPropagation(); deleteRoom(r.id); });
+      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
+    } else {
+      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl);
+    }
+
+    const expand = document.createElement('div');
+    expand.className = 'room-expand';
+    expand.id = `room-expand-${r.id}`;
+    expand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">Loading…</span>';
+
+    if (r.box_count > 0) {
+      hdr.addEventListener('click', () => toggleRoomExpand(r.id, hdr, chevron, expand));
+    }
+
+    wrap.appendChild(hdr);
+    wrap.appendChild(expand);
+    list.appendChild(wrap);
+  });
+}
+
+async function toggleRoomExpand(roomId, hdr, chevron, expand) {
+  const isOpen = expand.classList.contains('open');
+  document.querySelectorAll('.room-expand.open').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('.room-row-header.expanded').forEach(h => h.classList.remove('expanded'));
+  document.querySelectorAll('.cat-chevron.open').forEach(c => c.classList.remove('open'));
+  if (isOpen) return;
+  hdr.classList.add('expanded');
+  chevron.classList.add('open');
+  expand.classList.add('open');
+
+  try {
+    const boxes = await api(`/api/rooms/${roomId}/boxes`);
+    expand.innerHTML = '';
+    if (!boxes.length) {
+      expand.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No boxes in this room.</div>';
+      return;
+    }
+    boxes.forEach(b => {
+      const boxRow = document.createElement('div');
+      boxRow.className = 'room-box-row';
+
+      const numEl = document.createElement('div');
+      numEl.className = 'room-box-num'; numEl.textContent = `BOX ${b.box_number}`;
+
+      const infoEl = document.createElement('div');
+      infoEl.className = 'room-box-info';
+
+      const labelEl = document.createElement('div');
+      labelEl.className = 'room-box-label'; labelEl.textContent = b.label || 'Unlabelled';
+
+      const metaEl = document.createElement('div');
+      metaEl.className = 'room-box-meta';
+      metaEl.textContent = `${b.item_count} type${b.item_count!=1?'s':''} · ${b.total_qty} items total`;
+
+      infoEl.appendChild(labelEl); infoEl.appendChild(metaEl);
+
+      const chevBox = document.createElement('span');
+      chevBox.className = 'cat-chevron'; chevBox.textContent = '▶';
+
+      // Go-to-box link on the label
+      labelEl.style.cursor = 'pointer';
+      labelEl.style.textDecoration = 'underline dotted';
+      labelEl.title = 'Go to box page';
+      labelEl.addEventListener('click', e => { e.stopPropagation(); openBoxDetail(b.id); });
+
+      boxRow.appendChild(numEl); boxRow.appendChild(infoEl); boxRow.appendChild(chevBox);
+
+      const boxExpand = document.createElement('div');
+      boxExpand.className = 'room-box-expand';
+      boxExpand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:11px;">Loading…</span>';
+
+      boxRow.addEventListener('click', () => toggleRoomBoxExpand(b.id, boxRow, chevBox, boxExpand));
+
+      expand.appendChild(boxRow);
+      expand.appendChild(boxExpand);
+    });
+  } catch(e) {
+    expand.innerHTML = `<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`;
+  }
+}
+
+async function toggleRoomBoxExpand(boxId, boxRow, chevron, boxExpand) {
+  const isOpen = boxExpand.classList.contains('open');
+  // Close siblings
+  boxRow.closest('.room-expand').querySelectorAll('.room-box-expand.open').forEach(e => e.classList.remove('open'));
+  boxRow.closest('.room-expand').querySelectorAll('.room-box-row .cat-chevron.open').forEach(c => c.classList.remove('open'));
+  if (isOpen) return;
+  chevron.classList.add('open');
+  boxExpand.classList.add('open');
+
+  try {
+    const box = await api(`/api/boxes/${boxId}`);
+    boxExpand.innerHTML = '';
+    if (!box.items || !box.items.length) {
+      boxExpand.innerHTML = '<div style="color:var(--muted);font-size:11px;font-family:var(--mono);">Empty box.</div>';
+      return;
+    }
+    box.items.forEach(item => {
+      const itemRow = document.createElement('div');
+      itemRow.className = 'room-box-item-row';
+      const qty = document.createElement('span');
+      qty.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--accent);flex-shrink:0;';
+      qty.textContent = `×${item.quantity}`;
+      const name = document.createElement('span');
+      name.textContent = item.name;
+      const cat = document.createElement('span');
+      cat.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;';
+      cat.textContent = item.category || '';
+      itemRow.appendChild(qty); itemRow.appendChild(name); itemRow.appendChild(cat);
+      boxExpand.appendChild(itemRow);
+    });
+  } catch(e) {
+    boxExpand.innerHTML = `<span style="color:var(--danger);font-size:11px;">Error loading</span>`;
+  }
+}
+
+async function syncHAAreas() {
+  const btn = document.getElementById('ha-sync-btn');
+  if (btn) { btn.textContent = '⟳ Syncing…'; btn.disabled = true; }
+  try {
+    const result = await api('/api/rooms/sync-ha', { method: 'POST' });
+    toast(`Synced ${result.synced} HA area${result.synced !== 1 ? 's' : ''}`);
+    await loadRooms();
+  } catch(e) {
+    toast(`Sync failed: ${e.message}`, true);
+  } finally {
+    if (btn) { btn.textContent = '⟳ Sync HA'; btn.disabled = false; }
+  }
 }
 
 function openRoomModal(id = null) {
@@ -1189,9 +1388,11 @@ async function saveRoom() {
 
 async function deleteRoom(id) {
   if (!confirm('Delete room? Boxes will become unassigned.')) return;
-  await api(`/api/rooms/${id}`, { method:'DELETE' });
-  await loadRooms();
-  toast('Room deleted');
+  try {
+    await api(`/api/rooms/${id}`, { method:'DELETE' });
+    await loadRooms();
+    toast('Room deleted');
+  } catch(e) { toast(e.message, true); }
 }
 
 // ── Boxes ──────────────────────────────────────────────────────────────────

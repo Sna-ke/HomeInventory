@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.5.1"
+version: "1.6.0"
 slug: "box_inventory"
 init: false
 arch:
@@ -17,6 +17,7 @@ build_from:
   i386: "ghcr.io/home-assistant/i386-base:latest"
 startup: application
 boot: auto
+homeassistant_api: true
 services:
   - mysql:want
 map:

@@ -203,10 +203,100 @@ def migrate_db():
                     )
                 """)
 
+            # Migration 4: rooms.ha_area_id + ha_synced (added v1.6.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'rooms'
+                AND COLUMN_NAME = 'ha_area_id'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding rooms.ha_area_id and ha_synced columns")
+                cur.execute("ALTER TABLE rooms ADD COLUMN ha_area_id VARCHAR(255) NULL UNIQUE AFTER name")
+                cur.execute("ALTER TABLE rooms ADD COLUMN ha_synced TINYINT(1) NOT NULL DEFAULT 0 AFTER ha_area_id")
+
         conn.commit()
         logger.info("Database migrations complete.")
     finally:
         conn.close()
+
+def sync_ha_areas():
+    """Fetch HA Areas and upsert into rooms table. Safe to call repeatedly."""
+    if not HA_TOKEN:
+        logger.info("HA_TOKEN not set — skipping HA area sync")
+        return 0
+
+    try:
+        resp = http_requests.get(
+            f"{HA_API_URL}/config/area_registry/list",
+            headers={"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        areas = resp.json()  # list of {area_id, name, ...}
+    except Exception as e:
+        logger.warning(f"HA area sync failed (fetch): {e}")
+        return 0
+
+    conn = get_db()
+    synced = 0
+    try:
+        with conn.cursor() as cur:
+            ha_area_ids = set()
+            for area in areas:
+                area_id = area.get("area_id") or area.get("id")
+                name = (area.get("name") or "").strip()
+                if not area_id or not name:
+                    continue
+                ha_area_ids.add(area_id)
+                # Upsert: if ha_area_id exists update name; else insert new room
+                cur.execute("SELECT id, name FROM rooms WHERE ha_area_id=%s", (area_id,))
+                existing = cur.fetchone()
+                if existing:
+                    if existing["name"] != name:
+                        cur.execute(
+                            "UPDATE rooms SET name=%s, ha_synced=1 WHERE ha_area_id=%s",
+                            (name, area_id)
+                        )
+                        logger.info(f"HA sync: renamed area '{existing['name']}' -> '{name}'")
+                else:
+                    # May already exist as a manually-created room with same name
+                    cur.execute("SELECT id FROM rooms WHERE name=%s AND ha_area_id IS NULL", (name,))
+                    manual = cur.fetchone()
+                    if manual:
+                        # Claim it — link the existing manual room to this HA area
+                        cur.execute(
+                            "UPDATE rooms SET ha_area_id=%s, ha_synced=1 WHERE id=%s",
+                            (area_id, manual["id"])
+                        )
+                        logger.info(f"HA sync: linked existing room '{name}' to area {area_id}")
+                    else:
+                        try:
+                            cur.execute(
+                                "INSERT INTO rooms (name, ha_area_id, ha_synced) VALUES (%s,%s,1)",
+                                (name, area_id)
+                            )
+                            logger.info(f"HA sync: added new area '{name}'")
+                        except Exception:
+                            pass  # duplicate name race — ignore
+                synced += 1
+
+            # Mark rooms whose HA area no longer exists
+            if ha_area_ids:
+                placeholders = ",".join(["%s"] * len(ha_area_ids))
+                cur.execute(
+                    f"UPDATE rooms SET ha_synced=0 WHERE ha_area_id IS NOT NULL "
+                    f"AND ha_area_id NOT IN ({placeholders})",
+                    list(ha_area_ids)
+                )
+            conn.commit()
+    except Exception as e:
+        logger.warning(f"HA area sync failed (db): {e}")
+    finally:
+        conn.close()
+
+    logger.info(f"HA area sync complete: {synced} areas processed")
+    return synced
+
 
 def next_box_number():
     conn = get_db()
@@ -382,7 +472,8 @@ def get_rooms():
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT r.*, COUNT(b.id) as box_count
+                SELECT r.id, r.name, r.ha_area_id, r.ha_synced,
+                       COUNT(b.id) as box_count
                 FROM rooms r
                 LEFT JOIN boxes b ON b.room_id = r.id
                 GROUP BY r.id
@@ -391,6 +482,37 @@ def get_rooms():
             return jsonify(cur.fetchall())
     finally:
         conn.close()
+
+
+@app.route("/api/rooms/<int:room_id>/boxes", methods=["GET"])
+def get_room_boxes(room_id):
+    """Boxes in a room with item counts — for expand row on rooms page."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT b.id, b.box_number, b.label, b.description,
+                       COUNT(bi.id) as item_count,
+                       COALESCE(SUM(bi.quantity), 0) as total_qty,
+                       (SELECT CONCAT('/api/images/', img.id)
+                        FROM images img WHERE img.entity_type='box' AND img.entity_id=b.id
+                        ORDER BY img.created_at LIMIT 1) as thumb_url
+                FROM boxes b
+                LEFT JOIN box_items bi ON bi.box_id = b.id
+                WHERE b.room_id = %s
+                GROUP BY b.id
+                ORDER BY b.box_number
+            """, (room_id,))
+            return jsonify(cur.fetchall())
+    finally:
+        conn.close()
+
+
+@app.route("/api/rooms/sync-ha", methods=["POST"])
+def trigger_ha_sync():
+    """Manually trigger HA area sync from the UI."""
+    count = sync_ha_areas()
+    return jsonify({"ok": True, "synced": count})
 
 
 @app.route("/api/rooms", methods=["POST"])
@@ -402,7 +524,7 @@ def create_room():
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO rooms (name) VALUES (%s)", (name,))
+            cur.execute("INSERT INTO rooms (name, ha_synced) VALUES (%s, 0)", (name,))
             conn.commit()
             cur.execute("SELECT * FROM rooms WHERE id = %s", (cur.lastrowid,))
             return jsonify(cur.fetchone()), 201
@@ -421,6 +543,11 @@ def update_room(room_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # Don't allow renaming HA-synced areas from the app
+            cur.execute("SELECT ha_synced, ha_area_id FROM rooms WHERE id=%s", (room_id,))
+            row = cur.fetchone()
+            if row and row["ha_synced"] and row["ha_area_id"]:
+                return jsonify({"error": "This area is managed by Home Assistant. Rename it in HA."}), 403
             cur.execute("UPDATE rooms SET name=%s WHERE id=%s", (name, room_id))
             conn.commit()
             cur.execute("SELECT * FROM rooms WHERE id=%s", (room_id,))
@@ -437,6 +564,10 @@ def delete_room(room_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            cur.execute("SELECT ha_synced, ha_area_id FROM rooms WHERE id=%s", (room_id,))
+            row = cur.fetchone()
+            if row and row["ha_synced"] and row["ha_area_id"]:
+                return jsonify({"error": "This area is managed by Home Assistant. Remove it in HA."}), 403
             cur.execute("DELETE FROM rooms WHERE id=%s", (room_id,))
             conn.commit()
             return jsonify({"ok": True})
@@ -877,6 +1008,9 @@ def search():
 
 # ── Vision / Item Identification ──────────────────────────────────────────
 
+HA_TOKEN = os.environ.get("HA_TOKEN", "").strip()
+HA_API_URL = "http://supervisor/core/api"
+
 VISION_BACKEND = os.environ.get("VISION_BACKEND", "none").lower()
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://homeassistant.local:11434").rstrip("/")
@@ -1016,4 +1150,6 @@ def index():
 
 if __name__ == "__main__":
     init_db()
+    migrate_db()
+    sync_ha_areas()
     app.run(host="0.0.0.0", port=5000, debug=False)
