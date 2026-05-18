@@ -232,7 +232,7 @@ th {
   font-size: 11px; font-weight: 700; letter-spacing: 2px;
   text-transform: uppercase; color: var(--muted);
   text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border);
-  white-space: nowrap;
+  white-space: nowrap; position: relative;
 }
 td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 14px; }
 tr:active td { background: var(--surface2); }
@@ -687,9 +687,17 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
             <th class="sortable-th" data-sort="name" onclick="setItemSort('name')" style="cursor:pointer;user-select:none;">
               Name <span id="sort-name-icon">↕</span>
             </th>
-            <th class="sortable-th" data-sort="category" onclick="setItemSort('category')" style="cursor:pointer;user-select:none;">
-              Category <span id="sort-cat-icon">↕</span>
-              <span style="font-size:10px;color:var(--muted);margin-left:4px;" title="Click to filter by category">▼</span>
+            <th class="sortable-th" data-sort="category" style="user-select:none;white-space:nowrap;">
+              <span onclick="setItemSort('category')" style="cursor:pointer;">Category <span id="sort-cat-icon">↕</span></span>
+              <span id="cat-filter-btn" onclick="toggleCatFilterDropdown(event)"
+                style="cursor:pointer;margin-left:6px;padding:1px 5px;border:1px solid var(--border);
+                       font-size:11px;color:var(--muted);transition:all .15s;"
+                title="Filter by category">▼</span>
+              <div id="cat-filter-dropdown"
+                style="display:none;position:absolute;background:var(--surface2);
+                       border:1px solid var(--accent);z-index:300;min-width:160px;
+                       max-height:240px;overflow-y:auto;">
+              </div>
             </th>
             <th>Boxes</th>
             <th></th>
@@ -1873,14 +1881,69 @@ function setItemSort(field) {
   applyItemFilters();
 }
 
+function toggleCatFilterDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('cat-filter-dropdown');
+  const btn = document.getElementById('cat-filter-btn');
+  const isOpen = dd.style.display !== 'none';
+  if (isOpen) { dd.style.display = 'none'; return; }
+
+  // Build category list from allItems (distinct, sorted)
+  const cats = [...new Set(allItems.map(i => i.category).filter(Boolean))].sort();
+  dd.innerHTML = '';
+
+  // "(all)" option
+  const allOpt = document.createElement('div');
+  allOpt.className = 'ac-item' + (itemCatFilter === null ? ' ac-create' : '');
+  allOpt.textContent = '(all categories)';
+  allOpt.style.fontStyle = 'italic';
+  allOpt.addEventListener('mousedown', e => e.preventDefault());
+  allOpt.addEventListener('click', () => {
+    setItemCatFilter(null);
+    dd.style.display = 'none';
+    btn.style.color = '';
+    btn.style.borderColor = '';
+  });
+  dd.appendChild(allOpt);
+
+  cats.forEach(cat => {
+    const opt = document.createElement('div');
+    opt.className = 'ac-item';
+    if (cat === itemCatFilter) opt.style.background = 'var(--accent)'; 
+    if (cat === itemCatFilter) opt.style.color = '#000';
+    opt.textContent = cat;
+    opt.addEventListener('mousedown', e => e.preventDefault());
+    opt.addEventListener('click', () => {
+      setItemCatFilter(cat);
+      dd.style.display = 'none';
+      btn.style.color = 'var(--accent2)';
+      btn.style.borderColor = 'var(--accent2)';
+    });
+    dd.appendChild(opt);
+  });
+
+  dd.style.display = 'block';
+}
+
+// Close cat filter dropdown on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('#cat-filter-btn') && !e.target.closest('#cat-filter-dropdown')) {
+    const dd = document.getElementById('cat-filter-dropdown');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
 function setItemCatFilter(catName) {
   itemCatFilter = catName;
   const badge = document.getElementById('item-cat-filter-badge');
+  const btn = document.getElementById('cat-filter-btn');
   if (catName) {
     document.getElementById('item-cat-filter-label').textContent = '🏷️ ' + catName;
     badge.style.display = 'flex';
+    if (btn) { btn.style.color = 'var(--accent2)'; btn.style.borderColor = 'var(--accent2)'; }
   } else {
     badge.style.display = 'none';
+    if (btn) { btn.style.color = ''; btn.style.borderColor = ''; }
   }
   applyItemFilters();
 }
