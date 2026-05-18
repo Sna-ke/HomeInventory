@@ -3054,80 +3054,89 @@ function updateLabelPreview() {
 
   const pxW = Math.round(wMM * MM_TO_PX);
   const pxH = Math.round(hMM * MM_TO_PX);
-  const shortPx = Math.min(pxW, pxH);
-  const longPx  = Math.max(pxW, pxH);
+  const PADDING = 4; // px padding inside label
 
-  // ── Layout constants ─────────────────────────────────────────────────────
-  // The QR+number column is a fixed fraction of the SHORT edge.
-  // Content (title + body) gets the rest — prioritising readability.
-  //
-  //  Portrait  (40×60): QR zone = top 45% of height, content below
-  //  Landscape (60×40): QR zone = left column, width = ~38% of total width
-  //                     (roughly a square of short-edge size × 0.85)
-  //                     Content column gets the remaining 62% — much more room
+  // ── QR size: fixed in mm, capped so it never crowds the text ─────────────
+  // Rule: QR occupies at most 35% of the label's SHORT edge, minimum 16mm.
+  // For square labels the QR goes top-left and text flows beside/below it.
+  const shortMM  = Math.min(wMM, hMM);
+  const qrMM     = Math.min(Math.round(shortMM * 0.35), 18); // max 18mm
+  const qrPx     = Math.round(qrMM * MM_TO_PX);
+  // Column that holds QR + "BOX N" label underneath
+  const qrColPxW = qrPx + PADDING * 2;
+  const qrColPxH = qrPx + 14 + PADDING * 2; // 14px for the box number line
 
-  let qrPx, qrColPx;
-  if (isLandscape) {
-    // QR column width = 85% of the short (height) dimension
-    qrColPx = Math.round(shortPx * 0.85);
-    qrPx    = Math.round(shortPx * 0.62); // QR smaller than the column
-  } else {
-    // QR zone height = 55% of short (width) dimension
-    qrColPx = Math.round(shortPx * 0.55);
-    qrPx    = Math.round(shortPx * 0.42);
-  }
+  // ── Layout decision ───────────────────────────────────────────────────────
+  // Portrait  → QR column on the LEFT, text takes the remaining width
+  // Landscape → same (QR left, text right) — it always works better than top/bottom
+  // Square    → QR top-left corner, text beside and below (CSS grid)
+  const textColPxW = pxW - qrColPxW;
+  const numSize    = Math.max(7, Math.round(qrPx * 0.25));
 
-  // Text area dimensions (what's left after the QR column)
-  const textAreaPx = isLandscape ? (longPx - qrColPx) : longPx;
-
-  // Font sizes scaled to the text area
-  const titleSize = Math.max(8,  Math.round(textAreaPx * (isLandscape ? 0.095 : 0.07)));
-  const bodySize  = Math.max(6,  Math.round(titleSize * 0.82));
-  const numSize   = Math.max(8,  Math.round(qrPx * 0.28));
+  // Font sizes are based on the TEXT column width, not the whole label
+  // Use a target of ~7 chars per line at the chosen font size
+  // Barlow Condensed char width ≈ 0.55× font size
+  const charsPerLine = Math.floor(textColPxW / (7 * 0.55));  // rough
+  const titleSize = Math.max(8,  Math.min(20, Math.round(textColPxW * 0.11)));
+  const bodySize  = Math.max(7,  Math.min(14, Math.round(textColPxW * 0.085)));
 
   const target = document.getElementById('print-target');
   target.className = 'label-preview';
-  target.style.cssText = `width:${pxW}px;height:${pxH}px;flex-direction:${isLandscape ? 'row' : 'column'};`;
+  // Always row layout: QR column left, text right
+  target.style.cssText = `width:${pxW}px;height:${pxH}px;flex-direction:row;align-items:stretch;`;
   target.dataset.printW = wMM;
   target.dataset.printH = hMM;
 
-  // ── QR + number section ───────────────────────────────────────────────────
+  // ── QR + BOX N column ─────────────────────────────────────────────────────
   const leftDiv = document.createElement('div');
   leftDiv.className = 'label-left';
-  if (isLandscape) {
-    leftDiv.style.cssText = `width:${qrColPx}px;flex-shrink:0;`;
-  } else {
-    leftDiv.style.cssText = `height:${qrColPx}px;flex-direction:row;gap:5px;
-      border-right:none;border-bottom:1px solid #ccc;flex-shrink:0;`;
-  }
+  leftDiv.style.cssText = `
+    width:${qrColPxW}px;
+    flex-shrink:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:${PADDING}px;
+    border-right:1px solid #ccc;
+    background:#fff;
+  `;
 
   const qrWrap = document.createElement('div');
   qrWrap.className = 'label-qr-wrap';
   qrWrap.id = 'qr-container';
+  // Low error correction = denser data = smaller physical minimum size
   new QRCode(qrWrap, {
     text: `${location.origin}/?box=${box.box_number}`,
     width: qrPx, height: qrPx,
-    correctLevel: QRCode.CorrectLevel.M,
+    correctLevel: QRCode.CorrectLevel.L,
   });
 
   const numEl = document.createElement('div');
   numEl.className = 'label-box-num';
-  numEl.style.fontSize = numSize + 'px';
+  numEl.style.cssText = `font-size:${numSize}px;margin-top:2px;text-align:center;
+    font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#000;line-height:1;`;
   numEl.textContent = `BOX ${box.box_number}`;
 
   leftDiv.appendChild(qrWrap);
   leftDiv.appendChild(numEl);
 
-  // ── Content section ───────────────────────────────────────────────────────
+  // ── Content column ────────────────────────────────────────────────────────
   const rightDiv = document.createElement('div');
   rightDiv.className = 'label-right';
-  // Give the content section explicit padding so text doesn't crowd the edge
-  rightDiv.style.padding = '5px 6px';
+  rightDiv.style.cssText = `
+    flex:1;min-width:0;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:${PADDING}px ${PADDING + 2}px;
+    gap:2px;overflow:hidden;
+  `;
 
   if (box.label) {
     const titleEl = document.createElement('div');
     titleEl.className = 'label-title';
-    titleEl.style.fontSize = titleSize + 'px';
+    titleEl.style.cssText = `font-size:${titleSize}px;font-weight:700;
+      font-family:'Barlow Condensed',sans-serif;color:#000;
+      line-height:1.15;word-break:break-word;`;
     titleEl.textContent = box.label;
     rightDiv.appendChild(titleEl);
   }
@@ -3135,9 +3144,15 @@ function updateLabelPreview() {
   if (bodyText) {
     const bodyEl = document.createElement('div');
     bodyEl.className = 'label-body';
-    bodyEl.style.fontSize = bodySize + 'px';
-    const maxChars = isLandscape ? 80 : 120;
-    bodyEl.textContent = bodyText.length > maxChars ? bodyText.substring(0, maxChars) + '…' : bodyText;
+    bodyEl.style.cssText = `font-size:${bodySize}px;
+      font-family:'Barlow Condensed',sans-serif;color:#222;
+      line-height:1.25;word-break:break-word;`;
+    // Truncate to what can reasonably fit
+    const maxLines  = Math.max(2, Math.floor((pxH - PADDING * 2) / (bodySize * 1.3)));
+    const maxChars  = maxLines * charsPerLine;
+    bodyEl.textContent = bodyText.length > maxChars
+      ? bodyText.substring(0, maxChars) + '…'
+      : bodyText;
     rightDiv.appendChild(bodyEl);
   }
 
