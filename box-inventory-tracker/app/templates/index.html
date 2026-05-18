@@ -744,12 +744,14 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 
 <div class="topbar">
   <h1>BOX<span>TRACK</span></h1>
-  <button onclick="openQuickAddItem()" title="Add item to a box"
-    style="background:var(--accent);border:none;color:#000;font-family:var(--sans);
-           font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;
-           padding:6px 10px;cursor:pointer;flex-shrink:0;white-space:nowrap;">
-    + Item
-  </button>
+  <div style="flex:1;display:flex;justify-content:center;">
+    <button onclick="openQuickAddItem()" title="Add item to a box"
+      style="background:var(--accent);border:none;color:#000;font-family:var(--sans);
+             font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;
+             padding:6px 14px;cursor:pointer;white-space:nowrap;">
+      + Item
+    </button>
+  </div>
   <input class="search-box" id="globalSearch" type="search" placeholder="🔍 Search…" oninput="handleSearch(this.value)">
   <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
     style="background:none;border:1px solid var(--border);color:var(--muted);
@@ -953,7 +955,9 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <label>Box</label>
       <div class="ac-wrap">
         <input type="text" id="atb-box-search" placeholder="Search box number or label…"
-          oninput="searchBoxesAC(this.value)" autocomplete="off">
+          oninput="searchBoxesAC(this.value)"
+          onfocus="showInitialBoxSuggestions()"
+          autocomplete="off">
         <div id="atb-box-suggestions" class="ac-list"></div>
         <div id="atb-box-selected-badge"
           style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);
@@ -989,7 +993,9 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <label>Item Name</label>
       <div class="ac-wrap">
         <input type="text" id="atb-search" placeholder="Search or type item name…"
-          oninput="searchItemsAC(this.value)" autocomplete="off" autocorrect="off" spellcheck="false">
+          oninput="searchItemsAC(this.value)"
+          onfocus="showInitialItemSuggestions()"
+          autocomplete="off" autocorrect="off" spellcheck="false">
         <div id="atb-suggestions" class="ac-list"></div>
         <input type="hidden" id="atb-item-id">
       </div>
@@ -2230,6 +2236,7 @@ function resetATBModal() {
 function setATBBox(id, label) {
   addToBoxId = id;
   lastUsedBoxId = id;
+  trackRecentBox(id);
   document.getElementById('atb-box-selected-name').textContent = label;
   document.getElementById('atb-box-selected-badge').style.display = 'flex';
   document.getElementById('atb-box-search').style.display = 'none';
@@ -2244,29 +2251,48 @@ function clearATBBox() {
   document.getElementById('atb-box-search').focus();
 }
 
-async function searchBoxesAC(q) {
-  const list = document.getElementById('atb-box-suggestions');
-  if (!q.trim()) { list.classList.remove('open'); return; }
-  // Search from cached boxes list first, fall back to API
-  let boxes = window._lastBoxes || [];
-  const lq = q.toLowerCase();
-  let filtered = boxes.filter(b =>
-    String(b.box_number).includes(q) ||
-    (b.label || '').toLowerCase().includes(lq) ||
-    (b.room_name || '').toLowerCase().includes(lq)
-  );
-  if (!filtered.length) {
-    // Fetch fresh if nothing cached
-    boxes = await api('/api/boxes');
-    window._lastBoxes = boxes;
-    filtered = boxes.filter(b =>
-      String(b.box_number).includes(q) ||
-      (b.label || '').toLowerCase().includes(lq) ||
-      (b.room_name || '').toLowerCase().includes(lq)
-    );
+// ── Recency tracking ──────────────────────────────────────────────────────
+// Stored as arrays of IDs, most recent first, capped at 20 entries.
+const recentItemIds = [];
+const recentBoxIds  = [];
+
+function trackRecentItem(id) {
+  const idx = recentItemIds.indexOf(id);
+  if (idx !== -1) recentItemIds.splice(idx, 1);
+  recentItemIds.unshift(id);
+  if (recentItemIds.length > 20) recentItemIds.pop();
+}
+
+function trackRecentBox(id) {
+  const idx = recentBoxIds.indexOf(id);
+  if (idx !== -1) recentBoxIds.splice(idx, 1);
+  recentBoxIds.unshift(id);
+  if (recentBoxIds.length > 20) recentBoxIds.pop();
+}
+
+function sortByRecency(items, recentIds, idKey) {
+  return [...items].sort((a, b) => {
+    const ai = recentIds.indexOf(a[idKey]);
+    const bi = recentIds.indexOf(b[idKey]);
+    // Recent items first (lower index = more recent); untracked items go last alphabetically
+    if (ai === -1 && bi === -1) return 0; // preserve existing order (already alpha)
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
+
+// ── Box search ─────────────────────────────────────────────────────────────
+async function getBoxesCached() {
+  if (!window._lastBoxes || !window._lastBoxes.length) {
+    window._lastBoxes = await api('/api/boxes');
   }
+  return window._lastBoxes;
+}
+
+function renderBoxSuggestions(boxes, list) {
   list.innerHTML = '';
-  filtered.slice(0, 10).forEach(b => {
+  boxes.forEach(b => {
     const opt = document.createElement('div');
     opt.className = 'ac-item';
     opt.dataset.boxId = b.id;
@@ -2278,11 +2304,59 @@ async function searchBoxesAC(q) {
   else list.classList.remove('open');
 }
 
+async function showInitialBoxSuggestions() {
+  if (document.getElementById('atb-box-selected-badge').style.display === 'flex') return;
+  const list = document.getElementById('atb-box-suggestions');
+  if (list.classList.contains('open')) return; // already showing
+  const boxes = await getBoxesCached();
+  const sorted = sortByRecency(boxes, recentBoxIds, 'id');
+  renderBoxSuggestions(sorted.slice(0, 5), list);
+}
+
+async function searchBoxesAC(q) {
+  const list = document.getElementById('atb-box-suggestions');
+  if (!q.trim()) {
+    // Empty query — show initial suggestions instead of closing
+    showInitialBoxSuggestions();
+    return;
+  }
+  const boxes = await getBoxesCached();
+  const lq = q.toLowerCase();
+
+  // Match "box 2", "box2", or just "2" against box_number;
+  // also strip leading "box" word so "box 3" finds #3.
+  const stripped = q.replace(/^box\s*/i, '').trim();
+
+  let filtered = boxes.filter(b =>
+    String(b.box_number) === stripped ||
+    String(b.box_number).startsWith(stripped) ||
+    (b.label || '').toLowerCase().includes(lq) ||
+    (b.room_name || '').toLowerCase().includes(lq) ||
+    (`box ${b.box_number}`).includes(lq) ||
+    (`box${b.box_number}`).includes(lq.replace(/\s/g,''))
+  );
+
+  if (!filtered.length) {
+    // Refresh cache and retry once
+    window._lastBoxes = await api('/api/boxes');
+    filtered = window._lastBoxes.filter(b =>
+      String(b.box_number) === stripped ||
+      String(b.box_number).startsWith(stripped) ||
+      (b.label || '').toLowerCase().includes(lq) ||
+      (b.room_name || '').toLowerCase().includes(lq) ||
+      (`box ${b.box_number}`).includes(lq)
+    );
+  }
+  const sorted = sortByRecency(filtered, recentBoxIds, 'id');
+  renderBoxSuggestions(sorted.slice(0, 10), list);
+}
+
 // Delegated listener for box search suggestions
 document.getElementById('atb-box-suggestions').addEventListener('mousedown', e => e.preventDefault());
 document.getElementById('atb-box-suggestions').addEventListener('click', e => {
   const item = e.target.closest('.ac-item');
   if (!item) return;
+  trackRecentBox(parseInt(item.dataset.boxId));
   setATBBox(parseInt(item.dataset.boxId), item.dataset.boxLabel);
 });
 
@@ -2312,33 +2386,49 @@ function clearATBItem() {
   inp.focus();
 }
 
-async function searchItemsAC(q) {
-  // Don't search if an item is already selected
-  if (document.getElementById('atb-item-id').value) return;
-  const list = document.getElementById('atb-suggestions');
-  if (!q.trim()) { list.classList.remove('open'); return; }
-  const items = await api(`/api/items?q=${encodeURIComponent(q)}`);
-
-  // Use data-* attributes instead of inline onclick with interpolated strings —
-  // inline onclick breaks on any item name containing quotes or apostrophes.
-  const rows = items.map(i => {
+function renderItemSuggestions(items, list, showCreate, createLabel) {
+  list.innerHTML = '';
+  items.forEach(i => {
     const div = document.createElement('div');
     div.className = 'ac-item';
     div.dataset.itemId = i.id;
     div.dataset.itemName = i.name;
     div.dataset.itemCat = i.category || '';
     div.innerHTML = `<span>${esc(i.name)}</span><small>${esc(i.category||'')}</small>`;
-    return div.outerHTML;
-  }).join('');
+    list.appendChild(div);
+  });
+  if (showCreate && createLabel) {
+    const createDiv = document.createElement('div');
+    createDiv.className = 'ac-item ac-create';
+    createDiv.dataset.createNew = '1';
+    createDiv.textContent = `+ Create "${createLabel}"`;
+    list.appendChild(createDiv);
+  }
+  if (list.children.length) list.classList.add('open');
+  else list.classList.remove('open');
+}
 
-  const createDiv = document.createElement('div');
-  createDiv.className = 'ac-item ac-create';
-  createDiv.dataset.createNew = '1';
-  createDiv.textContent = `+ Create "${q}"`;
+async function showInitialItemSuggestions() {
+  if (document.getElementById('atb-item-id').value) return;
+  const list = document.getElementById('atb-suggestions');
+  if (list.classList.contains('open')) return;
+  // Use allItems if loaded, otherwise fetch
+  let items = allItems && allItems.length ? allItems : await api('/api/items');
+  const sorted = sortByRecency(items, recentItemIds, 'id');
+  renderItemSuggestions(sorted.slice(0, 5), list, false, null);
+}
 
-  list.innerHTML = rows;
-  list.appendChild(createDiv);
-  list.classList.add('open');
+async function searchItemsAC(q) {
+  // Don't search if an item is already selected
+  if (document.getElementById('atb-item-id').value) return;
+  const list = document.getElementById('atb-suggestions');
+  if (!q.trim()) {
+    showInitialItemSuggestions();
+    return;
+  }
+  const items = await api(`/api/items?q=${encodeURIComponent(q)}`);
+  const sorted = sortByRecency(items, recentItemIds, 'id');
+  renderItemSuggestions(sorted, list, true, q);
 }
 
 // Single delegated listener on the suggestions list — avoids all inline-onclick quoting issues
@@ -2353,6 +2443,7 @@ document.getElementById('atb-suggestions').addEventListener('click', e => {
     document.getElementById('atb-item-id').value = '';
     document.getElementById('atb-suggestions').classList.remove('open');
   } else {
+    trackRecentItem(parseInt(item.dataset.itemId));
     setATBSelection(item.dataset.itemId, item.dataset.itemName, item.dataset.itemCat);
     document.getElementById('atb-suggestions').classList.remove('open');
   }
