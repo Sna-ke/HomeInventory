@@ -309,27 +309,55 @@ tr:active td { background: var(--surface2); }
   background: var(--surface2);
 }
 .room-expand.open { display: block; }
+.room-box-wrap { margin-bottom: 4px; }
 .room-box-row {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; margin-bottom: 4px;
+  display: flex; align-items: stretch; gap: 0;
   background: var(--surface); border: 1px solid var(--border);
-  cursor: pointer; transition: border-color .12s;
+  transition: border-color .12s;
 }
-.room-box-row:hover { border-color: var(--accent); }
+/* Left expand zone — click to show/hide contents */
+.room-box-expand-zone {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 0; padding: 9px 10px;
+  cursor: pointer; transition: background .12s;
+}
+.room-box-expand-zone:hover { background: var(--surface2); }
 .room-box-num {
   font-family: var(--mono); font-size: 11px;
-  background: var(--accent); color: #000; padding: 1px 6px; flex-shrink: 0;
+  background: var(--accent); color: #000; padding: 2px 7px; flex-shrink: 0;
+  align-self: center;
 }
 .room-box-info { flex: 1; min-width: 0; }
 .room-box-label { font-size: 14px; font-weight: 700; }
 .room-box-meta { font-family: var(--mono); font-size: 11px; color: var(--muted); }
-.room-box-expand { display: none; padding: 6px 10px 10px 24px; }
+/* Right navigate zone — click to go to box page */
+.room-box-nav {
+  display: flex; align-items: center; justify-content: center;
+  padding: 9px 12px; cursor: pointer; flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  color: var(--muted); font-size: 13px; font-family: var(--sans);
+  font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  transition: background .12s, color .12s; gap: 4px;
+  white-space: nowrap;
+}
+.room-box-nav:hover { background: var(--accent); color: #000; border-left-color: var(--accent); }
+.room-box-expand { display: none; padding: 6px 10px 10px 28px; background: var(--surface2); border-top: 1px solid var(--border); }
 .room-box-expand.open { display: block; }
 .room-box-item-row {
   font-size: 13px; padding: 3px 0;
   border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center;
 }
 .room-box-item-row:last-child { border-bottom: none; }
+/* Expand-all toolbar inside a room expand section */
+.room-expand-toolbar {
+  display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 8px;
+}
+.room-expand-toolbar button {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-family: var(--mono); font-size: 11px; padding: 3px 8px; cursor: pointer;
+  transition: all .12s;
+}
+.room-expand-toolbar button:hover { border-color: var(--accent); color: var(--accent); }
 
 /* ── Modal ── */
 .modal-backdrop {
@@ -1186,6 +1214,8 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 
 // ── Rooms ──────────────────────────────────────────────────────────────────
 async function loadRooms() {
+  // Clear cache so re-expanding rooms fetches fresh data
+  Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
   rooms = await api('/api/rooms');
   // Update filter dropdown
   const f = document.getElementById('roomFilter');
@@ -1254,15 +1284,37 @@ async function loadRooms() {
   });
 }
 
+// Tracks which room boxes have been loaded already (cache)
+const roomBoxCache = {};
+
 async function toggleRoomExpand(roomId, hdr, chevron, expand) {
   const isOpen = expand.classList.contains('open');
-  document.querySelectorAll('.room-expand.open').forEach(e => e.classList.remove('open'));
-  document.querySelectorAll('.room-row-header.expanded').forEach(h => h.classList.remove('expanded'));
-  document.querySelectorAll('.cat-chevron.open').forEach(c => c.classList.remove('open'));
-  if (isOpen) return;
+  // Close other rooms
+  document.querySelectorAll('.room-expand.open').forEach(e => {
+    if (e !== expand) e.classList.remove('open');
+  });
+  document.querySelectorAll('.room-row-header.expanded').forEach(h => {
+    if (h !== hdr) h.classList.remove('expanded');
+  });
+  document.querySelectorAll('.room-row-header .cat-chevron.open').forEach(c => {
+    if (c !== chevron) c.classList.remove('open');
+  });
+  if (isOpen) {
+    expand.classList.remove('open');
+    hdr.classList.remove('expanded');
+    chevron.classList.remove('open');
+    // Collapse all boxes inside when room closes
+    expand.querySelectorAll('.room-box-expand.open').forEach(e => e.classList.remove('open'));
+    expand.querySelectorAll('.room-box-expand-zone .cat-chevron.open').forEach(c => c.classList.remove('open'));
+    return;
+  }
   hdr.classList.add('expanded');
   chevron.classList.add('open');
   expand.classList.add('open');
+
+  // Only fetch if not already populated
+  if (roomBoxCache[roomId]) return;
+  roomBoxCache[roomId] = true;
 
   try {
     const boxes = await api(`/api/rooms/${roomId}/boxes`);
@@ -1271,58 +1323,111 @@ async function toggleRoomExpand(roomId, hdr, chevron, expand) {
       expand.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No boxes in this room.</div>';
       return;
     }
+
+    // Expand/collapse-all toolbar
+    const toolbar = document.createElement('div');
+    toolbar.className = 'room-expand-toolbar';
+    const expandAll = document.createElement('button');
+    expandAll.textContent = '⊞ Expand all';
+    expandAll.addEventListener('click', () => expandAllRoomBoxes(expand, boxes));
+    const collapseAll = document.createElement('button');
+    collapseAll.textContent = '⊟ Collapse all';
+    collapseAll.addEventListener('click', () => collapseAllRoomBoxes(expand));
+    toolbar.appendChild(expandAll);
+    toolbar.appendChild(collapseAll);
+    expand.appendChild(toolbar);
+
     boxes.forEach(b => {
-      const boxRow = document.createElement('div');
-      boxRow.className = 'room-box-row';
+      const wrap = document.createElement('div');
+      wrap.className = 'room-box-wrap';
+
+      // The row: [expand zone | nav button]
+      const row = document.createElement('div');
+      row.className = 'room-box-row';
+
+      // ── Left: expand zone ────────────────────────────
+      const expandZone = document.createElement('div');
+      expandZone.className = 'room-box-expand-zone';
+
+      const chevBox = document.createElement('span');
+      chevBox.className = 'cat-chevron'; chevBox.textContent = '▶';
 
       const numEl = document.createElement('div');
       numEl.className = 'room-box-num'; numEl.textContent = `BOX ${b.box_number}`;
 
       const infoEl = document.createElement('div');
       infoEl.className = 'room-box-info';
-
       const labelEl = document.createElement('div');
       labelEl.className = 'room-box-label'; labelEl.textContent = b.label || 'Unlabelled';
-
       const metaEl = document.createElement('div');
       metaEl.className = 'room-box-meta';
-      metaEl.textContent = `${b.item_count} type${b.item_count!=1?'s':''} · ${b.total_qty} items total`;
-
+      metaEl.textContent = `${b.item_count} type${b.item_count!=1?'s':''} · ${b.total_qty} qty`;
       infoEl.appendChild(labelEl); infoEl.appendChild(metaEl);
 
-      const chevBox = document.createElement('span');
-      chevBox.className = 'cat-chevron'; chevBox.textContent = '▶';
+      expandZone.appendChild(chevBox);
+      expandZone.appendChild(numEl);
+      expandZone.appendChild(infoEl);
 
-      // Go-to-box link on the label
-      labelEl.style.cursor = 'pointer';
-      labelEl.style.textDecoration = 'underline dotted';
-      labelEl.title = 'Go to box page';
-      labelEl.addEventListener('click', e => { e.stopPropagation(); openBoxDetail(b.id); });
+      // ── Right: navigate button ───────────────────────
+      const navBtn = document.createElement('div');
+      navBtn.className = 'room-box-nav';
+      navBtn.title = 'Open box page';
+      navBtn.innerHTML = '→ View';
 
-      boxRow.appendChild(numEl); boxRow.appendChild(infoEl); boxRow.appendChild(chevBox);
-
+      // Contents panel
       const boxExpand = document.createElement('div');
       boxExpand.className = 'room-box-expand';
-      boxExpand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:11px;">Loading…</span>';
 
-      boxRow.addEventListener('click', () => toggleRoomBoxExpand(b.id, boxRow, chevBox, boxExpand));
+      // Expand zone click → toggle contents
+      expandZone.addEventListener('click', () => toggleRoomBoxExpand(b.id, chevBox, boxExpand));
+      // Nav button click → go to box
+      navBtn.addEventListener('click', () => openBoxDetail(b.id));
 
-      expand.appendChild(boxRow);
-      expand.appendChild(boxExpand);
+      row.appendChild(expandZone);
+      row.appendChild(navBtn);
+      wrap.appendChild(row);
+      wrap.appendChild(boxExpand);
+      expand.appendChild(wrap);
     });
   } catch(e) {
     expand.innerHTML = `<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`;
   }
 }
 
-async function toggleRoomBoxExpand(boxId, boxRow, chevron, boxExpand) {
+async function expandAllRoomBoxes(roomExpand, boxes) {
+  // Fire all expands in parallel
+  const wraps = roomExpand.querySelectorAll('.room-box-wrap');
+  const promises = [];
+  wraps.forEach((wrap, i) => {
+    const expandZone = wrap.querySelector('.room-box-expand-zone');
+    const chevron = expandZone?.querySelector('.cat-chevron');
+    const boxExpand = wrap.querySelector('.room-box-expand');
+    if (chevron && boxExpand && !boxExpand.classList.contains('open')) {
+      promises.push(toggleRoomBoxExpand(boxes[i].id, chevron, boxExpand));
+    }
+  });
+  await Promise.all(promises);
+}
+
+function collapseAllRoomBoxes(roomExpand) {
+  roomExpand.querySelectorAll('.room-box-expand.open').forEach(e => e.classList.remove('open'));
+  roomExpand.querySelectorAll('.room-box-expand-zone .cat-chevron.open').forEach(c => c.classList.remove('open'));
+}
+
+async function toggleRoomBoxExpand(boxId, chevron, boxExpand) {
   const isOpen = boxExpand.classList.contains('open');
-  // Close siblings
-  boxRow.closest('.room-expand').querySelectorAll('.room-box-expand.open').forEach(e => e.classList.remove('open'));
-  boxRow.closest('.room-expand').querySelectorAll('.room-box-row .cat-chevron.open').forEach(c => c.classList.remove('open'));
-  if (isOpen) return;
+  if (isOpen) {
+    boxExpand.classList.remove('open');
+    chevron.classList.remove('open');
+    return;
+  }
   chevron.classList.add('open');
   boxExpand.classList.add('open');
+
+  // If already populated, just show it
+  if (boxExpand.dataset.loaded) return;
+  boxExpand.dataset.loaded = '1';
+  boxExpand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:11px;">Loading…</span>';
 
   try {
     const box = await api(`/api/boxes/${boxId}`);
@@ -1346,6 +1451,7 @@ async function toggleRoomBoxExpand(boxId, boxRow, chevron, boxExpand) {
       boxExpand.appendChild(itemRow);
     });
   } catch(e) {
+    boxExpand.dataset.loaded = ''; // allow retry
     boxExpand.innerHTML = `<span style="color:var(--danger);font-size:11px;">Error loading</span>`;
   }
 }
