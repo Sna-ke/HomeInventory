@@ -220,19 +220,39 @@ def migrate_db():
         conn.close()
 
 def sync_ha_areas():
-    """Fetch HA Areas and upsert into rooms table. Safe to call repeatedly."""
+    """Fetch HA Areas and upsert into rooms table. Safe to call repeatedly.
+
+    The area_registry has no direct REST endpoint. We use POST /api/template
+    with a Jinja2 template that returns JSON — this is the official approach
+    for add-ons that need area data without WebSocket.
+    """
     if not HA_TOKEN:
         logger.info("HA_TOKEN not set — skipping HA area sync")
         return 0
 
     try:
-        resp = http_requests.get(
-            f"{HA_API_URL}/config/area_registry/list",
+        # Use tojson filter so HA handles all escaping.
+        # Returns a JSON array of {"id": "...", "name": "..."} objects.
+        template = (
+            "{{ areas() | map(attribute='__str__') | list | tojson }}"
+        )
+        # Simpler: use a template that explicitly builds what we need
+        template = (
+            "{%- set ns = namespace(out=[]) -%}"
+            "{%- for id in areas() -%}"
+            "{%- set ns.out = ns.out + [{'id': id, 'name': area_name(id)}] -%}"
+            "{%- endfor -%}"
+            "{{ ns.out | tojson }}"
+        )
+        resp = http_requests.post(
+            f"{HA_API_URL}/template",
             headers={"Authorization": f"Bearer {HA_TOKEN}", "Content-Type": "application/json"},
+            json={"template": template},
             timeout=10,
         )
         resp.raise_for_status()
-        areas = resp.json()  # list of {area_id, name, ...}
+        import json as _json
+        areas = _json.loads(resp.text)
     except Exception as e:
         logger.warning(f"HA area sync failed (fetch): {e}")
         return 0
@@ -243,7 +263,7 @@ def sync_ha_areas():
         with conn.cursor() as cur:
             ha_area_ids = set()
             for area in areas:
-                area_id = area.get("area_id") or area.get("id")
+                area_id = (area.get("id") or "").strip()
                 name = (area.get("name") or "").strip()
                 if not area_id or not name:
                     continue

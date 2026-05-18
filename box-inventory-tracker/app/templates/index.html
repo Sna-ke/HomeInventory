@@ -744,6 +744,12 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 
 <div class="topbar">
   <h1>BOX<span>TRACK</span></h1>
+  <button onclick="openQuickAddItem()" title="Add item to a box"
+    style="background:var(--accent);border:none;color:#000;font-family:var(--sans);
+           font-weight:700;font-size:13px;letter-spacing:1px;text-transform:uppercase;
+           padding:6px 10px;cursor:pointer;flex-shrink:0;white-space:nowrap;">
+    + Item
+  </button>
   <input class="search-box" id="globalSearch" type="search" placeholder="🔍 Search…" oninput="handleSearch(this.value)">
   <button id="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
     style="background:none;border:1px solid var(--border);color:var(--muted);
@@ -941,6 +947,24 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 <div id="modal-atb" class="modal-backdrop">
   <div class="modal">
     <h3>Add Item to Box</h3>
+
+    <!-- Box selector — shown when opened from quick-add, hidden when from box page -->
+    <div id="atb-box-field" class="field" style="display:none;">
+      <label>Box</label>
+      <div class="ac-wrap">
+        <input type="text" id="atb-box-search" placeholder="Search box number or label…"
+          oninput="searchBoxesAC(this.value)" autocomplete="off">
+        <div id="atb-box-suggestions" class="ac-list"></div>
+        <div id="atb-box-selected-badge"
+          style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);
+                 border:1px solid var(--accent);font-family:var(--mono);font-size:12px;
+                 color:var(--accent);align-items:center;gap:8px;">
+          <span id="atb-box-selected-name"></span>
+          <button onclick="clearATBBox()" style="background:none;border:none;color:var(--muted);
+            cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Identify by photo (shown only when vision backend is configured) -->
     <div id="atb-identify-section" style="display:none;margin-bottom:16px;">
@@ -2155,8 +2179,31 @@ async function handleIdentifyPhoto(input) {
 // ── Add Item to Box ────────────────────────────────────────────────────────
 let atbPendingPhotos = []; // File objects staged before the item is saved
 
+let lastUsedBoxId = null; // persists across quick-add calls
+
 function openAddToBoxModal(boxId) {
+  // Called from box detail page — box is known, hide box selector
   addToBoxId = boxId;
+  lastUsedBoxId = boxId;
+  document.getElementById('atb-box-field').style.display = 'none';
+  resetATBModal();
+}
+
+function openQuickAddItem() {
+  // Called from topbar — box unknown, show box selector
+  addToBoxId = lastUsedBoxId; // pre-fill with last used box if available
+  document.getElementById('atb-box-field').style.display = 'block';
+  // Pre-fill box selector if we have a last-used box
+  if (lastUsedBoxId) {
+    const box = (window._lastBoxes || []).find(b => b.id === lastUsedBoxId);
+    if (box) setATBBox(box.id, `BOX ${box.box_number}${box.label ? ' · ' + box.label : ''}`);
+  } else {
+    clearATBBox();
+  }
+  resetATBModal();
+}
+
+function resetATBModal() {
   atbPendingPhotos = [];
   document.getElementById('atb-search').value = '';
   document.getElementById('atb-item-id').value = '';
@@ -2175,9 +2222,69 @@ function openAddToBoxModal(boxId) {
   }
   document.getElementById('atb-suggestions').classList.remove('open');
   document.getElementById('atb-cat-suggestions').classList.remove('open');
-  setATBSelection(null, null, null); // reset selected-item badge
+  document.getElementById('atb-box-suggestions').classList.remove('open');
+  setATBSelection(null, null, null);
   openModal('modal-atb');
 }
+
+function setATBBox(id, label) {
+  addToBoxId = id;
+  lastUsedBoxId = id;
+  document.getElementById('atb-box-selected-name').textContent = label;
+  document.getElementById('atb-box-selected-badge').style.display = 'flex';
+  document.getElementById('atb-box-search').style.display = 'none';
+  document.getElementById('atb-box-suggestions').classList.remove('open');
+}
+
+function clearATBBox() {
+  addToBoxId = null;
+  document.getElementById('atb-box-search').value = '';
+  document.getElementById('atb-box-search').style.display = '';
+  document.getElementById('atb-box-selected-badge').style.display = 'none';
+  document.getElementById('atb-box-search').focus();
+}
+
+async function searchBoxesAC(q) {
+  const list = document.getElementById('atb-box-suggestions');
+  if (!q.trim()) { list.classList.remove('open'); return; }
+  // Search from cached boxes list first, fall back to API
+  let boxes = window._lastBoxes || [];
+  const lq = q.toLowerCase();
+  let filtered = boxes.filter(b =>
+    String(b.box_number).includes(q) ||
+    (b.label || '').toLowerCase().includes(lq) ||
+    (b.room_name || '').toLowerCase().includes(lq)
+  );
+  if (!filtered.length) {
+    // Fetch fresh if nothing cached
+    boxes = await api('/api/boxes');
+    window._lastBoxes = boxes;
+    filtered = boxes.filter(b =>
+      String(b.box_number).includes(q) ||
+      (b.label || '').toLowerCase().includes(lq) ||
+      (b.room_name || '').toLowerCase().includes(lq)
+    );
+  }
+  list.innerHTML = '';
+  filtered.slice(0, 10).forEach(b => {
+    const opt = document.createElement('div');
+    opt.className = 'ac-item';
+    opt.dataset.boxId = b.id;
+    opt.dataset.boxLabel = `BOX ${b.box_number}${b.label ? ' · ' + b.label : ''}`;
+    opt.innerHTML = `<span><strong>BOX ${b.box_number}</strong>${b.label ? ' · ' + esc(b.label) : ''}</span><small>${esc(b.room_name || '')}</small>`;
+    list.appendChild(opt);
+  });
+  if (list.children.length) list.classList.add('open');
+  else list.classList.remove('open');
+}
+
+// Delegated listener for box search suggestions
+document.getElementById('atb-box-suggestions').addEventListener('mousedown', e => e.preventDefault());
+document.getElementById('atb-box-suggestions').addEventListener('click', e => {
+  const item = e.target.closest('.ac-item');
+  if (!item) return;
+  setATBBox(parseInt(item.dataset.boxId), item.dataset.boxLabel);
+});
 
 // Show/hide the "selected item" badge and category field
 function setATBSelection(id, name, cat) {
@@ -2294,6 +2401,9 @@ async function uploadPendingPhotos(itemId) {
 }
 
 async function confirmAddToBox() {
+  // Validate box selected (required in quick-add mode)
+  if (!addToBoxId) { toast('Select a box first', true); return; }
+
   let item_id = document.getElementById('atb-item-id').value;
   const qty = parseInt(document.getElementById('atb-qty').value) || 1;
   const notes = document.getElementById('atb-notes').value.trim();
@@ -2317,8 +2427,17 @@ async function confirmAddToBox() {
     method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
   });
   closeModal('modal-atb');
-  toast(`Item added${photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : ''}`);
-  openBoxDetail(addToBoxId);
+  const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
+  toast(`Item added${photoMsg}`);
+
+  // If opened from box detail, refresh it. Otherwise offer to go to the box.
+  const boxField = document.getElementById('atb-box-field');
+  if (boxField.style.display !== 'none') {
+    // Quick-add mode — stay on current panel, ready for next item
+    // but keep last-used box so next quick-add pre-fills it
+  } else {
+    openBoxDetail(addToBoxId);
+  }
 }
 
 // ── Items ──────────────────────────────────────────────────────────────────
