@@ -874,12 +874,29 @@ def add_item_to_box(box_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            # Check for existing entry with the same item and notes in this box.
+            # If found, increment the quantity instead of inserting a duplicate.
             cur.execute(
-                "INSERT INTO box_items (box_id, item_id, quantity, notes) VALUES (%s,%s,%s,%s)",
-                (box_id, item_id, quantity, notes)
+                "SELECT id, quantity FROM box_items "
+                "WHERE box_id=%s AND item_id=%s AND (notes=%s OR (notes IS NULL AND %s IS NULL))",
+                (box_id, item_id, notes, notes)
             )
-            conn.commit()
-            return jsonify({"ok": True, "id": cur.lastrowid}), 201
+            existing = cur.fetchone()
+            if existing:
+                new_qty = existing["quantity"] + quantity
+                cur.execute(
+                    "UPDATE box_items SET quantity=%s WHERE id=%s",
+                    (new_qty, existing["id"])
+                )
+                conn.commit()
+                return jsonify({"ok": True, "id": existing["id"], "incremented": True, "quantity": new_qty}), 200
+            else:
+                cur.execute(
+                    "INSERT INTO box_items (box_id, item_id, quantity, notes) VALUES (%s,%s,%s,%s)",
+                    (box_id, item_id, quantity, notes)
+                )
+                conn.commit()
+                return jsonify({"ok": True, "id": cur.lastrowid, "incremented": False}), 201
     finally:
         conn.close()
 

@@ -581,14 +581,21 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   outline: 2px dashed var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--surface2));
 }
+/* Whole room-row lights up when dragging over an empty room header */
+.room-row.drag-over {
+  outline: 2px dashed var(--accent);
+}
 .room-row.drag-over > .room-row-header {
-  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+.room-row.drag-over .room-row-name {
+  color: var(--accent);
 }
 .room-box-wrap[draggable="true"] {
   cursor: grab;
 }
 .room-box-wrap[draggable="true"]:active { cursor: grabbing; }
-.room-box-wrap.dragging { opacity: 0.4; }
+.room-box-wrap.dragging { opacity: 0.4; pointer-events: none; }
 
 /* ── Category list ── */
 .cat-row {
@@ -625,13 +632,14 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 }
 .qty-btn:active { background: var(--accent); color: #000; border-color: var(--accent); }
 .qty-cell {
-  background: var(--surface2); border: 1px solid var(--border);
-  color: var(--text); font-family: var(--mono); font-size: 13px;
-  text-align: center; padding: 7px 2px; cursor: pointer;
-  transition: all .12s;
+  background: var(--surface2); border-bottom: 1px solid var(--border);
+  color: var(--text); font-family: var(--mono); font-size: 14px;
+  text-align: center; padding: 8px 4px; cursor: pointer;
+  transition: background .1s, color .1s;
 }
-.qty-cell:hover, .qty-cell:active { background: var(--accent); color: #000; border-color: var(--accent); }
-.qty-cell.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+.qty-cell:last-child { border-bottom: none; }
+.qty-cell:hover, .qty-cell:active { background: var(--surface); color: var(--accent); }
+.qty-cell.selected { background: var(--accent); color: #000; font-weight: bold; }
 
 /* ── Inline qty controls in item rows ── */
 .item-qty-control {
@@ -657,17 +665,24 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
   background: var(--surface2); border: 1px solid var(--accent);
   z-index: 200; display: none;
-  grid-template-columns: repeat(5,1fr); gap: 2px;
-  padding: 4px; min-width: 160px;
+  flex-direction: column;
+  width: 60px;
+  /* Show 6 rows: each row ~30px */
+  max-height: 180px; overflow-y: auto;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
 }
-.item-qty-dropdown.open { display: grid; }
+.item-qty-dropdown.open { display: flex; }
 .item-qty-option {
-  font-family: var(--mono); font-size: 13px; text-align: center;
-  padding: 6px 4px; cursor: pointer; background: var(--surface);
-  border: 1px solid var(--border); transition: all .1s;
+  font-family: var(--mono); font-size: 14px; text-align: center;
+  padding: 7px 4px; cursor: pointer; background: var(--surface);
+  border-bottom: 1px solid var(--border); flex-shrink: 0;
+  transition: background .1s, color .1s;
+  scroll-snap-align: start;
 }
-.item-qty-option:hover, .item-qty-option:active,
-.item-qty-option.selected { background: var(--accent); color: #000; border-color: var(--accent); }
+.item-qty-option:last-child { border-bottom: none; }
+.item-qty-option:hover, .item-qty-option:active { background: var(--surface2); color: var(--accent); }
+.item-qty-option.selected { background: var(--accent); color: #000; font-weight: bold; }
 
 /* ── Identify suggestion chips ── */
 .suggest-chip {
@@ -1028,8 +1043,8 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       </div>
     </div>
 
-    <div class="field" id="atb-category-field">
-      <label>Category <span style="color:var(--muted);font-size:11px;">(new items only)</span></label>
+    <div class="field" id="atb-category-field" style="display:none;">
+      <label>Category</label>
       <div class="ac-wrap">
         <input type="text" id="atb-category" placeholder="e.g. Kitchen"
           oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off"
@@ -1168,7 +1183,7 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
         <button type="button" class="qty-btn" id="edit-qty-plus">+</button>
       </div>
       <div id="edit-qty-grid" style="display:none;margin-top:6px;">
-        <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;" id="edit-qty-cells"></div>
+        <div id="edit-qty-cells" style="display:flex;flex-direction:column;max-height:180px;overflow-y:auto;border:1px solid var(--border);"></div>
       </div>
     </div>
 
@@ -1870,11 +1885,12 @@ async function openBoxDetail(id) {
       numEl.dataset.id = i.box_item_id;
       numEl.dataset.qty = i.quantity;
 
-      // Dropdown grid 0–99
+      // Dropdown: scrollable list 0–999, 6 rows visible, centered on current qty
       const dropdown = document.createElement('div');
       dropdown.className = 'item-qty-dropdown';
       dropdown.id = `qty-dd-${i.box_item_id}`;
-      for (let n = 0; n <= 99; n++) {
+      const maxQty = Math.max(999, i.quantity + 50);
+      for (let n = 0; n <= maxQty; n++) {
         const opt = document.createElement('div');
         opt.className = 'item-qty-option' + (n === i.quantity ? ' selected' : '');
         opt.textContent = n;
@@ -2013,21 +2029,34 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
   } else if (action === 'qty-minus') {
     const numEl = btn.closest('.item-qty-control').querySelector('.item-qty-num');
     const cur = parseInt(numEl.textContent) || 0;
-    const next = Math.max(0, cur - 1);
-    await patchQty(btn.dataset.id, next, numEl);
+    if (cur <= 1) {
+      if (confirm('Set quantity to 0? This will remove the item from the box.')) {
+        await api(`/api/box-items/${btn.dataset.id}`, { method: 'DELETE' });
+        toast('Item removed');
+        openBoxDetail(currentBoxId);
+      }
+    } else {
+      await patchQty(btn.dataset.id, cur - 1, numEl);
+    }
 
   } else if (action === 'qty-plus') {
     const numEl = btn.closest('.item-qty-control').querySelector('.item-qty-num');
     const cur = parseInt(numEl.textContent) || 0;
-    const next = Math.min(99, cur + 1);
-    await patchQty(btn.dataset.id, next, numEl);
+    await patchQty(btn.dataset.id, cur + 1, numEl); // no upper cap
 
   } else if (action === 'qty-pick') {
-    // Toggle the dropdown
     const dd = document.getElementById(`qty-dd-${btn.dataset.id}`);
     const wasOpen = dd.classList.contains('open');
     document.querySelectorAll('.item-qty-dropdown.open').forEach(d => d.classList.remove('open'));
-    if (!wasOpen) dd.classList.add('open');
+    if (!wasOpen) {
+      dd.classList.add('open');
+      // Scroll so the selected option is centered in the 6-row viewport
+      const selected = dd.querySelector('.item-qty-option.selected');
+      if (selected) {
+        const rowH = selected.offsetHeight || 30;
+        dd.scrollTop = Math.max(0, selected.offsetTop - rowH * 2);
+      }
+    }
 
   } else if (action === 'qty-select') {
     e.stopPropagation();
@@ -2115,12 +2144,23 @@ function showItemPhotoOverlay(url, itemId) {
 }
 
 async function patchQty(boxItemId, newQty, numEl) {
-  // Optimistic update of the display number
   numEl.textContent = newQty;
   numEl.dataset.qty = newQty;
-  // Update selected state in dropdown
   const dd = document.getElementById(`qty-dd-${boxItemId}`);
   if (dd) {
+    // Extend dropdown range if needed
+    const maxRendered = parseInt(dd.lastElementChild?.dataset.val || 0);
+    if (newQty > maxRendered) {
+      for (let n = maxRendered + 1; n <= newQty + 50; n++) {
+        const opt = document.createElement('div');
+        opt.className = 'item-qty-option';
+        opt.textContent = n;
+        opt.dataset.action = 'qty-select';
+        opt.dataset.id = boxItemId;
+        opt.dataset.val = n;
+        dd.appendChild(opt);
+      }
+    }
     dd.querySelectorAll('.item-qty-option').forEach(o => {
       o.classList.toggle('selected', parseInt(o.dataset.val) === newQty);
     });
@@ -2148,12 +2188,14 @@ function openEditBoxItemModal(boxItemId, qty, notes, name) {
   document.getElementById('edit-item-notes').value = notes || '';
   document.getElementById('edit-qty-grid').style.display = 'none';
 
-  // Build qty number grid 0–99
+  // Build scrollable qty list centered on current value
   const cells = document.getElementById('edit-qty-cells');
   cells.innerHTML = '';
-  for (let n = 0; n <= 99; n++) {
+  const curQty = parseInt(qty) || 0;
+  const maxQ = Math.max(999, curQty + 50);
+  for (let n = 0; n <= maxQ; n++) {
     const c = document.createElement('div');
-    c.className = 'qty-cell' + (n === parseInt(qty) ? ' selected' : '');
+    c.className = 'qty-cell' + (n === curQty ? ' selected' : '');
     c.textContent = n;
     c.addEventListener('click', () => {
       document.getElementById('edit-item-qty').value = n;
@@ -2164,20 +2206,29 @@ function openEditBoxItemModal(boxItemId, qty, notes, name) {
     cells.appendChild(c);
   }
 
-  // Minus / plus buttons in modal
+  // Minus / plus buttons in modal — no arbitrary cap
   document.getElementById('edit-qty-minus').onclick = () => {
     const inp = document.getElementById('edit-item-qty');
-    inp.value = Math.max(0, (parseInt(inp.value)||0) - 1);
+    const cur = parseInt(inp.value) || 0;
+    inp.value = Math.max(0, cur - 1);
   };
   document.getElementById('edit-qty-plus').onclick = () => {
     const inp = document.getElementById('edit-item-qty');
-    inp.value = Math.min(99, (parseInt(inp.value)||0) + 1);
+    inp.value = (parseInt(inp.value) || 0) + 1;
   };
 
-  // Tap the number to toggle the grid
+  // Tap the number to toggle the scrollable list; center on selected value
   document.getElementById('edit-item-qty').addEventListener('click', () => {
     const grid = document.getElementById('edit-qty-grid');
-    grid.style.display = grid.style.display === 'none' ? 'block' : 'none';
+    const isHidden = grid.style.display === 'none';
+    grid.style.display = isHidden ? 'block' : 'none';
+    if (isHidden) {
+      const sel = cells.querySelector('.qty-cell.selected');
+      if (sel) {
+        const rowH = sel.offsetHeight || 34;
+        cells.scrollTop = Math.max(0, sel.offsetTop - rowH * 2);
+      }
+    }
   }, { once: false });
 
   // Remove button wired to box item id
@@ -2196,6 +2247,14 @@ async function saveEditBoxItem() {
   const boxItemId = document.getElementById('edit-item-box-item-id').value;
   const qty = parseInt(document.getElementById('edit-item-qty').value) || 0;
   const notes = document.getElementById('edit-item-notes').value.trim();
+  if (qty === 0) {
+    if (!confirm('Set quantity to 0? This will remove the item from the box.')) return;
+    closeModal('modal-edit-item');
+    await api(`/api/box-items/${boxItemId}`, { method: 'DELETE' });
+    toast('Item removed');
+    openBoxDetail(currentBoxId);
+    return;
+  }
   await api(`/api/box-items/${boxItemId}`, {
     method: 'PUT',
     body: JSON.stringify({ quantity: qty, notes })
@@ -2545,16 +2604,18 @@ async function showInitialItemSuggestions() {
 }
 
 async function searchItemsAC(q) {
-  // Don't search if an item is already selected
   if (document.getElementById('atb-item-id').value) return;
   const list = document.getElementById('atb-suggestions');
   if (!q.trim()) {
     showInitialItemSuggestions();
+    document.getElementById('atb-category-field').style.display = 'none';
     return;
   }
   const items = await api(`/api/items?q=${encodeURIComponent(q)}`);
   const sorted = sortByRecency(items, recentItemIds, 'id');
   renderItemSuggestions(sorted, list, true, q);
+  // No existing matches — user is probably creating new, reveal category field
+  if (!items.length) showATBCategoryField();
 }
 
 // Single delegated listener on the suggestions list — avoids all inline-onclick quoting issues
@@ -2568,6 +2629,7 @@ document.getElementById('atb-suggestions').addEventListener('click', e => {
     // User wants to create a new item with the typed name
     document.getElementById('atb-item-id').value = '';
     document.getElementById('atb-suggestions').classList.remove('open');
+    showATBCategoryField(); // Show category for new item
   } else {
     trackRecentItem(parseInt(item.dataset.itemId));
     setATBSelection(item.dataset.itemId, item.dataset.itemName, item.dataset.itemCat);
@@ -2640,12 +2702,16 @@ async function confirmAddToBox() {
     await uploadPendingPhotos(item_id);
   }
 
-  await api(`/api/boxes/${addToBoxId}/items`, {
+  const result = await api(`/api/boxes/${addToBoxId}/items`, {
     method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
   });
   closeModal('modal-atb');
   const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
-  toast(`Item added${photoMsg}`);
+  if (result.incremented) {
+    toast(`Quantity updated to ${result.quantity}${photoMsg}`);
+  } else {
+    toast(`Item added${photoMsg}`);
+  }
 
   // If opened from box detail, refresh it. Otherwise offer to go to the box.
   const boxField = document.getElementById('atb-box-field');
