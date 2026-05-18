@@ -424,6 +424,55 @@ tr:active td { background: var(--surface2); }
 /* ── Misc ── */
 .empty { color: var(--muted); font-family: var(--mono); font-size: 13px; padding: 40px 16px; text-align: center; }
 
+/* ── Expandable item rows ── */
+tr.item-main-row { cursor: pointer; }
+tr.item-main-row:hover td { background: var(--surface2); }
+tr.item-main-row.expanded td { background: var(--surface2); border-bottom: none; }
+tr.item-expand-row td {
+  background: var(--surface2); padding: 0;
+  border-bottom: 2px solid var(--accent);
+}
+tr.item-expand-row .expand-inner {
+  padding: 10px 16px 14px 32px; display: flex; flex-direction: column; gap: 6px;
+}
+.expand-box-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 14px;
+}
+.expand-box-num {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--accent); color: #000; padding: 1px 6px; flex-shrink: 0;
+}
+.expand-box-label { font-weight: 700; }
+.expand-box-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.sort-active { color: var(--accent); }
+td.filter-active { color: var(--accent2); cursor: pointer; }
+
+/* ── Category list ── */
+.cat-row {
+  background: var(--surface); border: 1px solid var(--border);
+  margin-bottom: 6px; overflow: hidden;
+}
+.cat-row-header {
+  display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  cursor: pointer; transition: background .12s;
+}
+.cat-row-header:hover { background: var(--surface2); }
+.cat-row-header.expanded { background: var(--surface2); border-bottom: 1px solid var(--border); }
+.cat-row-name { font-size: 17px; font-weight: 700; flex: 1; }
+.cat-row-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cat-chevron { color: var(--muted); font-size: 13px; transition: transform .2s; flex-shrink: 0; }
+.cat-chevron.open { transform: rotate(90deg); }
+.cat-expand { display: none; padding: 10px 14px 14px 28px; }
+.cat-expand.open { display: block; }
+.cat-item-row {
+  display: flex; align-items: center; gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.cat-item-row:last-child { border-bottom: none; }
+.cat-item-name { font-size: 14px; font-weight: 700; min-width: 140px; }
+.cat-item-boxes { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; }
+
 /* ── Qty stepper ── */
 .qty-btn {
   background: var(--surface2); border: 1px solid var(--border);
@@ -576,6 +625,7 @@ tr:active td { background: var(--surface2); }
   <button id="sidebar-boxes" class="active" onclick="showPanel('boxes')">📦 Boxes</button>
   <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
   <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
+  <button id="sidebar-categories" onclick="showPanel('categories')">🏷️ Categories</button>
 </nav>
 
 <div class="content" id="mainContent">
@@ -621,17 +671,42 @@ tr:active td { background: var(--surface2); }
       <h2>Items</h2>
       <button class="btn btn-primary btn-sm" onclick="openItemModal()">+ Add</button>
     </div>
-    <div style="margin-bottom:12px;">
-      <input id="itemSearch" type="search" placeholder="Filter…"
-        oninput="filterItems(this.value)"
-        style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:14px;padding:8px 10px;width:100%;max-width:280px;outline:none;-webkit-appearance:none;border-radius:0;">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+      <input id="itemSearch" type="search" placeholder="Filter by name…"
+        oninput="applyItemFilters()"
+        style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:14px;padding:8px 10px;width:100%;max-width:220px;outline:none;-webkit-appearance:none;border-radius:0;">
+      <div id="item-cat-filter-badge" style="display:none;background:var(--surface2);border:1px solid var(--accent);color:var(--accent);font-family:var(--mono);font-size:12px;padding:5px 10px;display:none;align-items:center;gap:6px;">
+        <span id="item-cat-filter-label"></span>
+        <button onclick="clearItemCatFilter()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;">✕</button>
+      </div>
     </div>
     <div class="tbl-wrap">
-      <table>
-        <thead><tr><th>Name</th><th>Category</th><th>Boxes</th><th></th></tr></thead>
+      <table id="items-table">
+        <thead>
+          <tr>
+            <th class="sortable-th" data-sort="name" onclick="setItemSort('name')" style="cursor:pointer;user-select:none;">
+              Name <span id="sort-name-icon">↕</span>
+            </th>
+            <th class="sortable-th" data-sort="category" onclick="setItemSort('category')" style="cursor:pointer;user-select:none;">
+              Category <span id="sort-cat-icon">↕</span>
+              <span style="font-size:10px;color:var(--muted);margin-left:4px;" title="Click to filter by category">▼</span>
+            </th>
+            <th>Boxes</th>
+            <th></th>
+          </tr>
+        </thead>
         <tbody id="items-tbody"></tbody>
       </table>
     </div>
+  </div>
+
+  <!-- CATEGORIES -->
+  <div id="panel-categories" class="panel">
+    <div class="panel-hdr">
+      <h2>Categories</h2>
+      <button class="btn btn-primary btn-sm" onclick="openCategoryModal()">+ Add</button>
+    </div>
+    <div id="categories-list"></div>
   </div>
 
   <!-- SEARCH RESULTS -->
@@ -652,6 +727,9 @@ tr:active td { background: var(--surface2); }
   </button>
   <button id="tab-items" onclick="showPanel('items')">
     <span class="icon">📋</span>Items
+  </button>
+  <button id="tab-categories" onclick="showPanel('categories')">
+    <span class="icon">🏷️</span>Categories
   </button>
 </div>
 
@@ -820,6 +898,44 @@ tr:active td { background: var(--surface2); }
   </div>
 </div>
 
+<!-- Category modal (add/rename) -->
+<div id="modal-category" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-cat-title">Add Category</h3>
+    <input type="hidden" id="cat-editing-id">
+    <div class="field">
+      <label>Category Name</label>
+      <input type="text" id="cat-name-input" placeholder="e.g. Kitchen">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-category')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCategory()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category delete + reassign modal -->
+<div id="modal-cat-delete" class="modal-backdrop">
+  <div class="modal">
+    <h3>Delete Category</h3>
+    <input type="hidden" id="cat-delete-id">
+    <p style="margin-bottom:16px;color:var(--text);font-size:15px;">
+      Move items currently in <strong id="cat-delete-name" style="color:var(--accent);"></strong> to:
+    </p>
+    <div class="field">
+      <label>Reassign items to</label>
+      <select id="cat-reassign-select"
+        style="background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:16px;padding:10px 12px;width:100%;-webkit-appearance:none;border-radius:0;">
+        <option value="">(none — remove category from items)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-cat-delete')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmDeleteCategory()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <!-- Edit box-item modal -->
 <div id="modal-edit-item" class="modal-backdrop">
   <div class="modal">
@@ -934,6 +1050,7 @@ function showPanel(name) {
   if (name === 'boxes') loadBoxes();
   else if (name === 'rooms') loadRooms();
   else if (name === 'items') loadItems();
+  else if (name === 'categories') loadCategories();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -1729,37 +1846,180 @@ async function confirmAddToBox() {
 }
 
 // ── Items ──────────────────────────────────────────────────────────────────
+// ── Items state ──────────────────────────────────────────────────────────────
+let itemSort = 'name';      // 'name' | 'category'
+let itemSortDir = 1;        // 1=asc, -1=desc
+let itemCatFilter = null;   // category name string or null
+let expandedItemId = null;
+
 async function loadItems() {
   allItems = await api('/api/items');
-  renderItems(allItems);
+  applyItemFilters();
+}
+
+function setItemSort(field) {
+  if (itemSort === field) {
+    itemSortDir *= -1;
+  } else {
+    itemSort = field;
+    itemSortDir = 1;
+  }
+  // Update header icons
+  document.getElementById('sort-name-icon').textContent = '↕';
+  document.getElementById('sort-cat-icon').textContent = '↕';
+  const icon = itemSort === 'name' ? 'sort-name-icon' : 'sort-cat-icon';
+  document.getElementById(icon).textContent = itemSortDir === 1 ? '↑' : '↓';
+  document.getElementById(icon).classList.add('sort-active');
+  applyItemFilters();
+}
+
+function setItemCatFilter(catName) {
+  itemCatFilter = catName;
+  const badge = document.getElementById('item-cat-filter-badge');
+  if (catName) {
+    document.getElementById('item-cat-filter-label').textContent = '🏷️ ' + catName;
+    badge.style.display = 'flex';
+  } else {
+    badge.style.display = 'none';
+  }
+  applyItemFilters();
+}
+
+function clearItemCatFilter() { setItemCatFilter(null); }
+
+function applyItemFilters() {
+  const q = (document.getElementById('itemSearch').value || '').toLowerCase().trim();
+  let items = allItems.slice();
+  // Text filter
+  if (q) items = items.filter(i =>
+    i.name.toLowerCase().includes(q) || (i.category||'').toLowerCase().includes(q)
+  );
+  // Category filter
+  if (itemCatFilter) items = items.filter(i => (i.category||'') === itemCatFilter);
+  // Sort
+  items.sort((a, b) => {
+    const av = (itemSort === 'name' ? a.name : (a.category||'zzz')).toLowerCase();
+    const bv = (itemSort === 'name' ? b.name : (b.category||'zzz')).toLowerCase();
+    return av < bv ? -itemSortDir : av > bv ? itemSortDir : 0;
+  });
+  renderItems(items);
 }
 
 function renderItems(items) {
   const tbody = document.getElementById('items-tbody');
+  tbody.innerHTML = '';
   if (!items.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">No items yet.</td></tr>'; return;
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">No items yet.</td></tr>';
+    return;
   }
-  tbody.innerHTML = items.map(i => `
-    <tr>
-      <td>${esc(i.name)}</td>
-      <td><span class="chip cat">${esc(i.category||'—')}</span></td>
-      <td class="mono" style="font-family:var(--mono);font-size:12px;">
-        ${i.in_boxes ? i.in_boxes.split(',').map(n=>`<span class="badge">#${n}</span>`).join('') : '<span style="color:var(--muted)">—</span>'}
-      </td>
-      <td>
-        <button class="btn-icon" onclick="openItemModal(${i.id})">✏️</button>
-        <button class="btn-icon danger" onclick="deleteItem(${i.id})">🗑</button>
-      </td>
-    </tr>
-  `).join('');
+  items.forEach(i => {
+    // Main row
+    const tr = document.createElement('tr');
+    tr.className = 'item-main-row';
+    tr.dataset.itemId = i.id;
+
+    const nameCell = document.createElement('td');
+    nameCell.textContent = i.name;
+
+    const catCell = document.createElement('td');
+    if (i.category) {
+      const chip = document.createElement('span');
+      chip.className = 'chip cat';
+      chip.style.cursor = 'pointer';
+      chip.title = 'Filter by this category';
+      chip.textContent = i.category;
+      chip.addEventListener('click', e => {
+        e.stopPropagation();
+        setItemCatFilter(itemCatFilter === i.category ? null : i.category);
+      });
+      catCell.appendChild(chip);
+    } else {
+      catCell.innerHTML = '<span style="color:var(--muted)">—</span>';
+    }
+
+    const boxCell = document.createElement('td');
+    boxCell.style.cssText = 'font-family:var(--mono);font-size:12px;';
+    if (i.in_boxes) {
+      i.in_boxes.split(',').forEach(n => {
+        const b = document.createElement('span');
+        b.className = 'badge';
+        b.textContent = '#' + n;
+        boxCell.appendChild(b);
+      });
+    } else {
+      boxCell.innerHTML = '<span style="color:var(--muted)">—</span>';
+    }
+
+    const actCell = document.createElement('td');
+    actCell.style.whiteSpace = 'nowrap';
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-icon'; editBtn.textContent = '✏️';
+    editBtn.addEventListener('click', e => { e.stopPropagation(); openItemModal(i.id); });
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-icon danger'; delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); deleteItem(i.id); });
+    actCell.appendChild(editBtn); actCell.appendChild(delBtn);
+
+    tr.appendChild(nameCell); tr.appendChild(catCell);
+    tr.appendChild(boxCell); tr.appendChild(actCell);
+
+    // Click row to expand
+    tr.addEventListener('click', () => toggleItemExpand(i.id, tr));
+
+    tbody.appendChild(tr);
+
+    // Expand row (hidden by default)
+    const expandTr = document.createElement('tr');
+    expandTr.className = 'item-expand-row';
+    expandTr.id = `item-expand-${i.id}`;
+    expandTr.style.display = 'none';
+    const expandTd = document.createElement('td');
+    expandTd.colSpan = 4;
+    const inner = document.createElement('div');
+    inner.className = 'expand-inner';
+    inner.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">Loading…</span>';
+    expandTd.appendChild(inner);
+    expandTr.appendChild(expandTd);
+    tbody.appendChild(expandTr);
+  });
 }
 
-function filterItems(q) {
-  if (!q) { renderItems(allItems); return; }
-  const lq = q.toLowerCase();
-  renderItems(allItems.filter(i =>
-    i.name.toLowerCase().includes(lq) || (i.category||'').toLowerCase().includes(lq)
-  ));
+async function toggleItemExpand(itemId, mainTr) {
+  const expandTr = document.getElementById(`item-expand-${itemId}`);
+  const isOpen = expandTr.style.display !== 'none';
+  // Close all open rows first
+  document.querySelectorAll('.item-expand-row').forEach(r => r.style.display = 'none');
+  document.querySelectorAll('.item-main-row').forEach(r => r.classList.remove('expanded'));
+
+  if (isOpen) return; // was open, just close
+
+  mainTr.classList.add('expanded');
+  expandTr.style.display = '';
+  const inner = expandTr.querySelector('.expand-inner');
+
+  try {
+    const item = await api(`/api/items/${itemId}`);
+    if (!item.boxes || !item.boxes.length) {
+      inner.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">Not in any box.</span>';
+      return;
+    }
+    inner.innerHTML = '';
+    item.boxes.forEach(b => {
+      const row = document.createElement('div');
+      row.className = 'expand-box-row';
+      row.innerHTML = `
+        <span class="expand-box-num">BOX ${b.box_number}</span>
+        <span class="expand-box-label">${esc(b.label || 'Unlabelled')}</span>
+        <span class="expand-box-meta">
+          ${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'}
+          · qty: <strong style="color:var(--accent)">${b.quantity}</strong>
+          ${b.notes ? `· ${esc(b.notes)}` : ''}
+        </span>`;
+      inner.appendChild(row);
+    });
+  } catch(e) {
+    inner.innerHTML = `<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`;
+  }
 }
 
 function openItemModal(id = null) {
@@ -1980,13 +2240,7 @@ function updateLabelPreview() {
     rightDiv.appendChild(bodyEl);
   }
 
-  if (box.room_name) {
-    const roomEl = document.createElement('div');
-    roomEl.className = 'label-room';
-    roomEl.style.fontSize = Math.max(6, bodySize - 1) + 'px';
-    roomEl.textContent = `📍 ${box.room_name}`;
-    rightDiv.appendChild(roomEl);
-  }
+  // Room deliberately omitted from label per user request
 
   target.innerHTML = '';
   target.appendChild(leftDiv);
@@ -2041,6 +2295,160 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.ac-wrap'))
     document.querySelectorAll('.ac-list').forEach(l => l.classList.remove('open'));
 });
+
+// ── Categories panel ───────────────────────────────────────────────────────
+let allCategories = [];
+
+async function loadCategories() {
+  allCategories = await api('/api/categories?counts=1');
+  renderCategories();
+}
+
+function renderCategories() {
+  const list = document.getElementById('categories-list');
+  if (!allCategories.length) {
+    list.innerHTML = '<div class="empty">No categories yet.</div>'; return;
+  }
+  list.innerHTML = '';
+  allCategories.forEach(cat => {
+    const wrap = document.createElement('div');
+    wrap.className = 'cat-row';
+
+    const hdr = document.createElement('div');
+    hdr.className = 'cat-row-header';
+
+    const chevron = document.createElement('span');
+    chevron.className = 'cat-chevron'; chevron.textContent = '▶';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'cat-row-name'; nameEl.textContent = cat.name;
+
+    const countEl = document.createElement('div');
+    countEl.className = 'cat-row-count';
+    countEl.textContent = `${cat.item_count} item${cat.item_count !== 1 ? 's' : ''}`;
+
+    const renameBtn = document.createElement('button');
+    renameBtn.className = 'btn-icon'; renameBtn.textContent = '✏️';
+    renameBtn.title = 'Rename';
+    renameBtn.addEventListener('click', e => { e.stopPropagation(); openCategoryModal(cat.id, cat.name); });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'btn-icon danger'; delBtn.textContent = '🗑';
+    delBtn.title = 'Delete';
+    delBtn.addEventListener('click', e => { e.stopPropagation(); openCatDeleteModal(cat.id, cat.name); });
+
+    hdr.appendChild(chevron); hdr.appendChild(nameEl);
+    hdr.appendChild(countEl); hdr.appendChild(renameBtn); hdr.appendChild(delBtn);
+
+    const expand = document.createElement('div');
+    expand.className = 'cat-expand';
+    expand.id = `cat-expand-${cat.id}`;
+    expand.innerHTML = '<span style="color:var(--muted);font-family:var(--mono);font-size:12px;">Loading…</span>';
+
+    hdr.addEventListener('click', () => toggleCatExpand(cat.id, hdr, chevron, expand));
+    wrap.appendChild(hdr); wrap.appendChild(expand);
+    list.appendChild(wrap);
+  });
+}
+
+async function toggleCatExpand(catId, hdr, chevron, expand) {
+  const isOpen = expand.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.cat-expand.open').forEach(e => e.classList.remove('open'));
+  document.querySelectorAll('.cat-row-header.expanded').forEach(h => h.classList.remove('expanded'));
+  document.querySelectorAll('.cat-chevron.open').forEach(c => c.classList.remove('open'));
+  if (isOpen) return;
+
+  hdr.classList.add('expanded');
+  chevron.classList.add('open');
+  expand.classList.add('open');
+
+  try {
+    const items = await api(`/api/categories/${catId}/items`);
+    if (!items.length) {
+      expand.innerHTML = '<div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:4px 0;">No items in this category.</div>';
+      return;
+    }
+    expand.innerHTML = '';
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'cat-item-row';
+
+      const nameEl = document.createElement('div');
+      nameEl.className = 'cat-item-name'; nameEl.textContent = item.name;
+
+      const boxesEl = document.createElement('div');
+      boxesEl.className = 'cat-item-boxes';
+      if (item.boxes && item.boxes.length) {
+        item.boxes.forEach(b => {
+          const chip = document.createElement('span');
+          chip.className = 'chip';
+          chip.style.cursor = 'pointer';
+          chip.title = (b.label || '') + (b.room_name ? ' · ' + b.room_name : '');
+          chip.textContent = `#${b.box_number} ×${b.quantity}`;
+          chip.addEventListener('click', () => openBoxDetail(b.box_id));
+          boxesEl.appendChild(chip);
+        });
+      } else {
+        boxesEl.innerHTML = '<span style="color:var(--muted);font-size:12px;">Not in any box</span>';
+      }
+
+      row.appendChild(nameEl); row.appendChild(boxesEl);
+      expand.appendChild(row);
+    });
+  } catch(e) {
+    expand.innerHTML = `<span style="color:var(--danger)">Error: ${esc(e.message)}</span>`;
+  }
+}
+
+function openCategoryModal(id = null, name = '') {
+  document.getElementById('cat-editing-id').value = id || '';
+  document.getElementById('modal-cat-title').textContent = id ? 'Rename Category' : 'Add Category';
+  document.getElementById('cat-name-input').value = name;
+  openModal('modal-category');
+}
+
+async function saveCategory() {
+  const name = document.getElementById('cat-name-input').value.trim();
+  if (!name) { toast('Name is required', true); return; }
+  const id = document.getElementById('cat-editing-id').value;
+  try {
+    if (id) {
+      await api(`/api/categories/${id}`, { method: 'PUT', body: JSON.stringify({ name }) });
+      toast('Category renamed');
+    } else {
+      await api('/api/categories', { method: 'POST', body: JSON.stringify({ name }) });
+      toast('Category added');
+    }
+    closeModal('modal-category');
+    await loadCategories();
+    await loadItems(); // refresh items panel too
+  } catch(e) { toast(e.message, true); }
+}
+
+function openCatDeleteModal(catId, catName) {
+  document.getElementById('cat-delete-id').value = catId;
+  document.getElementById('cat-delete-name').textContent = catName;
+  const sel = document.getElementById('cat-reassign-select');
+  sel.innerHTML = '<option value="">(none — remove category from items)</option>';
+  allCategories.filter(c => c.id !== catId).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id; opt.textContent = c.name;
+    sel.appendChild(opt);
+  });
+  openModal('modal-cat-delete');
+}
+
+async function confirmDeleteCategory() {
+  const catId = document.getElementById('cat-delete-id').value;
+  const reassignTo = document.getElementById('cat-reassign-select').value;
+  const qs = reassignTo ? `?reassign_to=${reassignTo}` : '';
+  await api(`/api/categories/${catId}${qs}`, { method: 'DELETE' });
+  closeModal('modal-cat-delete');
+  toast('Category deleted');
+  await loadCategories();
+  await loadItems();
+}
 
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
