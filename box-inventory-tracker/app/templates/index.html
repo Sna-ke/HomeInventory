@@ -406,11 +406,17 @@ tr:active td { background: var(--surface2); }
 /* ── Autocomplete ── */
 .ac-wrap { position: relative; }
 .ac-list {
+  /* Default: absolutely positioned within ac-wrap */
   position: absolute; top: 100%; left: 0; right: 0;
-  background: var(--surface2); border: 1px solid var(--accent);
-  z-index: 300; max-height: 200px; overflow-y: auto; display: none;
+  background: var(--surface); border: 1px solid var(--accent);
+  z-index: 9999; max-height: 200px; overflow-y: auto; display: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
 }
 .ac-list.open { display: block; }
+/* Fixed mode: positioned by JS using getBoundingClientRect */
+.ac-list.fixed-position {
+  position: fixed; left: 0; top: 0; right: auto; width: 0;
+}
 .ac-item {
   padding: 10px 12px; cursor: pointer; font-size: 15px;
   border-bottom: 1px solid var(--border);
@@ -2480,8 +2486,12 @@ function renderBoxSuggestions(boxes, list) {
     opt.innerHTML = `<span><strong>BOX ${b.box_number}</strong>${b.label ? ' · ' + esc(b.label) : ''}</span><small>${esc(b.room_name || '')}</small>`;
     list.appendChild(opt);
   });
-  if (list.children.length) list.classList.add('open');
-  else list.classList.remove('open');
+  if (list.children.length) {
+    positionDropdownFixed(list);
+    list.classList.add('open');
+  } else {
+    list.classList.remove('open');
+  }
 }
 
 function closeAllATBDropdowns() {
@@ -3000,7 +3010,6 @@ async function searchCategories(q, listId) {
   const matches = cats.filter(c => c.name.toLowerCase().includes(q.toLowerCase()));
   const exact = matches.some(c => c.name.toLowerCase() === q.toLowerCase());
 
-  // Build items with data-* to avoid quoting issues in onclick attributes
   list.innerHTML = '';
   matches.forEach(c => {
     const div = document.createElement('div');
@@ -3019,7 +3028,21 @@ async function searchCategories(q, listId) {
     list.appendChild(div);
   }
   if (!list.children.length) { list.classList.remove('open'); return; }
+
+  // Position using fixed coords so it escapes modal overflow clipping
+  positionDropdownFixed(list);
   list.classList.add('open');
+}
+
+function positionDropdownFixed(list) {
+  // Find the input that triggered this list (previousElementSibling of the list)
+  const input = list.previousElementSibling;
+  if (!input) return;
+  const rect = input.getBoundingClientRect();
+  list.classList.add('fixed-position');
+  list.style.top  = (rect.bottom + 2) + 'px';
+  list.style.left = rect.left + 'px';
+  list.style.width = rect.width + 'px';
 }
 
 // Delegated listener for all category suggestion lists
