@@ -919,6 +919,52 @@ def update_box_item(box_item_id):
         conn.close()
 
 
+@app.route("/api/box-items/<int:box_item_id>/move", methods=["POST"])
+def move_box_item(box_item_id):
+    """Move a box_item to a different box, merging if the item already exists there."""
+    data = request.json
+    target_box_id = data.get("target_box_id")
+    if not target_box_id:
+        return jsonify({"error": "target_box_id is required"}), 400
+    target_box_id = int(target_box_id)
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            # Get the item being moved
+            cur.execute("SELECT * FROM box_items WHERE id=%s", (box_item_id,))
+            src = cur.fetchone()
+            if not src:
+                return jsonify({"error": "Not found"}), 404
+            if src["box_id"] == target_box_id:
+                return jsonify({"error": "Already in that box"}), 400
+            # Check if target box already has this item (with same notes)
+            cur.execute(
+                "SELECT id, quantity FROM box_items "
+                "WHERE box_id=%s AND item_id=%s AND (notes=%s OR (notes IS NULL AND %s IS NULL))",
+                (target_box_id, src["item_id"], src["notes"], src["notes"])
+            )
+            existing = cur.fetchone()
+            if existing:
+                # Merge: add qty to existing, delete source
+                cur.execute(
+                    "UPDATE box_items SET quantity=%s WHERE id=%s",
+                    (existing["quantity"] + src["quantity"], existing["id"])
+                )
+                cur.execute("DELETE FROM box_items WHERE id=%s", (box_item_id,))
+                conn.commit()
+                return jsonify({"ok": True, "merged": True})
+            else:
+                # Move: update box_id on source record
+                cur.execute(
+                    "UPDATE box_items SET box_id=%s WHERE id=%s",
+                    (target_box_id, box_item_id)
+                )
+                conn.commit()
+                return jsonify({"ok": True, "merged": False})
+    finally:
+        conn.close()
+
+
 @app.route("/api/box-items/<int:box_item_id>", methods=["DELETE"])
 def remove_box_item(box_item_id):
     conn = get_db()
@@ -1082,7 +1128,7 @@ def compress_image_for_vision(file_bytes: bytes, mime: str) -> tuple[bytes, str]
         return file_bytes, mime
 
 
-def identify_via_anthropic(img_bytes: bytes, mime: str) -> list[str]:
+def identify_via_anthropic(img_bytes: bytes, mime: str, prompt: str = None) -> list[str]:
     import anthropic
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     b64 = base64.standard_b64encode(img_bytes).decode()
@@ -1093,7 +1139,7 @@ def identify_via_anthropic(img_bytes: bytes, mime: str) -> list[str]:
             "role": "user",
             "content": [
                 {"type": "image", "source": {"type": "base64", "media_type": mime, "data": b64}},
-                {"type": "text", "text": IDENTIFY_PROMPT},
+                {"type": "text", "text": prompt or IDENTIFY_PROMPT},
             ],
         }],
     )
@@ -1106,14 +1152,14 @@ def identify_via_anthropic(img_bytes: bytes, mime: str) -> list[str]:
     return json.loads(raw)
 
 
-def identify_via_ollama(img_bytes: bytes, mime: str) -> list[str]:
+def identify_via_ollama(img_bytes: bytes, mime: str, prompt: str = None) -> list[str]:
     import json
     b64 = base64.standard_b64encode(img_bytes).decode()
     resp = http_requests.post(
         f"{OLLAMA_URL}/api/generate",
         json={
             "model": OLLAMA_MODEL,
-            "prompt": IDENTIFY_PROMPT,
+            "prompt": prompt or IDENTIFY_PROMPT,
             "images": [b64],
             "stream": False,
             "options": {"temperature": 0.1},
@@ -1140,6 +1186,15 @@ def vision_config():
     return jsonify({"backend": backend, "ready": ready, "model": OLLAMA_MODEL if backend == "ollama" else None})
 
 
+BARCODE_PROMPT = (
+    "You are helping label moving boxes. Look at this photo and identify the barcode. "
+    "Look up the product name for that barcode and return ONLY a JSON array of up to 3 "
+    "short product name strings, most specific first. Each name should be 1-5 words suitable "
+    "as a box inventory label (e.g. 'Nespresso Vertuo Next', 'Dyson V11 Vacuum', 'Kindle Paperwhite'). "
+    "No explanations, no markdown — just the raw JSON array. "
+    "If you cannot read a barcode or identify the product, return []."
+)
+
 @app.route("/api/identify", methods=["POST"])
 def identify_item():
     if VISION_BACKEND == "none":
@@ -1148,6 +1203,7 @@ def identify_item():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
+    mode = request.form.get("mode", "image")  # "image" or "barcode"
     f = request.files["file"]
     mime = f.mimetype or mimetypes.guess_type(f.filename or "")[0] or "image/jpeg"
     raw_bytes = f.read()
@@ -1157,13 +1213,14 @@ def identify_item():
 
     img_bytes, img_mime = compress_image_for_vision(raw_bytes, mime)
 
+    prompt = BARCODE_PROMPT if mode == "barcode" else IDENTIFY_PROMPT
     try:
         if VISION_BACKEND == "anthropic":
             if not ANTHROPIC_API_KEY:
                 return jsonify({"error": "Anthropic API key not set"}), 503
-            names = identify_via_anthropic(img_bytes, img_mime)
+            names = identify_via_anthropic(img_bytes, img_mime, prompt)
         elif VISION_BACKEND == "ollama":
-            names = identify_via_ollama(img_bytes, img_mime)
+            names = identify_via_ollama(img_bytes, img_mime, prompt)
         else:
             return jsonify({"error": "Unknown vision backend"}), 503
 

@@ -601,7 +601,7 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   cursor: grab;
 }
 .room-box-wrap[draggable="true"]:active { cursor: grabbing; }
-.room-box-wrap.dragging { opacity: 0.4; pointer-events: none; }
+.room-box-wrap.dragging { opacity: 0.4; }  /* no pointer-events:none — breaks dragend */
 
 /* ── Category list ── */
 .cat-row {
@@ -689,6 +689,24 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 .item-qty-option:last-child { border-bottom: none; }
 .item-qty-option:hover, .item-qty-option:active { background: var(--surface2); color: var(--accent); }
 .item-qty-option.selected { background: var(--accent); color: #000; font-weight: bold; }
+
+/* ── ATB tabs ── */
+.atb-tab {
+  flex: 1; background: var(--surface2); border: none; border-bottom: 2px solid transparent;
+  color: var(--muted); font-family: var(--sans); font-size: 13px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; padding: 8px 4px;
+  cursor: pointer; transition: all .15s;
+}
+.atb-tab:hover { color: var(--text); }
+.atb-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: var(--surface); }
+
+/* ── Move item button ── */
+.btn-move {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-size: 14px; padding: 5px 7px; cursor: pointer; transition: all .15s;
+  font-family: var(--sans); font-weight: 700;
+}
+.btn-move:hover, .btn-move:active { border-color: var(--accent); color: var(--accent); }
 
 /* ── Identify suggestion chips ── */
 .suggest-chip {
@@ -988,11 +1006,43 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 </div>
 
 <!-- Add item to box modal -->
+<!-- Move Item modal -->
+<div id="modal-move-item" class="modal-backdrop">
+  <div class="modal">
+    <h3>Move Item to Another Box</h3>
+    <input type="hidden" id="move-box-item-id">
+    <div id="move-item-info" style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+    <div class="field">
+      <label>Destination Box</label>
+      <div class="ac-wrap">
+        <input type="text" id="move-box-search" placeholder="Search box number or label…"
+          oninput="searchBoxesForMove(this.value)"
+          onfocus="searchBoxesForMove(this.value || ' ')"
+          onblur="setTimeout(()=>document.getElementById('move-box-suggestions').classList.remove('open'),150)"
+          autocomplete="off">
+        <div id="move-box-suggestions" class="ac-list"></div>
+        <div id="move-box-selected-badge"
+          style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);
+                 border:1px solid var(--accent);font-family:var(--mono);font-size:12px;
+                 color:var(--accent);align-items:center;gap:8px;">
+          <span id="move-box-selected-name"></span>
+          <button onclick="clearMoveBox()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
+        </div>
+        <input type="hidden" id="move-box-id">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-move-item')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmMoveItem()">Move</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-atb" class="modal-backdrop">
   <div class="modal">
     <h3>Add Item to Box</h3>
 
-    <!-- Box selector — shown when opened from quick-add, hidden when from box page -->
+    <!-- Box selector (quick-add mode only) -->
     <div id="atb-box-field" class="field" style="display:none;">
       <label>Box</label>
       <div class="ac-wrap">
@@ -1007,68 +1057,95 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
                  border:1px solid var(--accent);font-family:var(--mono);font-size:12px;
                  color:var(--accent);align-items:center;gap:8px;">
           <span id="atb-box-selected-name"></span>
-          <button onclick="clearATBBox()" style="background:none;border:none;color:var(--muted);
-            cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
+          <button onclick="clearATBBox()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
         </div>
       </div>
     </div>
 
-    <!-- Identify by photo (shown only when vision backend is configured) -->
-    <div id="atb-identify-section" style="display:none;margin-bottom:16px;">
-      <div style="background:var(--surface2);border:1px solid var(--border);padding:12px;margin-bottom:10px;">
-        <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">
-          Identify by Photo
+    <!-- Tabs: By Name | By Image | By Barcode -->
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px;">
+      <button class="atb-tab active" data-tab="name" onclick="setATBTab('name')">By Name</button>
+      <button class="atb-tab" data-tab="image" onclick="setATBTab('image')">By Image</button>
+      <button class="atb-tab" data-tab="barcode" onclick="setATBTab('barcode')">By Barcode</button>
+    </div>
+
+    <!-- Tab: By Name -->
+    <div id="atb-tab-name">
+      <div class="field">
+        <label>Item Name</label>
+        <div class="ac-wrap">
+          <input type="text" id="atb-search" placeholder="Search or type item name…"
+            oninput="searchItemsAC(this.value)"
+            onfocus="showInitialItemSuggestions()"
+            onblur="setTimeout(()=>document.getElementById('atb-suggestions').classList.remove('open'),150)"
+            autocomplete="off" autocorrect="off" spellcheck="false">
+          <div id="atb-suggestions" class="ac-list"></div>
+          <input type="hidden" id="atb-item-id">
         </div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button type="button" class="btn btn-secondary btn-sm" id="atb-identify-btn" onclick="triggerIdentifyPhoto()">
-            📷 Take / Choose Photo
-          </button>
-          <span id="atb-identify-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></span>
+        <div id="atb-selected-badge" style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--accent);font-family:var(--mono);font-size:12px;color:var(--accent);align-items:center;gap:8px;">
+          <span id="atb-selected-name"></span>
+          <button onclick="clearATBItem()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
         </div>
-        <input type="file" id="atb-identify-input" accept="image/*" capture="environment" style="display:none"
-          onchange="handleIdentifyPhoto(this)">
-        <!-- Suggestion chips appear here after identification -->
-        <div id="atb-suggestions-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;"></div>
+      </div>
+      <div class="field" id="atb-category-field" style="display:none;">
+        <label>Category</label>
+        <div class="ac-wrap">
+          <input type="text" id="atb-category" placeholder="e.g. Kitchen"
+            oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off"
+            onblur="setTimeout(()=>document.getElementById('atb-cat-suggestions').classList.remove('open'),150)">
+          <div id="atb-cat-suggestions" class="ac-list"></div>
+        </div>
       </div>
     </div>
 
-    <div class="field">
-      <label>Item Name</label>
-      <div class="ac-wrap">
-        <input type="text" id="atb-search" placeholder="Search or type item name…"
-          oninput="searchItemsAC(this.value)"
-          onfocus="showInitialItemSuggestions()"
-          onblur="setTimeout(()=>document.getElementById('atb-suggestions').classList.remove('open'),150)"
-          autocomplete="off" autocorrect="off" spellcheck="false">
-        <div id="atb-suggestions" class="ac-list"></div>
-        <input type="hidden" id="atb-item-id">
+    <!-- Tab: By Image (AI identification) -->
+    <div id="atb-tab-image" style="display:none;">
+      <div id="atb-identify-section">
+        <div id="atb-no-vision-msg" style="display:none;color:var(--muted);font-family:var(--mono);font-size:12px;padding:12px;border:1px solid var(--border);">
+          Vision identification not configured. Set a backend in the app configuration.
+        </div>
+        <div id="atb-vision-ui">
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+            <button type="button" class="btn btn-secondary btn-sm" id="atb-identify-btn" onclick="triggerIdentifyPhoto()">
+              📷 Take / Choose Photo
+            </button>
+            <span id="atb-identify-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></span>
+          </div>
+          <input type="file" id="atb-identify-input" accept="image/*" capture="environment" style="display:none"
+            onchange="handleIdentifyPhoto(this)">
+          <div id="atb-suggestions-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+        </div>
       </div>
-      <div id="atb-selected-badge" style="display:none;margin-top:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--accent);font-family:var(--mono);font-size:12px;color:var(--accent);align-items:center;gap:8px;">
-        <span id="atb-selected-name"></span>
-        <button onclick="clearATBItem()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
-      </div>
-    </div>
-
-    <div class="field" id="atb-category-field" style="display:none;">
-      <label>Category</label>
-      <div class="ac-wrap">
-        <input type="text" id="atb-category" placeholder="e.g. Kitchen"
-          oninput="searchCategories(this.value, 'atb-cat-suggestions')" autocomplete="off"
-          onblur="setTimeout(()=>document.getElementById('atb-cat-suggestions').classList.remove('open'),150)">
-        <div id="atb-cat-suggestions" class="ac-list"></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic;">
+        After identification, the suggested item name will appear above. Switch to "By Name" to confirm or edit.
       </div>
     </div>
 
-    <div class="field">
+    <!-- Tab: By Barcode -->
+    <div id="atb-tab-barcode" style="display:none;">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+        <button type="button" class="btn btn-secondary btn-sm" id="atb-barcode-btn" onclick="triggerBarcodePhoto()">
+          📷 Scan Barcode
+        </button>
+        <span id="atb-barcode-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></span>
+      </div>
+      <input type="file" id="atb-barcode-input" accept="image/*" capture="environment" style="display:none"
+        onchange="handleBarcodePhoto(this)">
+      <div id="atb-barcode-result" style="margin-top:8px;"></div>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic;">
+        Take a photo of a barcode. The app will look up the product and suggest an item name.
+      </div>
+    </div>
+
+    <!-- Common fields -->
+    <div class="field" style="margin-top:12px;">
       <label>Quantity</label>
       <input type="number" id="atb-qty" value="1" min="1">
     </div>
-
     <div class="field">
       <label>Notes (optional)</label>
       <input type="text" id="atb-notes" placeholder="e.g. cables in side pocket">
     </div>
-
     <div class="field">
       <label>Attach Photo to Item (optional)</label>
       <div id="atb-photo-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
@@ -1928,6 +2005,14 @@ async function openBoxDetail(id) {
       editBtn.dataset.name = i.name;
       editBtn.textContent = '✏️';
 
+      const moveBtn = document.createElement('button');
+      moveBtn.className = 'btn-move';
+      moveBtn.dataset.action = 'move-box-item';
+      moveBtn.dataset.id = i.box_item_id;
+      moveBtn.dataset.name = i.name;
+      moveBtn.title = 'Move to another box';
+      moveBtn.textContent = '⇄';
+
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger';
       delBtn.dataset.action = 'remove-box-item';
@@ -1938,6 +2023,7 @@ async function openBoxDetail(id) {
       row.appendChild(info);
       row.appendChild(qtyCtrl);
       row.appendChild(editBtn);
+      row.appendChild(moveBtn);
       row.appendChild(delBtn);
       itemRowsEl.appendChild(row);
     });
@@ -2080,6 +2166,9 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
     await api(`/api/images/${btn.dataset.imageId}`, { method:'DELETE' });
     toast('Photo deleted');
     if (btn.dataset.entityType === 'box') openBoxDetail(parseInt(btn.dataset.entityId));
+
+  } else if (action === 'move-box-item') {
+    openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId);
 
   } else if (action === 'upload-box-photo') {
     const boxId = parseInt(btn.dataset.boxId);
@@ -2283,15 +2372,18 @@ let visionConfig = { backend: 'none', ready: false };
 async function loadVisionConfig() {
   try {
     visionConfig = await api('/api/vision-config');
-    const sec = document.getElementById('atb-identify-section');
+    const noVisionMsg = document.getElementById('atb-no-vision-msg');
+    const visionUi = document.getElementById('atb-vision-ui');
     if (visionConfig.ready) {
-      sec.style.display = 'block';
+      if (noVisionMsg) noVisionMsg.style.display = 'none';
+      if (visionUi) visionUi.style.display = 'block';
       const label = visionConfig.backend === 'ollama'
         ? `🤖 Ollama (${visionConfig.model})`
         : '☁️ Anthropic Claude';
       document.getElementById('atb-identify-status').textContent = label;
     } else {
-      sec.style.display = 'none';
+      if (noVisionMsg) noVisionMsg.style.display = 'block';
+      if (visionUi) visionUi.style.display = 'none';
     }
   } catch(e) {
     // Vision not available — that's fine, silently hide
@@ -2407,15 +2499,14 @@ function resetATBModal() {
   document.getElementById('atb-photo-preview').innerHTML = '';
   document.getElementById('atb-photo-input').value = '';
   document.getElementById('atb-identify-input').value = '';
+  document.getElementById('atb-barcode-input').value = '';
   document.getElementById('atb-suggestions-chips').innerHTML = '';
-  if (visionConfig.ready) {
-    const label = visionConfig.backend === 'ollama'
-      ? `🤖 Ollama (${visionConfig.model})`
-      : '☁️ Anthropic Claude';
-    document.getElementById('atb-identify-status').textContent = label;
-  }
+  document.getElementById('atb-barcode-result').innerHTML = '';
+  document.getElementById('atb-barcode-status').textContent = '';
+  document.getElementById('atb-identify-status').textContent = '';
   closeAllATBDropdowns();
   setATBSelection(null, null, null);
+  setATBTab('name'); // always start on By Name tab
   openModal('modal-atb');
 }
 
@@ -2951,18 +3042,36 @@ async function toggleItemExpand(itemId, mainTr) {
     item.boxes.forEach(b => {
       const row = document.createElement('div');
       row.className = 'expand-box-row';
-      row.style.cursor = 'pointer';
-      row.title = 'Go to box';
+      row.dataset.boxItemId = b.box_item_id;
+      row.dataset.itemName = item.name;
+      row.dataset.boxId = b.box_id;
       row.innerHTML = `
-        <span class="expand-box-num">BOX ${b.box_number}</span>
+        <span class="expand-box-num" style="cursor:pointer;" title="Go to box">BOX ${b.box_number}</span>
         <span class="expand-box-label">${esc(b.label || 'Unlabelled')}</span>
         <span class="expand-box-meta">
           ${b.room_name ? `📍 ${esc(b.room_name)}` : 'No room'}
           · qty: <strong style="color:var(--accent)">${b.quantity}</strong>
           ${b.notes ? `· ${esc(b.notes)}` : ''}
-        </span>
-        <span style="color:var(--muted);font-size:12px;margin-left:auto;">→</span>`;
-      row.addEventListener('click', () => openBoxDetail(b.box_id));
+        </span>`;
+
+      // Navigate on clicking the box number badge
+      row.querySelector('.expand-box-num').addEventListener('click', e => {
+        e.stopPropagation(); openBoxDetail(b.box_id);
+      });
+
+      // Move button
+      const moveBtn = document.createElement('button');
+      moveBtn.className = 'btn-move';
+      moveBtn.title = 'Move to another box';
+      moveBtn.textContent = '⇄';
+      moveBtn.style.marginLeft = 'auto';
+      moveBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        moveItemSourceBoxId = b.box_id;
+        openMoveItemModal(b.box_item_id, item.name, b.box_id);
+      });
+      row.appendChild(moveBtn);
+
       inner.appendChild(row);
     });
   } catch(e) {
@@ -3518,6 +3627,175 @@ function setLabelOrientation(orient) {
   document.getElementById('orient-portrait-btn').classList.toggle('active', orient === 'portrait');
   document.getElementById('orient-landscape-btn').classList.toggle('active', orient === 'landscape');
   updateLabelPreview();
+}
+
+// ── ATB tab switching ──────────────────────────────────────────────────────
+function setATBTab(tab) {
+  ['name','image','barcode'].forEach(t => {
+    document.getElementById(`atb-tab-${t}`).style.display = t === tab ? 'block' : 'none';
+    document.querySelector(`.atb-tab[data-tab="${t}"]`).classList.toggle('active', t === tab);
+  });
+}
+
+// ── Barcode lookup ─────────────────────────────────────────────────────────
+function triggerBarcodePhoto() {
+  const inp = document.getElementById('atb-barcode-input');
+  inp.value = ''; inp.click();
+}
+
+async function handleBarcodePhoto(input) {
+  if (!input.files.length) return;
+  const statusEl = document.getElementById('atb-barcode-status');
+  const resultEl = document.getElementById('atb-barcode-result');
+  const btn = document.getElementById('atb-barcode-btn');
+  statusEl.innerHTML = '<span class="spinner"></span> Reading barcode…';
+  btn.disabled = true;
+  resultEl.innerHTML = '';
+
+  try {
+    // Use the identify endpoint with a barcode-specific prompt
+    const fd = new FormData();
+    fd.append('file', input.files[0]);
+    fd.append('mode', 'barcode');
+    const res = await fetch('/api/identify', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Lookup failed');
+
+    const suggestions = data.suggestions || [];
+    if (!suggestions.length) {
+      statusEl.textContent = 'Could not identify — type the name manually';
+      return;
+    }
+    statusEl.textContent = 'Found:';
+    const chips = document.createElement('div');
+    chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;';
+    suggestions.forEach(name => {
+      const chip = document.createElement('button');
+      chip.type = 'button'; chip.className = 'suggest-chip';
+      chip.textContent = name;
+      chip.addEventListener('click', () => {
+        setATBTab('name');
+        document.getElementById('atb-search').value = name;
+        searchItemsAC(name);
+      });
+      chips.appendChild(chip);
+    });
+    resultEl.appendChild(chips);
+  } catch(e) {
+    statusEl.textContent = `Error: ${e.message}`;
+    toast(e.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+// ── Move item between boxes ─────────────────────────────────────────────────
+let moveItemSourceBoxId = null;
+
+function openMoveItemModal(boxItemId, itemName, sourceBoxId) {
+  moveItemSourceBoxId = sourceBoxId;
+  document.getElementById('move-box-item-id').value = boxItemId;
+  document.getElementById('move-item-info').textContent = `Moving: ${itemName}`;
+  document.getElementById('move-box-search').value = '';
+  document.getElementById('move-box-search').style.display = '';
+  document.getElementById('move-box-selected-badge').style.display = 'none';
+  document.getElementById('move-box-id').value = '';
+  document.getElementById('move-box-suggestions').classList.remove('open');
+  openModal('modal-move-item');
+}
+
+async function searchBoxesForMove(q) {
+  const list = document.getElementById('move-box-suggestions');
+  const boxes = await getBoxesCached();
+  const lq = (q || '').toLowerCase().trim();
+  const stripped = lq.replace(/^box\s*/i, '').trim();
+
+  // Show all except the source box; filter by query if provided
+  let filtered = boxes.filter(b => b.id !== moveItemSourceBoxId);
+  if (lq && lq !== ' ') {
+    filtered = filtered.filter(b =>
+      String(b.box_number) === stripped ||
+      String(b.box_number).startsWith(stripped) ||
+      (b.label || '').toLowerCase().includes(lq) ||
+      (b.room_name || '').toLowerCase().includes(lq) ||
+      `box ${b.box_number}`.includes(lq)
+    );
+  }
+
+  list.innerHTML = '';
+  filtered.slice(0, 10).forEach(b => {
+    const opt = document.createElement('div');
+    opt.className = 'ac-item';
+    opt.dataset.moveBoxId = b.id;
+    opt.dataset.moveBoxLabel = `BOX ${b.box_number}${b.label ? ' · ' + b.label : ''}`;
+    opt.innerHTML = `<span><strong>BOX ${b.box_number}</strong>${b.label ? ' · ' + esc(b.label) : ''}</span><small>${esc(b.room_name || '')}</small>`;
+    list.appendChild(opt);
+  });
+  if (list.children.length) {
+    positionDropdownFixed(list);
+    list.classList.add('open');
+  } else {
+    list.classList.remove('open');
+  }
+}
+
+// Delegated listener for move-box suggestions
+document.getElementById('move-box-suggestions').addEventListener('mousedown', e => e.preventDefault());
+document.getElementById('move-box-suggestions').addEventListener('click', e => {
+  const item = e.target.closest('.ac-item');
+  if (!item) return;
+  document.getElementById('move-box-id').value = item.dataset.moveBoxId;
+  document.getElementById('move-box-selected-name').textContent = item.dataset.moveBoxLabel;
+  document.getElementById('move-box-selected-badge').style.display = 'flex';
+  document.getElementById('move-box-search').style.display = 'none';
+  document.getElementById('move-box-suggestions').classList.remove('open');
+});
+
+function clearMoveBox() {
+  document.getElementById('move-box-id').value = '';
+  document.getElementById('move-box-search').value = '';
+  document.getElementById('move-box-search').style.display = '';
+  document.getElementById('move-box-selected-badge').style.display = 'none';
+  document.getElementById('move-box-search').focus();
+}
+
+async function confirmMoveItem() {
+  const boxItemId = document.getElementById('move-box-item-id').value;
+  const targetBoxId = document.getElementById('move-box-id').value;
+  if (!targetBoxId) { toast('Select a destination box', true); return; }
+  try {
+    const result = await api(`/api/box-items/${boxItemId}/move`, {
+      method: 'POST', body: JSON.stringify({ target_box_id: targetBoxId })
+    });
+    closeModal('modal-move-item');
+    toast(result.merged ? 'Item moved and merged with existing entry' : 'Item moved');
+    // Invalidate box caches
+    Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
+    if (moveItemSourceBoxId) openBoxDetail(moveItemSourceBoxId);
+  } catch(e) { toast(e.message, true); }
+}
+
+// Also add move button to items expand rows (items panel)
+// Called from toggleItemExpand after rendering boxes
+function addMoveToExpandRows(inner) {
+  inner.querySelectorAll('.expand-box-row').forEach(row => {
+    const moveBtn = document.createElement('button');
+    moveBtn.className = 'btn-move';
+    moveBtn.title = 'Move to another box';
+    moveBtn.textContent = '⇄';
+    moveBtn.style.marginLeft = '4px';
+    const boxItemId = row.dataset.boxItemId;
+    const itemName = row.dataset.itemName;
+    const sourceBoxId = row.dataset.boxId;
+    if (boxItemId) {
+      moveBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        moveItemSourceBoxId = parseInt(sourceBoxId);
+        openMoveItemModal(boxItemId, itemName, parseInt(sourceBoxId));
+      });
+      row.appendChild(moveBtn);
+    }
+  });
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
