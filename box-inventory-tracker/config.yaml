@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.8.0"
+version: "1.8.1"
 slug: "box_inventory"
 init: false
 arch:
@@ -36,5 +36,6 @@ schema:
   anthropic_api_key: str
   ollama_url: str
   ollama_model: str
-panel_icon: mdi:package-variant-closed
-panel_title: Box Inventory
+panel_icon: mdi:package-variant
+panel_title: Home Inventory
+panel_admin: false
