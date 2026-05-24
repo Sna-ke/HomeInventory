@@ -39,3 +39,5 @@ schema:
 panel_icon: mdi:package-variant
 panel_title: Home Inventory
 panel_admin: false
+intress: true
+ingress_port: 0
