@@ -40,4 +40,4 @@ panel_icon: mdi:package-variant
 panel_title: Home Inventory
 panel_admin: false
 ingress: true
-ingress_port: 0
+ingress_port: 5000
