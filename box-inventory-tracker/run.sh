@@ -30,5 +30,9 @@ python3 -c "from server import init_db, migrate_db, sync_ha_areas; init_db(); mi
 exec gunicorn \
     --bind 0.0.0.0:5000 \
     --workers 2 \
+    --worker-class gthread \
+    --threads 4 \
+    --timeout 180 \
+    --graceful-timeout 30 \
     --log-level info \
     server:app

@@ -1152,9 +1152,34 @@ def identify_via_anthropic(img_bytes: bytes, mime: str, prompt: str = None) -> l
     return json.loads(raw)
 
 
+def get_ollama_models() -> list[str]:
+    """Return list of model names available on the Ollama server, or [] on error."""
+    try:
+        resp = http_requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        resp.raise_for_status()
+        return [m.get("name", "") for m in resp.json().get("models", [])]
+    except Exception:
+        return []
+
+
 def identify_via_ollama(img_bytes: bytes, mime: str, prompt: str = None) -> list[str]:
     import json
     b64 = base64.standard_b64encode(img_bytes).decode()
+
+    # Check model exists before trying — gives a friendlier error than a raw 404
+    available = get_ollama_models()
+    # Ollama model names may include a tag (e.g. "llava:latest"); match on prefix
+    model_found = any(
+        m == OLLAMA_MODEL or m.startswith(OLLAMA_MODEL + ":") or OLLAMA_MODEL.startswith(m.split(":")[0])
+        for m in available
+    )
+    if available and not model_found:
+        raise ValueError(
+            f"Model '{OLLAMA_MODEL}' is not installed on your Ollama server. "
+            f"Available models: {', '.join(available) or 'none'}. "
+            f"Run: ollama pull {OLLAMA_MODEL}"
+        )
+
     resp = http_requests.post(
         f"{OLLAMA_URL}/api/generate",
         json={
@@ -1164,8 +1189,13 @@ def identify_via_ollama(img_bytes: bytes, mime: str, prompt: str = None) -> list
             "stream": False,
             "options": {"temperature": 0.1},
         },
-        timeout=60,
+        timeout=120,
     )
+    if resp.status_code == 404:
+        raise ValueError(
+            f"Model '{OLLAMA_MODEL}' not found on Ollama server at {OLLAMA_URL}. "
+            f"Run: ollama pull {OLLAMA_MODEL}"
+        )
     resp.raise_for_status()
     raw = resp.json().get("response", "").strip()
     raw = raw.strip("`").strip()
@@ -1176,14 +1206,41 @@ def identify_via_ollama(img_bytes: bytes, mime: str, prompt: str = None) -> list
 
 @app.route("/api/vision-config", methods=["GET"])
 def vision_config():
-    """Let the frontend know what's configured without exposing the key."""
+    """Let the frontend know what's configured, checking Ollama model availability."""
     backend = VISION_BACKEND
     ready = False
+    warning = None
+    available_models = []
+
     if backend == "anthropic" and ANTHROPIC_API_KEY:
         ready = True
     elif backend == "ollama" and OLLAMA_URL:
-        ready = True
-    return jsonify({"backend": backend, "ready": ready, "model": OLLAMA_MODEL if backend == "ollama" else None})
+        available_models = get_ollama_models()
+        if not available_models:
+            # Can't reach server at all
+            warning = f"Cannot reach Ollama at {OLLAMA_URL}"
+        else:
+            model_found = any(
+                m == OLLAMA_MODEL or m.startswith(OLLAMA_MODEL + ":")
+                or OLLAMA_MODEL.startswith(m.split(":")[0])
+                for m in available_models
+            )
+            if model_found:
+                ready = True
+            else:
+                warning = (
+                    f"Model '{OLLAMA_MODEL}' is not installed. "
+                    f"Run: ollama pull {OLLAMA_MODEL}  "
+                    f"(available: {', '.join(available_models[:5])})"
+                )
+
+    return jsonify({
+        "backend": backend,
+        "ready": ready,
+        "model": OLLAMA_MODEL if backend == "ollama" else None,
+        "available_models": available_models,
+        "warning": warning,
+    })
 
 
 BARCODE_PROMPT = (
@@ -1233,6 +1290,60 @@ def identify_item():
     except Exception as e:
         logger.error(f"Vision identify error ({VISION_BACKEND}): {e}")
         return jsonify({"error": f"Identification failed: {str(e)}"}), 500
+
+
+# ── UPC Lookup ────────────────────────────────────────────────────────────
+
+@app.route("/api/upc-lookup", methods=["GET"])
+def upc_lookup():
+    """Proxy UPC lookups to avoid browser CORS restrictions.
+    Tries Open Food Facts first (free, no key), then UPCitemdb (free tier).
+    """
+    upc = (request.args.get("upc") or "").strip().lstrip("0")
+    if not upc or not upc.isdigit():
+        return jsonify({"error": "Invalid UPC"}), 400
+
+    names = []
+
+    # ── 1. Open Food Facts (great for grocery/packaged goods) ────────────────
+    try:
+        r = http_requests.get(
+            f"https://world.openfoodfacts.org/api/v0/product/{upc}.json",
+            headers={"User-Agent": "BoxInventoryTracker/1.0"},
+            timeout=6,
+        )
+        if r.status_code == 200:
+            data = r.json()
+            if data.get("status") == 1:
+                p = data.get("product", {})
+                # Prefer product_name, fall back to generic name or brands
+                name = (p.get("product_name") or p.get("generic_name") or "").strip()
+                brand = (p.get("brands") or "").split(",")[0].strip()
+                if name:
+                    names.append(f"{brand} {name}".strip() if brand and brand.lower() not in name.lower() else name)
+                elif brand:
+                    names.append(brand)
+    except Exception as e:
+        logger.debug(f"Open Food Facts lookup failed: {e}")
+
+    # ── 2. UPCitemdb (broader range: electronics, books, household) ──────────
+    if not names:
+        try:
+            r = http_requests.get(
+                f"https://api.upcitemdb.com/prod/trial/lookup?upc={upc}",
+                headers={"User-Agent": "BoxInventoryTracker/1.0"},
+                timeout=6,
+            )
+            if r.status_code == 200:
+                data = r.json()
+                for item in (data.get("items") or [])[:3]:
+                    title = (item.get("title") or "").strip()
+                    if title:
+                        names.append(title)
+        except Exception as e:
+            logger.debug(f"UPCitemdb lookup failed: {e}")
+
+    return jsonify({"upc": upc, "names": names[:5]})
 
 
 # ── Frontend ───────────────────────────────────────────────────────────────

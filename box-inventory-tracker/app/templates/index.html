@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0f1117">
 <title>BoxTrack</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxing/0.21.3/zxing.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&display=swap');
 
@@ -1131,9 +1132,16 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       </div>
       <input type="file" id="atb-barcode-input" accept="image/*" capture="environment" style="display:none"
         onchange="handleBarcodePhoto(this)">
-      <div id="atb-barcode-result" style="margin-top:8px;"></div>
+      <!-- Decoded barcode value shown here for transparency -->
+      <div id="atb-barcode-upc" style="display:none;margin-bottom:8px;
+        font-family:var(--mono);font-size:11px;color:var(--muted);"></div>
+      <div id="atb-barcode-result" style="margin-top:4px;"></div>
       <div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic;">
-        Take a photo of a barcode. The app will look up the product and suggest an item name.
+        Takes a photo of a barcode, decodes it instantly in the browser, then
+        looks up the product name — no AI needed.
+        <span id="atb-barcode-ai-note" style="display:none;">
+          If the database lookup fails, AI identification is used as a fallback.
+        </span>
       </div>
     </div>
 
@@ -2374,6 +2382,7 @@ async function loadVisionConfig() {
     visionConfig = await api('/api/vision-config');
     const noVisionMsg = document.getElementById('atb-no-vision-msg');
     const visionUi = document.getElementById('atb-vision-ui');
+
     if (visionConfig.ready) {
       if (noVisionMsg) noVisionMsg.style.display = 'none';
       if (visionUi) visionUi.style.display = 'block';
@@ -2382,11 +2391,28 @@ async function loadVisionConfig() {
         : '☁️ Anthropic Claude';
       document.getElementById('atb-identify-status').textContent = label;
     } else {
-      if (noVisionMsg) noVisionMsg.style.display = 'block';
       if (visionUi) visionUi.style.display = 'none';
+      if (noVisionMsg) {
+        // Show warning with detail if available
+        const msg = visionConfig.warning
+          ? visionConfig.warning
+          : (visionConfig.backend === 'none'
+            ? 'Vision identification not configured. Set a backend in the app configuration.'
+            : 'Vision backend not ready.');
+        noVisionMsg.textContent = msg;
+        noVisionMsg.style.display = 'block';
+
+        // Show available models as hints if Ollama is configured but model missing
+        if (visionConfig.backend === 'ollama' && visionConfig.available_models && visionConfig.available_models.length) {
+          const hint = document.createElement('div');
+          hint.style.cssText = 'margin-top:8px;font-size:11px;color:var(--muted);';
+          hint.textContent = 'Installed models: ' + visionConfig.available_models.join(', ');
+          noVisionMsg.appendChild(hint);
+        }
+      }
     }
   } catch(e) {
-    // Vision not available — that's fine, silently hide
+    // Vision not available — silently hide
   }
 }
 
@@ -3643,47 +3669,149 @@ function triggerBarcodePhoto() {
   inp.value = ''; inp.click();
 }
 
+function showBarcodeChips(names, statusEl, resultEl) {
+  if (!names.length) return false;
+  statusEl.textContent = 'Found:';
+  const chips = document.createElement('div');
+  chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;';
+  names.forEach(name => {
+    const chip = document.createElement('button');
+    chip.type = 'button'; chip.className = 'suggest-chip';
+    chip.textContent = name;
+    chip.addEventListener('click', () => {
+      setATBTab('name');
+      document.getElementById('atb-search').value = name;
+      searchItemsAC(name);
+    });
+    chips.appendChild(chip);
+  });
+  resultEl.appendChild(chips);
+  return true;
+}
+
+async function decodeBarcode(file) {
+  // Use ZXing-js to decode barcode entirely in the browser — fast, no AI needed
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = async () => {
+      try {
+        // ZXing may be loaded as ZXing global or as default export
+        const ZXingLib = window.ZXing || (window.ZXingBrowser ? window.ZXingBrowser : null);
+        if (!ZXingLib) { reject(new Error('ZXing not loaded')); return; }
+
+        // Try MultiFormatReader which handles UPC-A, UPC-E, EAN-13, EAN-8, QR, etc.
+        const reader = ZXingLib.BrowserMultiFormatReader
+          ? new ZXingLib.BrowserMultiFormatReader()
+          : null;
+
+        // Fallback: use hints-based reader
+        const hints = new Map();
+        const formats = [
+          ZXingLib.BarcodeFormat?.UPC_A,
+          ZXingLib.BarcodeFormat?.UPC_E,
+          ZXingLib.BarcodeFormat?.EAN_13,
+          ZXingLib.BarcodeFormat?.EAN_8,
+          ZXingLib.BarcodeFormat?.CODE_128,
+          ZXingLib.BarcodeFormat?.CODE_39,
+          ZXingLib.BarcodeFormat?.ITF,
+          ZXingLib.BarcodeFormat?.QR_CODE,
+        ].filter(Boolean);
+        if (formats.length) hints.set(ZXingLib.DecodeHintType?.POSSIBLE_FORMATS, formats);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        // Try decoding via luminance source
+        const luminanceSource = new ZXingLib.HTMLCanvasElementLuminanceSource(canvas);
+        const binarizer = new ZXingLib.HybridBinarizer(luminanceSource);
+        const bitmap = new ZXingLib.BinaryBitmap(binarizer);
+
+        let result;
+        try {
+          const mfReader = hints.size
+            ? new ZXingLib.MultiFormatReader()
+            : new ZXingLib.MultiFormatReader();
+          if (hints.size) mfReader.setHints(hints);
+          result = mfReader.decode(bitmap);
+        } catch(e1) {
+          // Try without hints as fallback
+          result = new ZXingLib.MultiFormatReader().decode(bitmap);
+        }
+        resolve(result.getText());
+      } catch(e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error('Could not load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 async function handleBarcodePhoto(input) {
   if (!input.files.length) return;
   const statusEl = document.getElementById('atb-barcode-status');
   const resultEl = document.getElementById('atb-barcode-result');
+  const upcEl = document.getElementById('atb-barcode-upc');
   const btn = document.getElementById('atb-barcode-btn');
-  statusEl.innerHTML = '<span class="spinner"></span> Reading barcode…';
+  statusEl.innerHTML = '<span class="spinner"></span> Decoding barcode…';
   btn.disabled = true;
   resultEl.innerHTML = '';
+  upcEl.style.display = 'none';
+
+  let upc = null;
 
   try {
-    // Use the identify endpoint with a barcode-specific prompt
-    const fd = new FormData();
-    fd.append('file', input.files[0]);
-    fd.append('mode', 'barcode');
-    const res = await fetch('/api/identify', { method: 'POST', body: fd });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Lookup failed');
-
-    const suggestions = data.suggestions || [];
-    if (!suggestions.length) {
-      statusEl.textContent = 'Could not identify — type the name manually';
-      return;
+    // ── Step 1: Decode barcode in browser (fast, no network) ────────────────
+    try {
+      upc = await decodeBarcode(input.files[0]);
+      upcEl.textContent = `Barcode: ${upc}`;
+      upcEl.style.display = 'block';
+      statusEl.innerHTML = '<span class="spinner"></span> Looking up product…';
+    } catch(decodeErr) {
+      // ZXing couldn't read it — fall through to AI if available
+      console.log('ZXing decode failed:', decodeErr.message);
     }
-    statusEl.textContent = 'Found:';
-    const chips = document.createElement('div');
-    chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;';
-    suggestions.forEach(name => {
-      const chip = document.createElement('button');
-      chip.type = 'button'; chip.className = 'suggest-chip';
-      chip.textContent = name;
-      chip.addEventListener('click', () => {
-        setATBTab('name');
-        document.getElementById('atb-search').value = name;
-        searchItemsAC(name);
-      });
-      chips.appendChild(chip);
-    });
-    resultEl.appendChild(chips);
+
+    // ── Step 2: Database lookup using decoded UPC ────────────────────────────
+    if (upc) {
+      const res = await fetch(`/api/upc-lookup?upc=${encodeURIComponent(upc)}`);
+      const data = await res.json();
+      if (data.names && data.names.length) {
+        showBarcodeChips(data.names, statusEl, resultEl);
+        btn.disabled = false;
+        return; // Done — no AI needed
+      }
+      statusEl.textContent = `UPC ${upc} not found in database.`;
+    }
+
+    // ── Step 3: AI fallback (only if barcode decode failed or DB miss) ───────
+    if (visionConfig.ready) {
+      const aiLabel = upc
+        ? `Trying AI for UPC ${upc}…`
+        : 'Barcode unreadable — trying AI image recognition…';
+      statusEl.innerHTML = `<span class="spinner"></span> ${aiLabel}`;
+
+      const fd = new FormData();
+      fd.append('file', input.files[0]);
+      fd.append('mode', 'barcode');
+      const res = await fetch('/api/identify', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok && data.suggestions && data.suggestions.length) {
+        showBarcodeChips(data.suggestions, statusEl, resultEl);
+        return;
+      }
+    }
+
+    // ── Nothing worked ───────────────────────────────────────────────────────
+    statusEl.textContent = upc
+      ? `UPC ${upc} not found — type the product name manually.`
+      : 'Could not read barcode — try a clearer photo, or type the name manually.';
+
   } catch(e) {
     statusEl.textContent = `Error: ${e.message}`;
-    toast(e.message, true);
   } finally {
     btn.disabled = false;
   }
