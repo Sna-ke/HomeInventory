@@ -1350,7 +1350,10 @@ def upc_lookup():
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    # HA ingress injects X-Ingress-Path (e.g. /api/hassio_ingress/abc123)
+    # We pass it to the template so the frontend can prefix all API calls.
+    ingress_path = request.headers.get("X-Ingress-Path", "").rstrip("/")
+    return render_template("index.html", ingress_path=ingress_path)
 
 
 if __name__ == "__main__":

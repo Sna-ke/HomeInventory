@@ -1,6 +1,6 @@
 name: "Box Inventory Tracker"
 description: "Track packed items in boxes across rooms, with QR code label printing."
-version: "1.8.4"
+version: "1.9.0"
 slug: "box_inventory"
 init: false
 arch:
@@ -18,6 +18,11 @@ build_from:
 startup: application
 boot: auto
 homeassistant_api: true
+ingress: true
+ingress_port: 5000
+panel_icon: mdi:package-variant
+panel_title: Home Inventory
+panel_admin: false
 services:
   - mysql:want
 map:
@@ -25,7 +30,7 @@ map:
 ports:
   5000/tcp: 5000
 ports_description:
-  5000/tcp: "Web UI"
+  5000/tcp: "Web UI (direct access)"
 options:
   vision_backend: "none"
   anthropic_api_key: ""
@@ -36,8 +41,3 @@ schema:
   anthropic_api_key: str
   ollama_url: str
   ollama_model: str
-panel_icon: mdi:package-variant
-panel_title: Home Inventory
-panel_admin: false
-ingress: true
-ingress_port: 5000
