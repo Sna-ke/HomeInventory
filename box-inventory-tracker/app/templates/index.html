@@ -2234,7 +2234,7 @@ function showItemPhotoOverlay(url, itemId) {
   deleteBtn.className = 'btn btn-danger btn-sm';
   deleteBtn.textContent = '🗑 Delete Photo';
   deleteBtn.addEventListener('click', async () => {
-    // Extract image id from URL /api/images/123
+    // Extract image id — URL ends with the numeric ID regardless of ingress prefix
     const imageId = url.split('/').pop();
     if (!confirm('Delete this photo?')) return;
     await api(`/api/images/${imageId}`, { method: 'DELETE' });

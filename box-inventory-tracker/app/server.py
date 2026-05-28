@@ -43,6 +43,12 @@ def get_db():
     return pymysql.connect(**DB_CONFIG)
 
 
+def image_url(image_id):
+    """Build an image URL that works both direct and through HA ingress."""
+    ingress_path = request.headers.get("X-Ingress-Path", "").rstrip("/")
+    return f"{ingress_path}/api/images/{image_id}"
+
+
 def init_db():
     for attempt in range(10):
         try:
@@ -351,7 +357,7 @@ def images_for(conn, entity_type, entity_id):
         )
         rows = cur.fetchall()
     for r in rows:
-        r["url"] = f"/api/images/{r['id']}"
+        r["url"] = image_url(r["id"])
     return rows
 
 
@@ -514,16 +520,20 @@ def get_room_boxes(room_id):
                 SELECT b.id, b.box_number, b.label, b.description,
                        COUNT(bi.id) as item_count,
                        COALESCE(SUM(bi.quantity), 0) as total_qty,
-                       (SELECT CONCAT('/api/images/', img.id)
+                       (SELECT img.id
                         FROM images img WHERE img.entity_type='box' AND img.entity_id=b.id
-                        ORDER BY img.created_at LIMIT 1) as thumb_url
+                        ORDER BY img.created_at LIMIT 1) as thumb_id
                 FROM boxes b
                 LEFT JOIN box_items bi ON bi.box_id = b.id
                 WHERE b.room_id = %s
                 GROUP BY b.id
                 ORDER BY b.box_number
             """, (room_id,))
-            return jsonify(cur.fetchall())
+            rows = cur.fetchall()
+            for row in rows:
+                tid = row.pop("thumb_id", None)
+                row["thumb_url"] = image_url(tid) if tid else None
+            return jsonify(rows)
     finally:
         conn.close()
 
@@ -626,7 +636,7 @@ def get_boxes():
                 (box["id"],)
             )
             img = cur2.fetchone()
-            box["thumb_url"] = f"/api/images/{img['id']}" if img else None
+            box["thumb_url"] = image_url(img["id"]) if img else None
             cur2.close()
         return jsonify(boxes)
     finally:
@@ -651,17 +661,21 @@ def get_box(box_id):
                 SELECT bi.id as box_item_id, bi.quantity, bi.notes,
                        i.id as item_id, i.name,
                        c.id as category_id, c.name as category,
-                       (SELECT CONCAT('/api/images/', img.id)
+                       (SELECT img.id
                         FROM images img
                         WHERE img.entity_type = 'item' AND img.entity_id = i.id
-                        ORDER BY img.created_at LIMIT 1) as thumb_url
+                        ORDER BY img.created_at LIMIT 1) as thumb_id
                 FROM box_items bi
                 JOIN items i ON i.id = bi.item_id
                 LEFT JOIN categories c ON c.id = i.category_id
                 WHERE bi.box_id = %s
                 ORDER BY c.name, i.name
             """, (box_id,))
-            box["items"] = cur.fetchall()
+            items = cur.fetchall()
+            for item in items:
+                tid = item.pop("thumb_id", None)
+                item["thumb_url"] = image_url(tid) if tid else None
+            box["items"] = items
             box["images"] = images_for(conn, "box", box_id)
             return jsonify(box)
     finally:
@@ -1022,7 +1036,7 @@ def upload_image():
             )
             conn.commit()
             image_id = cur.lastrowid
-        return jsonify({"id": image_id, "url": f"/api/images/{image_id}"}), 201
+        return jsonify({"id": image_id, "url": image_url(image_id)}), 201
     finally:
         conn.close()
 
