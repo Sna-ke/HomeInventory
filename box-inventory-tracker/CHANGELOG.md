@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.3
+- Boxes page: live-updates when boxes or items change without reloading rooms
+- Items page: live-updates in-place, preserving which item row is currently expanded
+- Categories page: live-updates in-place, preserving which category is currently expanded
+- Box detail page: already updated in-place (unchanged)
+
 ## 2.2.2
 - Fixed live sync not working: gunicorn was running 2 worker processes, each with their own in-memory SSE client registry. Mutations in worker A had no way to notify clients connected to worker B. Switched to 1 worker + 8 threads (all share the same process memory, so SSE broadcasts reach all connected clients)
 - Added SSE connection and push logging for easier diagnostics in HA logs

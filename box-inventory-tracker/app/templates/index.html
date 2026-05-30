@@ -2245,7 +2245,17 @@ function setBoxView(v) {
 }
 
 async function loadBoxes() {
-  await loadRooms();
+  // Refresh room filter dropdown without full room re-render
+  try {
+    const freshRooms = await api('/api/rooms');
+    rooms = freshRooms;
+    const f = document.getElementById('roomFilter');
+    if (f) {
+      const prev = f.value;
+      f.innerHTML = '<option value="">All Rooms</option>' +
+        rooms.map(r => `<option value="${r.id}" ${prev==r.id?'selected':''}>${esc(r.name)}</option>`).join('');
+    }
+  } catch(e) { /* non-fatal */ }
   const roomId = document.getElementById('roomFilter').value;
   const url = roomId ? `/api/boxes?room_id=${roomId}` : '/api/boxes';
   const boxes = await api(url);
@@ -3464,6 +3474,22 @@ async function loadItems() {
   applyItemFilters();
 }
 
+async function refreshItemsInPlace() {
+  // Remember which item row is currently expanded
+  const openExpandTr = [...document.querySelectorAll('.item-expand-row')]
+    .find(r => r.style.display !== 'none');
+  const openItemId = openExpandTr ? openExpandTr.id.replace('item-expand-', '') : null;
+
+  allItems = await api('/api/items');
+  applyItemFilters();
+
+  // Re-expand the same item after re-render
+  if (openItemId) {
+    const mainTr = document.querySelector(`.item-main-row[data-item-id="${openItemId}"]`);
+    if (mainTr) toggleItemExpand(parseInt(openItemId), mainTr);
+  }
+}
+
 function setItemSort(field) {
   if (itemSort === field) {
     itemSortDir *= -1;
@@ -4063,6 +4089,25 @@ async function loadCategories() {
   renderCategories();
 }
 
+async function refreshCategoriesInPlace() {
+  // Remember which category is expanded
+  const openExpand = document.querySelector('.cat-expand.open');
+  const openCatId = openExpand ? openExpand.id.replace('cat-expand-', '') : null;
+
+  allCategories = await api('/api/categories?counts=1');
+  renderCategories();
+
+  // Re-expand the same category if it was open
+  if (openCatId) {
+    const hdr = document.querySelector(`.cat-row-header[data-cat-id="${openCatId}"]`);
+    const chevron = hdr?.querySelector('.cat-chevron');
+    const expand = document.getElementById(`cat-expand-${openCatId}`);
+    if (hdr && chevron && expand && !expand.classList.contains('open')) {
+      toggleCatExpand(parseInt(openCatId), hdr, chevron, expand);
+    }
+  }
+}
+
 function renderCategories() {
   const list = document.getElementById('categories-list');
   if (!allCategories.length) {
@@ -4075,6 +4120,7 @@ function renderCategories() {
 
     const hdr = document.createElement('div');
     hdr.className = 'cat-row-header';
+    hdr.dataset.catId = cat.id;
 
     const chevron = document.createElement('span');
     chevron.className = 'cat-chevron'; chevron.textContent = '▶';
@@ -4864,25 +4910,32 @@ function handleRemoteChange(ev) {
   const type = ev.type;
   const panel = _sseCurrentPanel();
 
-  // Only refresh what the current panel actually needs
   if (panel === 'boxes' && (type === 'boxes' || type === 'items')) {
+    // Re-fetch and re-render boxes grid/list (no expand state to preserve)
     scheduleRefresh('boxes', () => loadBoxes());
+
   } else if (panel === 'rooms' && type === 'rooms') {
-    // Room structure changed (add/rename/delete) — full reload needed
+    // Room structure changed — full reload
     scheduleRefresh('rooms', () => loadRooms());
   } else if (panel === 'rooms' && (type === 'boxes' || type === 'items')) {
-    // Box contents changed — refresh open boxes in-place, preserve expand state
+    // Box contents changed — update open boxes in-place, preserve expand state
     scheduleRefresh('rooms', () => refreshOpenRoomBoxes());
+
   } else if (panel === 'items' && (type === 'items' || type === 'categories' || type === 'boxes')) {
-    scheduleRefresh('items', () => loadItems());
+    // Re-fetch items, re-apply filters, re-open any expanded row
+    scheduleRefresh('items', () => refreshItemsInPlace());
+
   } else if (panel === 'categories' && (type === 'categories' || type === 'items')) {
-    scheduleRefresh('categories', () => loadCategories());
+    // Re-fetch categories, re-render, re-open any expanded category
+    scheduleRefresh('categories', () => refreshCategoriesInPlace());
+
   } else if (panel === 'box-detail' && type === 'boxes') {
     if (currentBoxId && (ev.box_id === undefined || ev.box_id === currentBoxId)) {
       scheduleRefresh('box-detail', () => openBoxDetail(currentBoxId));
     }
   }
-  // Always refresh the room filter dropdown (lightweight) on room/box changes
+
+  // Keep room filter dropdown current on room changes (lightweight, any panel)
   if (type === 'rooms') {
     scheduleRefresh('rooms-filter', () => api('/api/rooms').then(r => {
       rooms = r;
