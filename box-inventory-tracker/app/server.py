@@ -220,6 +220,16 @@ def migrate_db():
                 cur.execute("ALTER TABLE rooms ADD COLUMN ha_area_id VARCHAR(255) NULL UNIQUE AFTER name")
                 cur.execute("ALTER TABLE rooms ADD COLUMN ha_synced TINYINT(1) NOT NULL DEFAULT 0 AFTER ha_area_id")
 
+            # Migration 5: items.upc (added v1.9.2)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'items' AND COLUMN_NAME = 'upc'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding items.upc column")
+                cur.execute("ALTER TABLE items ADD COLUMN upc VARCHAR(64) NULL AFTER name")
+                cur.execute("CREATE INDEX IF NOT EXISTS idx_items_upc ON items(upc)")
+
         conn.commit()
         logger.info("Database migrations complete.")
     finally:
@@ -760,7 +770,7 @@ def get_items():
     try:
         with conn.cursor() as cur:
             base = """
-                SELECT i.id, i.name, c.id as category_id, c.name as category,
+                SELECT i.id, i.name, i.upc, c.id as category_id, c.name as category,
                        GROUP_CONCAT(b.box_number ORDER BY b.box_number) as in_boxes
                 FROM items i
                 LEFT JOIN categories c ON c.id = i.category_id
@@ -784,17 +794,18 @@ def create_item():
     data = request.json
     name = (data.get("name") or "").strip()
     category_name = (data.get("category") or "").strip()
+    upc = (data.get("upc") or "").strip() or None
     if not name:
         return jsonify({"error": "Item name is required"}), 400
     conn = get_db()
     try:
         category_id = get_or_create_category(conn, category_name) if category_name else None
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO items (name, category_id) VALUES (%s,%s)", (name, category_id))
+            cur.execute("INSERT INTO items (name, category_id, upc) VALUES (%s,%s,%s)", (name, category_id, upc))
             conn.commit()
             item_id = cur.lastrowid
             cur.execute("""
-                SELECT i.id, i.name, c.id as category_id, c.name as category
+                SELECT i.id, i.name, i.upc, c.id as category_id, c.name as category
                 FROM items i LEFT JOIN categories c ON c.id=i.category_id
                 WHERE i.id=%s
             """, (item_id,))
@@ -808,16 +819,24 @@ def update_item(item_id):
     data = request.json
     name = (data.get("name") or "").strip()
     category_name = (data.get("category") or "").strip()
+    # upc=None means "don't change"; upc="" means "clear it"
+    update_upc = "upc" in data
+    upc = (data.get("upc") or "").strip() or None
     if not name:
         return jsonify({"error": "Item name is required"}), 400
     conn = get_db()
     try:
         category_id = get_or_create_category(conn, category_name) if category_name else None
         with conn.cursor() as cur:
-            cur.execute("UPDATE items SET name=%s, category_id=%s WHERE id=%s", (name, category_id, item_id))
+            if update_upc:
+                cur.execute("UPDATE items SET name=%s, category_id=%s, upc=%s WHERE id=%s",
+                            (name, category_id, upc, item_id))
+            else:
+                cur.execute("UPDATE items SET name=%s, category_id=%s WHERE id=%s",
+                            (name, category_id, item_id))
             conn.commit()
             cur.execute("""
-                SELECT i.id, i.name, c.id as category_id, c.name as category
+                SELECT i.id, i.name, i.upc, c.id as category_id, c.name as category
                 FROM items i LEFT JOIN categories c ON c.id=i.category_id
                 WHERE i.id=%s
             """, (item_id,))
@@ -1310,12 +1329,38 @@ def identify_item():
 
 @app.route("/api/upc-lookup", methods=["GET"])
 def upc_lookup():
-    """Proxy UPC lookups to avoid browser CORS restrictions.
-    Tries Open Food Facts first (free, no key), then UPCitemdb (free tier).
-    """
-    upc = (request.args.get("upc") or "").strip().lstrip("0")
-    if not upc or not upc.isdigit():
+    """Look up a UPC. Checks local item DB first, then external APIs."""
+    upc_raw = (request.args.get("upc") or "").strip()
+    if not upc_raw:
         return jsonify({"error": "Invalid UPC"}), 400
+    # Normalise: strip leading zeros for external lookups but keep raw for DB
+    upc = upc_raw.lstrip("0") or upc_raw
+    if not upc.isdigit():
+        return jsonify({"error": "Invalid UPC"}), 400
+
+    # ── 0. Local DB lookup ────────────────────────────────────────────────────
+    conn = get_db()
+    local_items = []
+    try:
+        with conn.cursor() as cur:
+            # Match on both raw and normalised (leading zeros stripped)
+            cur.execute("""
+                SELECT i.id, i.name, i.upc, c.name as category
+                FROM items i
+                LEFT JOIN categories c ON c.id = i.category_id
+                WHERE i.upc = %s OR i.upc = %s
+            """, (upc_raw, upc))
+            local_items = cur.fetchall()
+    finally:
+        conn.close()
+
+    if local_items:
+        return jsonify({
+            "upc": upc,
+            "source": "local",
+            "items": local_items,          # full item objects with id
+            "names": [i["name"] for i in local_items],
+        })
 
     names = []
 
@@ -1357,7 +1402,7 @@ def upc_lookup():
         except Exception as e:
             logger.debug(f"UPCitemdb lookup failed: {e}")
 
-    return jsonify({"upc": upc, "names": names[:5]})
+    return jsonify({"upc": upc, "source": "external", "items": [], "names": names[:5]})
 
 
 # ── Frontend ───────────────────────────────────────────────────────────────
