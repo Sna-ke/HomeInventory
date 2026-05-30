@@ -1192,6 +1192,20 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
         <button class="btn btn-secondary btn-sm" onclick="barcodeNotRight()">Not Right…</button>
       </div>
 
+      <!-- Merge prompt: shown when external result matches an existing item by name -->
+      <div id="atb-barcode-merge" style="display:none;margin-top:10px;
+        background:var(--surface2);border:1px solid var(--accent);padding:10px 12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">
+          Existing Item Found
+        </div>
+        <div id="atb-barcode-merge-msg"
+          style="font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.4;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="barcodeMergeConfirm()">Merge — Save Barcode to Existing</button>
+          <button class="btn btn-secondary btn-sm" onclick="barcodeKeepSeparate()">Keep Separate</button>
+        </div>
+      </div>
+
       <!-- "Not right" sub-panel -->
       <div id="atb-barcode-notright" style="display:none;margin-top:10px;
         background:var(--surface2);border:1px solid var(--border);padding:10px 12px;">
@@ -3817,14 +3831,19 @@ function triggerBarcodePhoto() {
   inp.value = ''; inp.click();
 }
 
+// Pending merge state: the external result that triggered the merge prompt
+let barcodePendingMerge = null; // { result, matchedItem }
+
 function resetBarcodeUI() {
   barcodeCurrentUpc = null;
   barcodeResults = [];
   barcodeSelectedIdx = 0;
+  barcodePendingMerge = null;
   document.getElementById('atb-barcode-upc').style.display = 'none';
   document.getElementById('atb-barcode-result').innerHTML = '';
   document.getElementById('atb-barcode-actions').style.display = 'none';
   document.getElementById('atb-barcode-notright').style.display = 'none';
+  document.getElementById('atb-barcode-merge').style.display = 'none';
   document.getElementById('atb-barcode-manual-name').value = '';
   document.getElementById('atb-barcode-status').textContent = '';
 }
@@ -3863,27 +3882,84 @@ async function barcodeAddSelected() {
   if (!r) { toast('No item selected', true); return; }
   if (!addToBoxId) { toast('Select a box first', true); return; }
 
-  let item_id = r.id || null;
-  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
-  const notes = document.getElementById('atb-notes').value.trim();
+  // If this is an external (non-local) result, check whether an item with the
+  // same name already exists in the local DB before creating a new one.
+  if (!r.id && barcodeCurrentUpc) {
+    const matches = await api(`/api/items/find-by-name?name=${encodeURIComponent(r.name)}`);
+    if (matches.length) {
+      // Classify each match:
+      //   no UPC  → offer to merge (save UPC to this item)
+      //   same UPC → already the same product, use directly
+      //   different UPC → different variant, keep separate
+      const noUpc = matches.filter(m => !m.upc);
+      const sameUpc = matches.filter(m => m.upc === barcodeCurrentUpc || m.upc === barcodeCurrentUpc.replace(/^0+/, ''));
 
-  // If from external source: create/find item and save UPC
-  if (!item_id) {
-    const newItem = await api('/api/items', {
-      method: 'POST',
-      body: JSON.stringify({ name: r.name, upc: barcodeCurrentUpc })
-    });
-    item_id = newItem.id;
-  } else if (barcodeCurrentUpc && !r.upc) {
-    // Local item found without UPC stored — save the UPC now
-    const existing = allItems.find(i => i.id === item_id);
-    await api(`/api/items/${item_id}`, {
-      method: 'PUT',
-      body: JSON.stringify({ name: r.name, category: r.category || '', upc: barcodeCurrentUpc })
-    });
+      if (sameUpc.length) {
+        // Already linked — just use it
+        await finishBarcodeAdd(sameUpc[0].id, r.name, false);
+        return;
+      }
+      if (noUpc.length) {
+        // Prompt to merge
+        barcodePendingMerge = { result: r, matchedItem: noUpc[0] };
+        const msg = document.getElementById('atb-barcode-merge-msg');
+        msg.textContent = `"${noUpc[0].name}" already exists in your inventory without a barcode. `
+          + `Merge to save this barcode to the existing item, or keep them separate.`;
+        document.getElementById('atb-barcode-merge').style.display = 'block';
+        document.getElementById('atb-barcode-actions').style.display = 'none';
+        return;
+      }
+      // All matches have different UPCs — fall through to create new
+    }
   }
 
-  // Upload pending photos
+  // Local item or no name conflict — proceed directly
+  await finishBarcodeAdd(r.id || null, r.name, !r.id);
+}
+
+async function barcodeMergeConfirm() {
+  if (!barcodePendingMerge) return;
+  const { result, matchedItem } = barcodePendingMerge;
+  // Save the scanned UPC onto the existing item
+  await api(`/api/items/${matchedItem.id}`, {
+    method: 'PUT',
+    body: JSON.stringify({ name: matchedItem.name, category: matchedItem.category || '', upc: barcodeCurrentUpc })
+  });
+  toast(`Barcode saved to "${matchedItem.name}"`);
+  await finishBarcodeAdd(matchedItem.id, matchedItem.name, false);
+}
+
+async function barcodeKeepSeparate() {
+  if (!barcodePendingMerge) return;
+  const { result } = barcodePendingMerge;
+  document.getElementById('atb-barcode-merge').style.display = 'none';
+  document.getElementById('atb-barcode-actions').style.display = 'flex';
+  barcodePendingMerge = null;
+  // Create a new item with the UPC (will have same name but separate record)
+  await finishBarcodeAdd(null, result.name, true);
+}
+
+async function finishBarcodeAdd(item_id, name, createNew) {
+  if (createNew) {
+    const r = barcodeResults[barcodeSelectedIdx];
+    const newItem = await api('/api/items', {
+      method: 'POST',
+      body: JSON.stringify({ name, upc: barcodeCurrentUpc })
+    });
+    item_id = newItem.id;
+  } else if (item_id && barcodeCurrentUpc) {
+    // If local item found without UPC, silently save it
+    const existing = allItems.find(i => i.id === item_id);
+    if (existing && !existing.upc) {
+      await api(`/api/items/${item_id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, category: existing?.category || '', upc: barcodeCurrentUpc })
+      }).catch(() => {}); // non-fatal
+    }
+  }
+
+  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
+  const notes = document.getElementById('atb-notes').value.trim();
   const photoCount = atbPendingPhotos.filter(Boolean).length;
   if (photoCount > 0) await uploadPendingPhotos(item_id);
 
@@ -3891,7 +3967,7 @@ async function barcodeAddSelected() {
     method: 'POST', body: JSON.stringify({ item_id, quantity: qty, notes })
   });
   closeModal('modal-atb');
-  toast(result.incremented ? `Qty updated to ${result.quantity}` : `${r.name} added`);
+  toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
   trackRecentItem(item_id);
   trackRecentBox(addToBoxId);
 
@@ -3909,25 +3985,28 @@ async function barcodeManualAdd() {
   if (!name) { toast('Enter a product name', true); return; }
   if (!addToBoxId) { toast('Select a box first', true); return; }
 
-  // Create new item with the UPC so future scans find it locally
-  const newItem = await api('/api/items', {
-    method: 'POST',
-    body: JSON.stringify({ name, upc: barcodeCurrentUpc })
-  });
-  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
-  const notes = document.getElementById('atb-notes').value.trim();
-  const photoCount = atbPendingPhotos.filter(Boolean).length;
-  if (photoCount > 0) await uploadPendingPhotos(newItem.id);
+  // Check for existing item with this name (no-UPC merge check, same as barcodeAddSelected)
+  if (barcodeCurrentUpc) {
+    const matches = await api(`/api/items/find-by-name?name=${encodeURIComponent(name)}`);
+    const noUpc = matches.filter(m => !m.upc);
+    const sameUpc = matches.filter(m => m.upc === barcodeCurrentUpc || m.upc === barcodeCurrentUpc.replace(/^0+/, ''));
+    if (sameUpc.length) {
+      await finishBarcodeAdd(sameUpc[0].id, name, false); return;
+    }
+    if (noUpc.length) {
+      // Synthesise a result entry and show merge prompt
+      barcodeResults = [{ name, source: 'manual' }];
+      barcodeSelectedIdx = 0;
+      barcodePendingMerge = { result: { name }, matchedItem: noUpc[0] };
+      const msg = document.getElementById('atb-barcode-merge-msg');
+      msg.textContent = `"${noUpc[0].name}" already exists without a barcode. Merge to link this barcode to it?`;
+      document.getElementById('atb-barcode-merge').style.display = 'block';
+      document.getElementById('atb-barcode-notright').style.display = 'none';
+      return;
+    }
+  }
 
-  const result = await api(`/api/boxes/${addToBoxId}/items`, {
-    method: 'POST', body: JSON.stringify({ item_id: newItem.id, quantity: qty, notes })
-  });
-  closeModal('modal-atb');
-  toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
-  trackRecentItem(newItem.id);
-
-  const boxField = document.getElementById('atb-box-field');
-  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+  await finishBarcodeAdd(null, name, true);
 }
 
 function switchToNameTab() {

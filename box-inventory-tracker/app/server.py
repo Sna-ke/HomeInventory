@@ -1327,6 +1327,32 @@ def identify_item():
 
 # ── UPC Lookup ────────────────────────────────────────────────────────────
 
+@app.route("/api/items/find-by-name", methods=["GET"])
+def find_item_by_name():
+    """Find existing items matching a name (case-insensitive).
+    Used by barcode flow to detect merge candidates.
+    Returns items with their UPC so the frontend can decide:
+      - no UPC: offer to merge (save UPC to existing item)
+      - different UPC: keep separate (different product variant)
+      - same UPC: already merged, use directly
+    """
+    name = (request.args.get("name") or "").strip()
+    if not name:
+        return jsonify([])
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT i.id, i.name, i.upc, c.name as category
+                FROM items i
+                LEFT JOIN categories c ON c.id = i.category_id
+                WHERE LOWER(i.name) = LOWER(%s)
+            """, (name,))
+            return jsonify(cur.fetchall())
+    finally:
+        conn.close()
+
+
 @app.route("/api/upc-lookup", methods=["GET"])
 def upc_lookup():
     """Look up a UPC. Checks local item DB first, then external APIs."""
