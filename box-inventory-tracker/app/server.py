@@ -32,6 +32,7 @@ def sse_push(event_type: str, payload: dict | None = None):
     """Push a change notification to all connected SSE clients."""
     data = _json_mod.dumps({"type": event_type, **(payload or {})})
     with _sse_lock:
+        client_count = len(_sse_clients)
         dead = []
         for q in _sse_clients:
             try:
@@ -40,6 +41,7 @@ def sse_push(event_type: str, payload: dict | None = None):
                 dead.append(q)
         for q in dead:
             _sse_clients.remove(q)
+    logger.info(f"SSE push: {event_type} → {client_count} client(s)")
 
 @app.route("/api/events")
 def sse_stream():
@@ -48,6 +50,7 @@ def sse_stream():
     with _sse_lock:
         _sse_clients.append(q)
 
+    logger.info(f"SSE client connected (total: {len(_sse_clients)})")
     def generate():
         # Send an initial ping so the client knows it's connected
         yield "event: ping\ndata: {}\n\n"
