@@ -1518,8 +1518,11 @@ function showPanel(name, writeHash = true) {
   if (sideBtn) sideBtn.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
-  // Write hash only when called from user interaction (not from applyHash itself)
-  if (writeHash) location.hash = name;
+  // Write URL hash and persist to sessionStorage (fallback for HA ingress)
+  if (writeHash) {
+    location.hash = name;
+    saveNav(name);
+  }
 
   if (name === 'boxes') loadBoxes();
   else if (name === 'rooms') loadRooms();
@@ -1943,7 +1946,7 @@ async function filterRoomsByItem(query) {
     // Restore: all rooms visible, clear all highlights, collapse rooms that were
     // only opened by search (we track them via data-search-opened)
     document.querySelectorAll('.room-row').forEach(w => {
-      w.style.display = '';
+      w.style.opacity = '';
       // Collapse rooms that were auto-opened by the search
       if (w.dataset.searchOpened) {
         delete w.dataset.searchOpened;
@@ -1986,13 +1989,18 @@ async function filterRoomsByItem(query) {
       });
 
       if (!matchingBoxIds.size) {
-        // No matches — hide this room row (but don't destroy it)
-        wrap.style.display = 'none';
+        // No matches — collapse this room (but keep it visible for drag-and-drop)
+        wrap.style.opacity = '0.45';
+        if (expand.classList.contains('open')) {
+          expand.classList.remove('open');
+          hdr?.classList.remove('expanded');
+          chevron?.classList.remove('open');
+        }
         return;
       }
 
-      // Show room
-      wrap.style.display = '';
+      // Has matches — show at full opacity
+      wrap.style.opacity = '';
 
       // Auto-expand the room if not already open
       if (!expand.classList.contains('open')) {
@@ -2276,8 +2284,10 @@ async function openBoxDetail(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-box-detail').classList.add('active');
-  // Write hash without triggering our hashchange handler re-entrantly
-  if (location.hash !== `#box/${id}`) location.hash = `box/${id}`;
+  // Write URL hash and persist to sessionStorage (fallback for HA ingress)
+  const _navKey = `box/${id}`;
+  if (location.hash !== `#${_navKey}`) location.hash = _navKey;
+  saveNav(_navKey);
   // Keep "Boxes" highlighted in nav while viewing a box
   const tb = document.getElementById('tab-boxes');
   if (tb) tb.classList.add('active');
@@ -4681,31 +4691,46 @@ function addMoveToExpandRows(inner) {
   });
 }
 
-// ── URL hash routing ──────────────────────────────────────────────────────
-// We write location.hash when navigating; hashchange fires when it changes.
-// popstate covers browser back/forward. Both call applyHash().
+// ── Navigation state ──────────────────────────────────────────────────────
+// HA ingress may strip URL fragments before or during page load, so we persist
+// the current location in sessionStorage as a fallback.
+// Priority: 1) ?box=N query param (QR codes)  2) URL hash  3) sessionStorage
 
-function applyHash() {
-  // Support ?box=N (QR code links — existing behaviour, do not break)
+const NAV_KEY = 'boxtrack_nav';
+
+function saveNav(loc) {
+  try { sessionStorage.setItem(NAV_KEY, loc); } catch(e) {}
+}
+
+function readNav() {
+  // QR code param wins over everything
   const params = new URLSearchParams(location.search);
   const qrBox = params.get('box');
-  if (qrBox) { openBoxDetail(parseInt(qrBox)); return; }
+  if (qrBox) return `box/${qrBox}`;
 
-  const hash = location.hash.slice(1); // strip leading #
+  // URL hash (works when not behind ingress, or when fragment survives)
+  const hash = location.hash.slice(1);
+  if (hash) return hash;
 
-  if (hash.startsWith('box/')) {
-    const id = parseInt(hash.split('/')[1]);
+  // sessionStorage fallback (survives HA ingress page loads)
+  try { return sessionStorage.getItem(NAV_KEY) || ''; } catch(e) { return ''; }
+}
+
+function applyNav() {
+  const loc = readNav();
+
+  if (loc.startsWith('box/')) {
+    const id = parseInt(loc.split('/')[1]);
     if (id) { openBoxDetail(id); return; }
   }
 
   const panels = ['boxes', 'rooms', 'items', 'categories'];
-  const target = panels.includes(hash) ? hash : 'boxes';
-  // Show without writing hash (we're already reading from it)
+  const target = panels.includes(loc) ? loc : 'boxes';
   showPanel(target, false);
 }
 
-window.addEventListener('hashchange', applyHash);
-window.addEventListener('popstate',   applyHash);
+window.addEventListener('hashchange', applyNav);
+window.addEventListener('popstate',   applyNav);
 
 // ── SSE live-sync ──────────────────────────────────────────────────────────
 let _sseSource = null;
@@ -4778,7 +4803,7 @@ function handleRemoteChange(ev) {
 (async () => {
   initTheme();
   await loadRooms();
-  applyHash();
+  applyNav();
   loadVisionConfig(); // non-blocking — vision is optional
   sseConnect();       // live sync — non-blocking
 })();

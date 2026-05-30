@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.5
+- Rooms page item search: non-matching rooms are now collapsed and faded (opacity 45%) instead of hidden. All rooms remain visible and draggable during a search
+
+## 2.1.4
+- Fixed navigation state not persisting through HA ingress page loads. HA strips URL fragments before serving the page, so navigation is now saved to sessionStorage as a fallback. On reload, the app checks: QR code param → URL hash → sessionStorage, and restores the correct panel or box view
+
 ## 2.1.3
 - Fixed hash routing: clicking Rooms/Items/Boxes/Categories now updates the URL bar correctly
 - Fixed refreshing on any panel now returns to that panel instead of the home screen
