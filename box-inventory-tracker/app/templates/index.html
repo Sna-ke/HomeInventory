@@ -1960,7 +1960,8 @@ async function filterRoomsByItem(query) {
         }
       }
     });
-    // Clear all item highlights inside expanded boxes
+    // Restore all box opacity and clear item highlights
+    document.querySelectorAll('.room-box-wrap').forEach(bw => bw.style.opacity = '');
     clearItemHighlights();
     return;
   }
@@ -2003,7 +2004,8 @@ async function filterRoomsByItem(query) {
       if (!matchingBoxIds.size) {
         // No matches in this room — fade and collapse it
         wrap.style.opacity = '0.45';
-        // Clear highlights from any open boxes before collapsing the room
+        // Restore box opacity and clear highlights before collapsing the room
+        expand.querySelectorAll('.room-box-wrap').forEach(bw => bw.style.opacity = '');
         expand.querySelectorAll('.room-box-expand.open').forEach(be => clearItemHighlights(be));
         if (expand.classList.contains('open')) {
           expand.classList.remove('open');
@@ -2032,7 +2034,8 @@ async function filterRoomsByItem(query) {
         if (!boxExpand) return;
 
         if (!matchingBoxIds.has(bid)) {
-          // Clear highlights then collapse
+          // Fade and collapse non-matching box
+          boxWrap.style.opacity = '0.45';
           clearItemHighlights(boxExpand);
           if (boxExpand.classList.contains('open')) {
             boxExpand.classList.remove('open');
@@ -2040,6 +2043,8 @@ async function filterRoomsByItem(query) {
           }
           return;
         }
+        // Matching box — full opacity
+        boxWrap.style.opacity = '';
 
         // Expand this box to show items
         if (!boxExpand.classList.contains('open')) {

@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.8
+- Room item search: non-matching boxes within a matching room are now faded to 45% opacity (same treatment as non-matching rooms), in addition to being collapsed
+
 ## 2.1.7
 - Room item search: when the query matches nothing, highlights are cleared but rooms and boxes stay open at their current expand state
 
