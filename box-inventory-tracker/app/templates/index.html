@@ -1883,6 +1883,8 @@ function expandAllRooms() {
     const expand = wrap.querySelector('.room-expand');
     const roomId = wrap.dataset.roomId;
     if (!expand || !hdr || !chevron || !roomId) return;
+    // Skip empty rooms (chevron is hidden when box_count === 0)
+    if (chevron.style.visibility === 'hidden') return;
     if (!expand.classList.contains('open')) {
       toggleRoomExpand(parseInt(roomId), hdr, chevron, expand);
     }
