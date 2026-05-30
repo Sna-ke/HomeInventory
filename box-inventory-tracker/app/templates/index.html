@@ -1057,7 +1057,32 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   <div class="modal">
     <h3>Move Item to Another Box</h3>
     <input type="hidden" id="move-box-item-id">
-    <div id="move-item-info" style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:14px;"></div>
+    <input type="hidden" id="move-item-max-qty">
+
+    <!-- Item info + qty stepper (hidden when qty=1) -->
+    <div id="move-item-info"
+      style="font-family:var(--mono);font-size:13px;color:var(--muted);margin-bottom:12px;"></div>
+
+    <div id="move-qty-field" class="field" style="display:none;">
+      <label>Quantity to Move</label>
+      <div style="display:flex;align-items:center;gap:0;">
+        <button type="button" class="qty-btn" id="move-qty-minus">−</button>
+        <div style="position:relative;flex:1;">
+          <input type="number" id="move-qty-input" min="1" value="1"
+            style="width:100%;text-align:center;font-size:22px;font-weight:700;
+                   font-family:var(--mono);padding:10px 4px;border-left:none;border-right:none;">
+        </div>
+        <button type="button" class="qty-btn" id="move-qty-plus">+</button>
+      </div>
+      <div id="move-qty-hint"
+        style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;"></div>
+      <!-- Scrollable dropdown list matching the boxes page item qty style -->
+      <div id="move-qty-dropdown" style="display:none;margin-top:4px;
+        border:1px solid var(--accent);max-height:180px;overflow-y:auto;
+        background:var(--surface2);">
+      </div>
+    </div>
+
     <div class="field">
       <label>Destination Box</label>
       <div class="ac-wrap">
@@ -2111,6 +2136,7 @@ async function openBoxDetail(id) {
       moveBtn.dataset.action = 'move-box-item';
       moveBtn.dataset.id = i.box_item_id;
       moveBtn.dataset.name = i.name;
+      moveBtn.dataset.qty = i.quantity;
       moveBtn.title = 'Move to another box';
       moveBtn.textContent = '⇄';
 
@@ -2269,7 +2295,7 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
     if (btn.dataset.entityType === 'box') openBoxDetail(parseInt(btn.dataset.entityId));
 
   } else if (action === 'move-box-item') {
-    openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId);
+    openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId, btn.dataset.qty);
 
   } else if (action === 'upload-box-photo') {
     const boxId = parseInt(btn.dataset.boxId);
@@ -3302,7 +3328,7 @@ async function toggleItemExpand(itemId, mainTr) {
       moveBtn.addEventListener('click', e => {
         e.stopPropagation();
         moveItemSourceBoxId = b.box_id;
-        openMoveItemModal(b.box_item_id, item.name, b.box_id);
+        openMoveItemModal(b.box_item_id, item.name, b.box_id, b.quantity);
       });
       row.appendChild(moveBtn);
 
@@ -4189,16 +4215,102 @@ async function handleBarcodePhoto(input) {
 // ── Move item between boxes ─────────────────────────────────────────────────
 let moveItemSourceBoxId = null;
 
-function openMoveItemModal(boxItemId, itemName, sourceBoxId) {
+function openMoveItemModal(boxItemId, itemName, sourceBoxId, currentQty) {
   moveItemSourceBoxId = sourceBoxId;
   document.getElementById('move-box-item-id').value = boxItemId;
-  document.getElementById('move-item-info').textContent = `Moving: ${itemName}`;
+  document.getElementById('move-item-max-qty').value = currentQty || 1;
   document.getElementById('move-box-search').value = '';
   document.getElementById('move-box-search').style.display = '';
   document.getElementById('move-box-selected-badge').style.display = 'none';
   document.getElementById('move-box-id').value = '';
   document.getElementById('move-box-suggestions').classList.remove('open');
+
+  const qty = parseInt(currentQty) || 1;
+
+  if (qty <= 1) {
+    // Single item — no qty chooser, just show info
+    document.getElementById('move-item-info').textContent = `Moving: ${itemName}`;
+    document.getElementById('move-qty-field').style.display = 'none';
+  } else {
+    // Multiple — show qty stepper defaulting to full qty
+    document.getElementById('move-item-info').textContent = `Moving: ${itemName}`;
+    document.getElementById('move-qty-field').style.display = 'block';
+    document.getElementById('move-qty-input').value = qty;
+    document.getElementById('move-qty-hint').textContent =
+      `${qty} in this box · move between 1 and ${qty}`;
+
+    // Build scrollable qty list 1..maxQty
+    const dd = document.getElementById('move-qty-dropdown');
+    dd.innerHTML = '';
+    dd.style.display = 'none';
+    for (let n = 1; n <= qty; n++) {
+      const opt = document.createElement('div');
+      opt.className = 'item-qty-option' + (n === qty ? ' selected' : '');
+      opt.textContent = n;
+      opt.addEventListener('click', () => {
+        document.getElementById('move-qty-input').value = n;
+        dd.querySelectorAll('.item-qty-option').forEach(o =>
+          o.classList.toggle('selected', parseInt(o.textContent) === n));
+        dd.style.display = 'none';
+        document.getElementById('move-qty-hint').textContent =
+          n === qty
+            ? `Moving all ${qty} · ${0} will remain`
+            : `Moving ${n} · ${qty - n} will remain in this box`;
+      });
+      dd.appendChild(opt);
+    }
+
+    // Tap the number to toggle dropdown
+    const inp = document.getElementById('move-qty-input');
+    inp.onclick = () => {
+      dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+      if (dd.style.display === 'block') {
+        const sel = dd.querySelector('.item-qty-option.selected');
+        if (sel) {
+          const rowH = sel.offsetHeight || 30;
+          dd.scrollTop = Math.max(0, sel.offsetTop - rowH * 2);
+        }
+      }
+    };
+
+    // Minus / plus buttons
+    document.getElementById('move-qty-minus').onclick = () => {
+      const cur = parseInt(inp.value) || 1;
+      if (cur > 1) {
+        inp.value = cur - 1;
+        updateMoveQtyHint(cur - 1, qty);
+        syncMoveQtyDropdown(cur - 1);
+      }
+    };
+    document.getElementById('move-qty-plus').onclick = () => {
+      const cur = parseInt(inp.value) || 1;
+      if (cur < qty) {
+        inp.value = cur + 1;
+        updateMoveQtyHint(cur + 1, qty);
+        syncMoveQtyDropdown(cur + 1);
+      }
+    };
+    inp.oninput = () => {
+      const v = Math.max(1, Math.min(qty, parseInt(inp.value) || 1));
+      updateMoveQtyHint(v, qty);
+      syncMoveQtyDropdown(v);
+    };
+  }
+
   openModal('modal-move-item');
+}
+
+function updateMoveQtyHint(moving, total) {
+  const remaining = total - moving;
+  document.getElementById('move-qty-hint').textContent =
+    remaining === 0
+      ? `Moving all ${total}`
+      : `Moving ${moving} · ${remaining} will remain in this box`;
+}
+
+function syncMoveQtyDropdown(val) {
+  document.getElementById('move-qty-dropdown').querySelectorAll('.item-qty-option').forEach(o =>
+    o.classList.toggle('selected', parseInt(o.textContent) === val));
 }
 
 async function searchBoxesForMove(q) {
@@ -4260,13 +4372,24 @@ async function confirmMoveItem() {
   const boxItemId = document.getElementById('move-box-item-id').value;
   const targetBoxId = document.getElementById('move-box-id').value;
   if (!targetBoxId) { toast('Select a destination box', true); return; }
+
+  const maxQty = parseInt(document.getElementById('move-item-max-qty').value) || 1;
+  const qtyField = document.getElementById('move-qty-field');
+  const moveQty = qtyField.style.display !== 'none'
+    ? Math.max(1, Math.min(maxQty, parseInt(document.getElementById('move-qty-input').value) || maxQty))
+    : maxQty; // qty=1, move all
+
   try {
     const result = await api(`/api/box-items/${boxItemId}/move`, {
-      method: 'POST', body: JSON.stringify({ target_box_id: targetBoxId })
+      method: 'POST', body: JSON.stringify({ target_box_id: targetBoxId, quantity: moveQty })
     });
     closeModal('modal-move-item');
-    toast(result.merged ? 'Item moved and merged with existing entry' : 'Item moved');
-    // Invalidate box caches
+    const remaining = result.qty_remaining;
+    const moved = result.qty_moved;
+    const msg = remaining > 0
+      ? `${moved} moved · ${remaining} remain in source box`
+      : result.merged ? 'Item moved and merged' : 'Item moved';
+    toast(msg);
     Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
     if (moveItemSourceBoxId) openBoxDetail(moveItemSourceBoxId);
   } catch(e) { toast(e.message, true); }
@@ -4288,7 +4411,8 @@ function addMoveToExpandRows(inner) {
       moveBtn.addEventListener('click', e => {
         e.stopPropagation();
         moveItemSourceBoxId = parseInt(sourceBoxId);
-        openMoveItemModal(boxItemId, itemName, parseInt(sourceBoxId));
+        const expandQty = row.dataset.qty;
+        openMoveItemModal(boxItemId, itemName, parseInt(sourceBoxId), expandQty);
       });
       row.appendChild(moveBtn);
     }

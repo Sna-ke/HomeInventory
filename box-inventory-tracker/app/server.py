@@ -954,46 +954,63 @@ def update_box_item(box_item_id):
 
 @app.route("/api/box-items/<int:box_item_id>/move", methods=["POST"])
 def move_box_item(box_item_id):
-    """Move a box_item to a different box, merging if the item already exists there."""
+    """Move a box_item (or subset of its quantity) to a different box."""
     data = request.json
     target_box_id = data.get("target_box_id")
     if not target_box_id:
         return jsonify({"error": "target_box_id is required"}), 400
     target_box_id = int(target_box_id)
+    move_qty = data.get("quantity")  # None = move all
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            # Get the item being moved
             cur.execute("SELECT * FROM box_items WHERE id=%s", (box_item_id,))
             src = cur.fetchone()
             if not src:
                 return jsonify({"error": "Not found"}), 404
             if src["box_id"] == target_box_id:
                 return jsonify({"error": "Already in that box"}), 400
-            # Check if target box already has this item (with same notes)
+
+            # Resolve quantity to move
+            src_qty = src["quantity"]
+            qty_to_move = int(move_qty) if move_qty is not None else src_qty
+            qty_to_move = max(1, min(qty_to_move, src_qty))
+            qty_remaining = src_qty - qty_to_move
+
+            # Check if target box already has this item with the same notes
             cur.execute(
                 "SELECT id, quantity FROM box_items "
                 "WHERE box_id=%s AND item_id=%s AND (notes=%s OR (notes IS NULL AND %s IS NULL))",
                 (target_box_id, src["item_id"], src["notes"], src["notes"])
             )
             existing = cur.fetchone()
+
             if existing:
-                # Merge: add qty to existing, delete source
+                # Merge into existing target entry
                 cur.execute(
                     "UPDATE box_items SET quantity=%s WHERE id=%s",
-                    (existing["quantity"] + src["quantity"], existing["id"])
+                    (existing["quantity"] + qty_to_move, existing["id"])
                 )
-                cur.execute("DELETE FROM box_items WHERE id=%s", (box_item_id,))
-                conn.commit()
-                return jsonify({"ok": True, "merged": True})
             else:
-                # Move: update box_id on source record
+                # Insert new entry in target box
                 cur.execute(
-                    "UPDATE box_items SET box_id=%s WHERE id=%s",
-                    (target_box_id, box_item_id)
+                    "INSERT INTO box_items (box_id, item_id, quantity, notes) VALUES (%s,%s,%s,%s)",
+                    (target_box_id, src["item_id"], qty_to_move, src["notes"])
                 )
-                conn.commit()
-                return jsonify({"ok": True, "merged": False})
+
+            # Update or remove source entry
+            if qty_remaining > 0:
+                cur.execute("UPDATE box_items SET quantity=%s WHERE id=%s", (qty_remaining, box_item_id))
+            else:
+                cur.execute("DELETE FROM box_items WHERE id=%s", (box_item_id,))
+
+            conn.commit()
+            return jsonify({
+                "ok": True,
+                "merged": existing is not None,
+                "qty_moved": qty_to_move,
+                "qty_remaining": qty_remaining,
+            })
     finally:
         conn.close()
 
