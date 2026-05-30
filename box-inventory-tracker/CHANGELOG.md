@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.6
+- Room item search: highlights are now cleared when a box collapses (not left behind in hidden boxes)
+- Room item search: if the refined query matches nothing at all, the current view is left unchanged instead of collapsing everything at once
+
 ## 2.1.5
 - Rooms page item search: non-matching rooms are now collapsed and faded (opacity 45%) instead of hidden. All rooms remain visible and draggable during a search
 

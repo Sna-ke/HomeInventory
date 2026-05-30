@@ -1969,28 +1969,38 @@ async function filterRoomsByItem(query) {
     const lq = query.toLowerCase();
     const roomWraps = [...document.querySelectorAll('.room-row[data-room-id]')];
 
-    await Promise.all(roomWraps.map(async wrap => {
+    // First pass: gather match data for all rooms without touching the DOM
+    const roomResults = await Promise.all(roomWraps.map(async wrap => {
       const roomId = parseInt(wrap.dataset.roomId);
-      const hdr = wrap.querySelector('.room-row-header');
-      const chevron = hdr?.querySelector('.cat-chevron');
-      const expand = wrap.querySelector('.room-expand');
-      if (!expand) return;
-
       let roomData;
       try { roomData = await getRoomItems(roomId); }
-      catch(e) { return; }
+      catch(e) { return { wrap, roomId, matchingBoxIds: new Set(), roomData: [] }; }
 
-      // Collect which box_ids have matching items
       const matchingBoxIds = new Set();
       roomData.forEach(box => {
         if (box.items.some(item => item.name.toLowerCase().includes(lq))) {
           matchingBoxIds.add(box.box_id);
         }
       });
+      return { wrap, roomId, matchingBoxIds, roomData };
+    }));
+
+    // If absolutely nothing matches, leave the view exactly as-is — no jarring change
+    const anyMatch = roomResults.some(r => r.matchingBoxIds.size > 0);
+    if (!anyMatch) return;
+
+    // Second pass: apply DOM changes now that we know the full picture
+    await Promise.all(roomResults.map(async ({ wrap, roomId, matchingBoxIds, roomData }) => {
+      const hdr = wrap.querySelector('.room-row-header');
+      const chevron = hdr?.querySelector('.cat-chevron');
+      const expand = wrap.querySelector('.room-expand');
+      if (!expand) return;
 
       if (!matchingBoxIds.size) {
-        // No matches — collapse this room (but keep it visible for drag-and-drop)
+        // No matches in this room — fade and collapse it
         wrap.style.opacity = '0.45';
+        // Clear highlights from any open boxes before collapsing the room
+        expand.querySelectorAll('.room-box-expand.open').forEach(be => clearItemHighlights(be));
         if (expand.classList.contains('open')) {
           expand.classList.remove('open');
           hdr?.classList.remove('expanded');
@@ -1999,19 +2009,17 @@ async function filterRoomsByItem(query) {
         return;
       }
 
-      // Has matches — show at full opacity
+      // Has matches — full opacity
       wrap.style.opacity = '';
 
       // Auto-expand the room if not already open
       if (!expand.classList.contains('open')) {
-        wrap.dataset.searchOpened = '1'; // mark as search-opened so we can close it on clear
+        wrap.dataset.searchOpened = '1';
         await toggleRoomExpand(roomId, hdr, chevron, expand);
-        // Small wait for DOM to settle after async box fetch
         await new Promise(r => setTimeout(r, 50));
       }
 
-      // For each box row in this room, expand boxes that have matches and
-      // highlight matching item names. Collapse boxes with no matches.
+      // Per-box: expand matching, collapse non-matching (clearing highlights first)
       const boxWraps = [...expand.querySelectorAll('.room-box-wrap[data-box-id]')];
       await Promise.all(boxWraps.map(async boxWrap => {
         const bid = parseInt(boxWrap.dataset.boxId);
@@ -2020,7 +2028,8 @@ async function filterRoomsByItem(query) {
         if (!boxExpand) return;
 
         if (!matchingBoxIds.has(bid)) {
-          // Collapse box if it was open
+          // Clear highlights then collapse
+          clearItemHighlights(boxExpand);
           if (boxExpand.classList.contains('open')) {
             boxExpand.classList.remove('open');
             if (zoneChevron) zoneChevron.classList.remove('open');
@@ -2035,7 +2044,6 @@ async function filterRoomsByItem(query) {
           await new Promise(r => setTimeout(r, 30));
         }
 
-        // Highlight matching item names inside this box's expand panel
         applyItemHighlights(boxExpand, lq, query);
       }));
     }));
@@ -2060,8 +2068,10 @@ function applyItemHighlights(container, lq, query) {
   });
 }
 
-function clearItemHighlights() {
-  document.querySelectorAll('.room-box-item-row span[data-orig-name]').forEach(span => {
+function clearItemHighlights(container) {
+  // If no container given, clear everywhere; otherwise just within the container
+  const root = container || document;
+  root.querySelectorAll('.room-box-item-row span[data-orig-name]').forEach(span => {
     span.textContent = span.dataset.origName;
     delete span.dataset.origName;
   });
