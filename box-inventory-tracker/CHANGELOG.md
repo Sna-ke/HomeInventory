@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.3
+- Fixed hash routing: clicking Rooms/Items/Boxes/Categories now updates the URL bar correctly
+- Fixed refreshing on any panel now returns to that panel instead of the home screen
+- Used hashchange event (not popstate) so tab clicks are captured correctly
+- Fixed brace balance error from 2.1.2 that could cause parse failures
+
 ## 2.1.2
 - Fixed syntax error (stray closing brace) introduced in 2.1.1 that prevented the page from loading
 
