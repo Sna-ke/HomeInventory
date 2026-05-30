@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.7
+- Room item search: when the query matches nothing, highlights are cleared but rooms and boxes stay open at their current expand state
+
 ## 2.1.6
 - Room item search: highlights are now cleared when a box collapses (not left behind in hidden boxes)
 - Room item search: if the refined query matches nothing at all, the current view is left unchanged instead of collapsing everything at once

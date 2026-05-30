@@ -1985,9 +1985,13 @@ async function filterRoomsByItem(query) {
       return { wrap, roomId, matchingBoxIds, roomData };
     }));
 
-    // If absolutely nothing matches, leave the view exactly as-is — no jarring change
+    // If absolutely nothing matches, clear highlights but leave expand state untouched
     const anyMatch = roomResults.some(r => r.matchingBoxIds.size > 0);
-    if (!anyMatch) return;
+    if (!anyMatch) {
+      clearItemHighlights();
+      document.querySelectorAll('.room-row').forEach(w => w.style.opacity = '');
+      return;
+    }
 
     // Second pass: apply DOM changes now that we know the full picture
     await Promise.all(roomResults.map(async ({ wrap, roomId, matchingBoxIds, roomData }) => {
