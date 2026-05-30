@@ -1875,6 +1875,77 @@ async function toggleRoomBoxExpand(boxId, chevron, boxExpand) {
   }
 }
 
+// ── In-place refresh of open boxes on rooms page ──────────────────────────
+// Called by SSE instead of loadRooms() so expand state is preserved.
+async function refreshOpenRoomBoxes() {
+  // Re-render the room counts in headers (lightweight)
+  try {
+    const fresh = await api('/api/rooms');
+    rooms = fresh;
+    // Update box-count text in each room header without re-rendering
+    fresh.forEach(r => {
+      const wrap = document.querySelector(`.room-row[data-room-id="${r.id}"]`);
+      if (!wrap) return;
+      const countEl = wrap.querySelector('.room-row-count');
+      if (countEl) {
+        countEl.textContent = r.box_count > 0
+          ? `${r.box_count} box${r.box_count !== 1 ? 'es' : ''}`
+          : 'empty';
+      }
+    });
+    // Update room filter dropdown
+    const f = document.getElementById('roomFilter');
+    if (f) {
+      const prev = f.value;
+      f.innerHTML = '<option value="">All Rooms</option>' +
+        fresh.map(r => `<option value="${r.id}" ${prev==r.id?'selected':''}>${esc(r.name)}</option>`).join('');
+    }
+  } catch(e) { /* non-fatal */ }
+
+  // Invalidate item caches and re-render any open box panels
+  Object.keys(roomItemCache).forEach(k => delete roomItemCache[k]);
+
+  const openBoxPanels = [...document.querySelectorAll('.room-box-expand.open')];
+  await Promise.all(openBoxPanels.map(async boxExpand => {
+    const boxWrap = boxExpand.closest('.room-box-wrap');
+    if (!boxWrap) return;
+    const boxId = parseInt(boxWrap.dataset.boxId);
+    if (!boxId) return;
+
+    try {
+      const box = await api(`/api/boxes/${boxId}`);
+      // Update the box meta line (item count + qty) in the expand zone
+      const metaEl = boxWrap.querySelector('.room-box-meta');
+      if (metaEl && box.items) {
+        const totalQty = box.items.reduce((s, i) => s + i.quantity, 0);
+        metaEl.textContent = `${box.items.length} type${box.items.length !== 1 ? 's' : ''} · ${totalQty} qty`;
+      }
+
+      // Re-render item rows in-place
+      boxExpand.innerHTML = '';
+      boxExpand.dataset.loaded = '1';
+      if (!box.items || !box.items.length) {
+        boxExpand.innerHTML = '<div style="color:var(--muted);font-size:11px;font-family:var(--mono);">Empty box.</div>';
+        return;
+      }
+      box.items.forEach(item => {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'room-box-item-row';
+        const qty = document.createElement('span');
+        qty.style.cssText = 'font-family:var(--mono);font-size:11px;color:var(--accent);flex-shrink:0;';
+        qty.textContent = `×${item.quantity}`;
+        const name = document.createElement('span');
+        name.textContent = item.name;
+        const cat = document.createElement('span');
+        cat.style.cssText = 'font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:auto;';
+        cat.textContent = item.category || '';
+        itemRow.appendChild(qty); itemRow.appendChild(name); itemRow.appendChild(cat);
+        boxExpand.appendChild(itemRow);
+      });
+    } catch(e) { /* leave as-is on error */ }
+  }));
+}
+
 // ── Room expand / collapse all ────────────────────────────────────────────
 function expandAllRooms() {
   document.querySelectorAll('.room-row').forEach(wrap => {
@@ -4796,8 +4867,12 @@ function handleRemoteChange(ev) {
   // Only refresh what the current panel actually needs
   if (panel === 'boxes' && (type === 'boxes' || type === 'items')) {
     scheduleRefresh('boxes', () => loadBoxes());
-  } else if (panel === 'rooms' && (type === 'rooms' || type === 'boxes' || type === 'items')) {
+  } else if (panel === 'rooms' && type === 'rooms') {
+    // Room structure changed (add/rename/delete) — full reload needed
     scheduleRefresh('rooms', () => loadRooms());
+  } else if (panel === 'rooms' && (type === 'boxes' || type === 'items')) {
+    // Box contents changed — refresh open boxes in-place, preserve expand state
+    scheduleRefresh('rooms', () => refreshOpenRoomBoxes());
   } else if (panel === 'items' && (type === 'items' || type === 'categories' || type === 'boxes')) {
     scheduleRefresh('items', () => loadItems());
   } else if (panel === 'categories' && (type === 'categories' || type === 'items')) {

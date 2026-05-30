@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.0
+- Rooms page now updates in-place when items are added or quantities change. Open rooms and boxes stay expanded; only item rows and counts are refreshed. A full reload only happens when room structure changes (add/rename/delete room)
+
 ## 2.1.8
 - Room item search: non-matching boxes within a matching room are now faded to 45% opacity (same treatment as non-matching rooms), in addition to being collapsed
 
