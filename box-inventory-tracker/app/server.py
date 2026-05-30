@@ -638,15 +638,31 @@ def get_boxes():
             sql += " GROUP BY b.id ORDER BY b.box_number"
             cur.execute(sql, params)
             boxes = cur.fetchall()
-        # Attach first image thumbnail url for card display
+        # Attach thumbnail data for card display
         for box in boxes:
             cur2 = conn.cursor()
+            # First preference: box's own photos
             cur2.execute(
                 "SELECT id FROM images WHERE entity_type='box' AND entity_id=%s ORDER BY created_at LIMIT 1",
                 (box["id"],)
             )
             img = cur2.fetchone()
-            box["thumb_url"] = image_url(img["id"]) if img else None
+            if img:
+                box["thumb_url"] = image_url(img["id"])
+                box["collage_urls"] = None
+            else:
+                box["thumb_url"] = None
+                # Fallback: up to 9 item photos from items in this box
+                cur2.execute("""
+                    SELECT DISTINCT img.id
+                    FROM images img
+                    JOIN box_items bi ON bi.item_id = img.entity_id
+                    WHERE img.entity_type = 'item' AND bi.box_id = %s
+                    ORDER BY img.created_at
+                    LIMIT 9
+                """, (box["id"],))
+                item_imgs = cur2.fetchall()
+                box["collage_urls"] = [image_url(r["id"]) for r in item_imgs] if item_imgs else None
             cur2.close()
         return jsonify(boxes)
     finally:

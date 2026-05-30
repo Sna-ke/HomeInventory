@@ -172,12 +172,35 @@ body {
 .card:active { border-color: var(--accent); }
 
 .card-thumb {
-  width: 100%; aspect-ratio: 16/9; object-fit: cover;
+  width: 100%; aspect-ratio: 16/9;
   background: var(--surface2);
   display: flex; align-items: center; justify-content: center;
   color: var(--border); font-size: 32px;
+  overflow: hidden; position: relative;
 }
 .card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Collage grid — fills the card-thumb area */
+.card-thumb-collage {
+  width: 100%; height: 100%;
+  display: grid; gap: 1px; background: var(--border);
+}
+/* Layout variants by image count */
+.card-thumb-collage[data-count="1"] { grid-template-columns: 1fr; }
+.card-thumb-collage[data-count="2"] { grid-template-columns: 1fr 1fr; }
+.card-thumb-collage[data-count="3"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.card-thumb-collage[data-count="3"] .collage-img:first-child { grid-row: 1 / 3; }
+.card-thumb-collage[data-count="4"] { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.card-thumb-collage[data-count="5"] { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.card-thumb-collage[data-count="5"] .collage-img:nth-child(-n+2) { grid-column: span 1; }
+.card-thumb-collage[data-count="6"],
+.card-thumb-collage[data-count="7"],
+.card-thumb-collage[data-count="8"],
+.card-thumb-collage[data-count="9"] { grid-template-columns: 1fr 1fr 1fr; grid-template-rows: 1fr 1fr 1fr; }
+.collage-img {
+  overflow: hidden; background: var(--surface2);
+}
+.collage-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 .card-body { padding: 12px; }
 .card-num {
@@ -474,6 +497,14 @@ tr:active td { background: var(--surface2); }
   padding: 10px 14px; cursor: pointer; transition: border-color .15s;
 }
 .box-list-row:hover { border-color: var(--accent); }
+.box-list-thumb {
+  width: 44px; height: 44px; flex-shrink: 0; border-radius: 0;
+  overflow: hidden; background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--border);
+}
+.box-list-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.box-list-thumb .card-thumb-collage { width: 100%; height: 100%; }
 .box-list-num {
   font-family: var(--mono); font-size: 12px;
   background: var(--accent); color: #000;
@@ -1879,6 +1910,38 @@ async function deleteRoom(id) {
 }
 
 // ── Boxes ──────────────────────────────────────────────────────────────────
+// Build thumbnail content for a box card — single image, collage, or placeholder
+function fillBoxThumb(el, box) {
+  el.innerHTML = '';
+  if (box.thumb_url) {
+    // Box has its own photo
+    const img = document.createElement('img');
+    img.src = box.thumb_url;
+    img.alt = 'box photo';
+    img.loading = 'lazy';
+    el.appendChild(img);
+  } else if (box.collage_urls && box.collage_urls.length) {
+    // Collage from item photos
+    const n = Math.min(box.collage_urls.length, 9);
+    const grid = document.createElement('div');
+    grid.className = 'card-thumb-collage';
+    grid.dataset.count = n;
+    box.collage_urls.slice(0, 9).forEach(url => {
+      const cell = document.createElement('div');
+      cell.className = 'collage-img';
+      const img = document.createElement('img');
+      img.src = url;
+      img.loading = 'lazy';
+      img.alt = '';
+      cell.appendChild(img);
+      grid.appendChild(cell);
+    });
+    el.appendChild(grid);
+  } else {
+    el.innerHTML = '<span>📦</span>';
+  }
+}
+
 function setBoxView(v) {
   boxView = v;
   document.getElementById('view-grid-btn').classList.toggle('active', v === 'grid');
@@ -1910,6 +1973,7 @@ function renderBoxes(boxes) {
       const row = document.createElement('div');
       row.className = 'box-list-row';
       row.innerHTML = `
+        <div class="box-list-thumb"></div>
         <div class="box-list-num">BOX<br>${b.box_number}</div>
         <div class="box-list-info">
           <div class="box-list-title">${esc(b.label || 'Unlabelled')}</div>
@@ -1921,6 +1985,7 @@ function renderBoxes(boxes) {
         </div>`;
       // delegated — avoid onclick string interpolation
       row.dataset.boxId = b.id;
+      fillBoxThumb(row.querySelector('.box-list-thumb'), b);
       row.querySelector('.box-list-info').addEventListener('click', () => openBoxDetail(b.id));
       row.querySelector('.box-list-num').addEventListener('click', () => openBoxDetail(b.id));
       row.querySelectorAll('.box-list-actions button')[0].addEventListener('click', e => { e.stopPropagation(); openPrintModal(b.id); });
@@ -1934,9 +1999,7 @@ function renderBoxes(boxes) {
       const card = document.createElement('div');
       card.className = 'card';
       card.innerHTML = `
-        <div class="card-thumb">
-          ${b.thumb_url ? `<img src="${b.thumb_url}" alt="box photo" loading="lazy">` : `<span>📦</span>`}
-        </div>
+        <div class="card-thumb"></div>
         <div class="card-body">
           <div class="card-num">BOX ${b.box_number}</div>
           <div class="card-title">${esc(b.label || 'Unlabelled')}</div>
@@ -1944,6 +2007,8 @@ function renderBoxes(boxes) {
           ${b.description ? `<div class="card-desc">${esc(b.description.substring(0,80))}${b.description.length>80?'…':''}</div>` : ''}
           <div class="card-actions"></div>
         </div>`;
+      // Populate thumbnail via DOM (avoids inserting URLs into template strings)
+      fillBoxThumb(card.querySelector('.card-thumb'), b);
       // Actions via JS to avoid interpolation
       const actions = card.querySelector('.card-actions');
       const editBtn = document.createElement('button');
