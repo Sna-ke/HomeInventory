@@ -7,12 +7,9 @@
 <meta name="theme-color" content="#0f1117">
 <title>BoxTrack</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-// ZXing-js loaded from jsDelivr (correct content-type, UMD build)
-// Falls back gracefully if blocked — barcode decode will use AI fallback instead
-</script>
+<!-- @zxing/library UMD — exposes window.ZXing, correct content-type from jsDelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"
-  onerror="window._zxingLoadFailed=true"></script>
+  onerror="console.warn('ZXing failed to load — barcode decode unavailable')"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;900&display=swap');
 
@@ -3765,6 +3762,51 @@ function setATBTab(tab) {
 }
 
 // ── Barcode lookup ─────────────────────────────────────────────────────────
+// ── Barcode decode ────────────────────────────────────────────────────────
+async function decodeBarcode(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        // @zxing/library UMD exposes ZXing global
+        const ZX = window.ZXing;
+        if (!ZX) { reject(new Error('ZXing library not loaded')); return; }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const luminanceSource = new ZX.HTMLCanvasElementLuminanceSource(canvas);
+        const binarizer = new ZX.HybridBinarizer(luminanceSource);
+        const bitmap = new ZX.BinaryBitmap(binarizer);
+
+        const hints = new Map();
+        const formats = [
+          ZX.BarcodeFormat.UPC_A, ZX.BarcodeFormat.UPC_E,
+          ZX.BarcodeFormat.EAN_13, ZX.BarcodeFormat.EAN_8,
+          ZX.BarcodeFormat.CODE_128, ZX.BarcodeFormat.CODE_39,
+          ZX.BarcodeFormat.ITF,
+        ].filter(Boolean);
+        if (formats.length) {
+          hints.set(ZX.DecodeHintType.POSSIBLE_FORMATS, formats);
+          hints.set(ZX.DecodeHintType.TRY_HARDER, true);
+        }
+
+        const reader = new ZX.MultiFormatReader();
+        reader.setHints(hints);
+        const result = reader.decode(bitmap);
+        resolve(result.getText());
+      } catch(e) {
+        reject(e);
+      }
+    };
+    img.onerror = () => reject(new Error('Could not load image'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 // ── Barcode state ─────────────────────────────────────────────────────────
 let barcodeCurrentUpc = null;      // last decoded UPC string
 let barcodeResults = [];           // [{id, name, source, upc?}] — current results
