@@ -1194,6 +1194,58 @@ def compress_image_for_vision(file_bytes: bytes, mime: str) -> tuple[bytes, str]
         return file_bytes, mime
 
 
+def parse_vision_response(raw: str) -> list[str]:
+    """Robustly extract a list of item name strings from a model response.
+
+    Handles: clean JSON arrays, markdown-fenced JSON, prose with bullet/numbered
+    lists, newline-separated names, and single-item responses.
+    """
+    import json, re
+
+    text = raw.strip()
+
+    # 1. Strip markdown code fences (```json ... ``` or ``` ... ```)
+    text = re.sub(r"```(?:json)?\s*", "", text).strip()
+    text = text.strip("`").strip()
+
+    # 2. Try direct JSON parse
+    try:
+        result = json.loads(text)
+        if isinstance(result, list):
+            return [str(s).strip() for s in result if str(s).strip()][:5]
+        if isinstance(result, str):
+            return [result.strip()] if result.strip() else []
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # 3. Try to extract a JSON array embedded anywhere in the text
+    m = re.search(r"\[.*?\]", text, re.DOTALL)
+    if m:
+        try:
+            result = json.loads(m.group(0))
+            if isinstance(result, list):
+                return [str(s).strip() for s in result if str(s).strip()][:5]
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # 4. Fall back: split on newlines, strip bullets/numbers/quotes
+    lines = []
+    for line in text.splitlines():
+        line = line.strip()
+        # Remove leading bullets, numbers, dashes, asterisks
+        line = re.sub(r"^[\d]+[.)]\s*", "", line)
+        line = re.sub(r"^[-*•]\s*", "", line)
+        # Remove surrounding quotes
+        line = line.strip('"\'')
+        # Skip empty lines or lines that look like prose (long sentences)
+        if line and len(line) <= 80 and not line.endswith(":"):
+            lines.append(line)
+    if lines:
+        return lines[:5]
+
+    return []
+
+
 def identify_via_anthropic(img_bytes: bytes, mime: str, prompt: str = None) -> list[str]:
     import anthropic
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -1209,13 +1261,8 @@ def identify_via_anthropic(img_bytes: bytes, mime: str, prompt: str = None) -> l
             ],
         }],
     )
-    import json
     raw = msg.content[0].text.strip()
-    # Strip any accidental markdown fences
-    raw = raw.strip("`").strip()
-    if raw.startswith("json"):
-        raw = raw[4:].strip()
-    return json.loads(raw)
+    return parse_vision_response(raw)
 
 
 def get_ollama_models() -> list[str]:
@@ -1264,10 +1311,7 @@ def identify_via_ollama(img_bytes: bytes, mime: str, prompt: str = None) -> list
         )
     resp.raise_for_status()
     raw = resp.json().get("response", "").strip()
-    raw = raw.strip("`").strip()
-    if raw.startswith("json"):
-        raw = raw[4:].strip()
-    return json.loads(raw)
+    return parse_vision_response(raw)
 
 
 @app.route("/api/vision-config", methods=["GET"])
