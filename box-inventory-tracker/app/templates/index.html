@@ -927,9 +927,21 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   <div id="panel-rooms" class="panel">
     <div class="panel-hdr">
       <h2>Rooms &amp; Areas</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-secondary btn-sm" id="ha-sync-btn" onclick="syncHAAreas()" title="Sync from Home Assistant Areas">⟳ Sync HA</button>
+        <button class="btn btn-secondary btn-sm" onclick="expandAllRooms()" title="Expand all rooms">⊞ All</button>
+        <button class="btn btn-secondary btn-sm" onclick="collapseAllRooms()" title="Collapse all rooms">⊟ All</button>
         <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add</button>
+      </div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <div style="position:relative;">
+        <input type="search" id="room-item-search"
+          placeholder="🔍 Find item in rooms…"
+          oninput="filterRoomsByItem(this.value)"
+          style="width:100%;background:var(--surface2);border:1px solid var(--border);
+                 color:var(--text);font-family:var(--mono);font-size:13px;
+                 padding:8px 10px;outline:none;-webkit-appearance:none;border-radius:0;">
       </div>
     </div>
     <div id="rooms-list-occupied"></div>
@@ -1495,18 +1507,17 @@ function toast(msg, isErr = false) {
 }
 
 // ── Navigation ─────────────────────────────────────────────────────────────
-function showPanel(name) {
+function showPanel(name, updateHash = true) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  // Deactivate both nav types
   document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById(`panel-${name}`).classList.add('active');
-  // Activate bottom tab
   const tab = document.getElementById(`tab-${name}`);
   if (tab) tab.classList.add('active');
-  // Activate sidebar button
   const sideBtn = document.getElementById(`sidebar-${name}`);
   if (sideBtn) sideBtn.classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
+
+  if (updateHash) history.replaceState(null, '', `#${name}`);
 
   if (name === 'boxes') loadBoxes();
   else if (name === 'rooms') loadRooms();
@@ -1523,8 +1534,12 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 
 // ── Rooms ──────────────────────────────────────────────────────────────────
 async function loadRooms() {
-  // Clear cache so re-expanding rooms fetches fresh data
+  // Clear all caches
   Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
+  Object.keys(roomItemCache).forEach(k => delete roomItemCache[k]);
+  // Clear find-item search
+  const ris = document.getElementById('room-item-search');
+  if (ris) { ris.value = ''; filterRoomsByItem(''); }
   rooms = await api('/api/rooms');
   // Update filter dropdown
   const f = document.getElementById('roomFilter');
@@ -1689,16 +1704,7 @@ const roomBoxCache = {};
 
 async function toggleRoomExpand(roomId, hdr, chevron, expand) {
   const isOpen = expand.classList.contains('open');
-  // Close other rooms
-  document.querySelectorAll('.room-expand.open').forEach(e => {
-    if (e !== expand) e.classList.remove('open');
-  });
-  document.querySelectorAll('.room-row-header.expanded').forEach(h => {
-    if (h !== hdr) h.classList.remove('expanded');
-  });
-  document.querySelectorAll('.room-row-header .cat-chevron.open').forEach(c => {
-    if (c !== chevron) c.classList.remove('open');
-  });
+  // Multiple rooms can be open simultaneously — just toggle this one
   if (isOpen) {
     expand.classList.remove('open');
     hdr.classList.remove('expanded');
@@ -1862,6 +1868,166 @@ async function toggleRoomBoxExpand(boxId, chevron, boxExpand) {
     boxExpand.dataset.loaded = ''; // allow retry
     boxExpand.innerHTML = `<span style="color:var(--danger);font-size:11px;">Error loading</span>`;
   }
+}
+
+// ── Room expand / collapse all ────────────────────────────────────────────
+function expandAllRooms() {
+  document.querySelectorAll('.room-row').forEach(wrap => {
+    const hdr = wrap.querySelector('.room-row-header');
+    const chevron = hdr?.querySelector('.cat-chevron');
+    const expand = wrap.querySelector('.room-expand');
+    const roomId = wrap.dataset.roomId;
+    if (!expand || !hdr || !chevron || !roomId) return;
+    if (!expand.classList.contains('open')) {
+      toggleRoomExpand(parseInt(roomId), hdr, chevron, expand);
+    }
+  });
+}
+
+function collapseAllRooms() {
+  document.querySelectorAll('.room-row').forEach(wrap => {
+    const hdr = wrap.querySelector('.room-row-header');
+    const chevron = hdr?.querySelector('.cat-chevron');
+    const expand = wrap.querySelector('.room-expand');
+    if (!expand || !hdr || !chevron) return;
+    if (expand.classList.contains('open')) {
+      expand.classList.remove('open');
+      hdr.classList.remove('expanded');
+      chevron.classList.remove('open');
+      expand.querySelectorAll('.room-box-expand.open').forEach(e => e.classList.remove('open'));
+    }
+  });
+}
+
+// ── Find Item in rooms — live search with highlight ───────────────────────
+let roomSearchTimer = null;
+// Per-room box+item cache: roomId → [{box_number, label, items:[{name}]}]
+const roomItemCache = {};
+
+async function getRoomItems(roomId) {
+  if (roomItemCache[roomId]) return roomItemCache[roomId];
+  const boxes = await api(`/api/rooms/${roomId}/boxes`);
+  // Fetch items for each box
+  const result = [];
+  await Promise.all(boxes.map(async b => {
+    try {
+      const box = await api(`/api/boxes/${b.id}`);
+      result.push({
+        box_id: b.id,
+        box_number: b.box_number,
+        label: b.label || '',
+        items: (box.items || []).map(i => ({ id: i.item_id, name: i.name }))
+      });
+    } catch(e) { /* skip */ }
+  }));
+  roomItemCache[roomId] = result;
+  return result;
+}
+
+function highlightMatch(text, query) {
+  if (!query) return esc(text);
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return esc(text);
+  return esc(text.slice(0, idx))
+    + `<mark style="background:var(--accent);color:#000;padding:0 1px;">${esc(text.slice(idx, idx + query.length))}</mark>`
+    + esc(text.slice(idx + query.length));
+}
+
+async function filterRoomsByItem(query) {
+  clearTimeout(roomSearchTimer);
+  query = query.trim();
+
+  if (!query) {
+    // Clear — restore all rooms visible, remove highlights, collapse all
+    document.querySelectorAll('.room-row').forEach(w => w.style.display = '');
+    document.querySelectorAll('.room-item-match').forEach(el => el.remove());
+    document.querySelectorAll('.room-search-result').forEach(el => el.remove());
+    // Also clear the empty-section label
+    document.querySelectorAll('[data-room-search-result]').forEach(el => {
+      el.removeAttribute('data-room-search-result');
+    });
+    return;
+  }
+
+  roomSearchTimer = setTimeout(async () => {
+    const lq = query.toLowerCase();
+
+    const roomWraps = [...document.querySelectorAll('.room-row[data-room-id]')];
+
+    await Promise.all(roomWraps.map(async wrap => {
+      const roomId = parseInt(wrap.dataset.roomId);
+      const hdr = wrap.querySelector('.room-row-header');
+      const chevron = hdr?.querySelector('.cat-chevron');
+      const expand = wrap.querySelector('.room-expand');
+
+      // Remove previous search results
+      expand.querySelectorAll('.room-search-result').forEach(el => el.remove());
+
+      let roomData;
+      try { roomData = await getRoomItems(roomId); }
+      catch(e) { wrap.style.display = 'none'; return; }
+
+      // Find matching items
+      const matches = [];
+      roomData.forEach(box => {
+        box.items.forEach(item => {
+          if (item.name.toLowerCase().includes(lq)) {
+            matches.push({ box_number: box.box_number, box_label: box.label, box_id: box.box_id, item });
+          }
+        });
+      });
+
+      if (!matches.length) {
+        wrap.style.display = 'none';
+        return;
+      }
+
+      wrap.style.display = '';
+
+      // Expand room to show results
+      if (!expand.classList.contains('open')) {
+        await toggleRoomExpand(roomId, hdr, chevron, expand);
+      }
+
+      // Inject a "search results" panel at the top of the expand area
+      const resultsDiv = document.createElement('div');
+      resultsDiv.className = 'room-search-result';
+      resultsDiv.style.cssText = 'margin-bottom:8px;';
+
+      const heading = document.createElement('div');
+      heading.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;';
+      heading.textContent = `${matches.length} item${matches.length !== 1 ? 's' : ''} matching "${query}"`;
+      resultsDiv.appendChild(heading);
+
+      matches.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'expand-box-row';
+        row.style.cursor = 'pointer';
+        row.innerHTML = `
+          <span class="expand-box-num" style="cursor:pointer">BOX ${m.box_number}</span>
+          <span class="expand-box-label">${esc(m.box_label || 'Unlabelled')}</span>
+          <span style="flex:1;">${highlightMatch(m.item.name, query)}</span>
+          <span style="color:var(--muted);font-size:12px;">→</span>`;
+        row.addEventListener('click', () => openBoxDetail(m.box_id));
+        resultsDiv.appendChild(row);
+      });
+
+      // Insert before existing content (or replace previous results)
+      if (expand.firstChild) {
+        expand.insertBefore(resultsDiv, expand.firstChild);
+      } else {
+        expand.appendChild(resultsDiv);
+      }
+    }));
+
+    // Update empty sections visibility
+    const occupiedHasVisible = [...document.querySelectorAll('#rooms-list-occupied .room-row')]
+      .some(w => w.style.display !== 'none');
+    if (!occupiedHasVisible) {
+      document.getElementById('rooms-list-occupied').innerHTML =
+        `<div class="empty">No rooms have items matching "${esc(query)}"</div>`;
+    }
+  }, 200);
 }
 
 async function syncHAAreas() {
@@ -2081,6 +2247,7 @@ async function openBoxDetail(id) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-box-detail').classList.add('active');
+  history.replaceState(null, '', `#box/${id}`);
   // Keep "Boxes" highlighted in nav while viewing a box
   const tb = document.getElementById('tab-boxes');
   if (tb) tb.classList.add('active');
@@ -4484,12 +4651,95 @@ function addMoveToExpandRows(inner) {
   });
 }
 
+// ── URL hash routing ──────────────────────────────────────────────────────
+async function navigateFromHash() {
+  // Support ?box=N (QR code links) — existing behaviour
+  const params = new URLSearchParams(location.search);
+  const qrBox = params.get('box');
+  if (qrBox) { openBoxDetail(parseInt(qrBox)); return; }
+
+  // Hash-based routing
+  const hash = location.hash.replace('#', '');
+  if (!hash) { showPanel('boxes', false); return; }
+
+  if (hash.startsWith('box/')) {
+    const id = parseInt(hash.split('/')[1]);
+    if (id) { openBoxDetail(id); return; }
+  }
+
+  const panels = ['boxes', 'rooms', 'items', 'categories'];
+  if (panels.includes(hash)) {
+    showPanel(hash, false);
+  } else {
+    showPanel('boxes', false);
+  }
+}
+
+window.addEventListener('popstate', navigateFromHash);
+
+// ── SSE live-sync ──────────────────────────────────────────────────────────
+let _sseSource = null;
+let _sseRetryMs = 2000;
+let _sseCurrentPanel = () => document.querySelector('.panel.active')?.id?.replace('panel-', '') || 'boxes';
+
+function sseConnect() {
+  if (_sseSource) { _sseSource.close(); _sseSource = null; }
+  const url = API_BASE + '/api/events';
+  _sseSource = new EventSource(url);
+
+  _sseSource.addEventListener('ping', () => {
+    _sseRetryMs = 2000; // reset backoff on successful connect
+  });
+
+  _sseSource.addEventListener('change', e => {
+    try {
+      const ev = JSON.parse(e.data);
+      handleRemoteChange(ev);
+    } catch(err) { /* ignore parse errors */ }
+  });
+
+  _sseSource.onerror = () => {
+    _sseSource.close(); _sseSource = null;
+    // Exponential backoff, cap at 30s
+    setTimeout(sseConnect, _sseRetryMs);
+    _sseRetryMs = Math.min(_sseRetryMs * 2, 30000);
+  };
+}
+
+async function handleRemoteChange(ev) {
+  const type = ev.type; // "boxes" | "items" | "rooms" | "categories"
+  const panel = _sseCurrentPanel();
+
+  // Refresh caches that are always needed
+  if (type === 'rooms' || type === 'boxes') {
+    await loadRooms(); // always refresh room filter etc.
+  }
+
+  // Refresh the current view
+  if (panel === 'boxes' && (type === 'boxes' || type === 'items')) {
+    renderBoxes(window._lastBoxes || []); // re-render with cache
+    loadBoxes(); // also re-fetch
+  } else if (panel === 'rooms' && (type === 'rooms' || type === 'boxes')) {
+    loadRooms();
+  } else if (panel === 'items' && (type === 'items' || type === 'categories')) {
+    loadItems();
+  } else if (panel === 'categories' && (type === 'categories' || type === 'items')) {
+    loadCategories();
+  } else if (panel === 'box-detail' && type === 'boxes') {
+    // If viewing a box that was just updated, refresh it
+    if (currentBoxId && (ev.box_id === undefined || ev.box_id === currentBoxId)) {
+      openBoxDetail(currentBoxId);
+    }
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 (async () => {
   initTheme();
   await loadRooms();
-  loadBoxes();
+  await navigateFromHash();
   loadVisionConfig(); // non-blocking — vision is optional
+  sseConnect();       // live sync — non-blocking
 })();
 </script>
 </body>

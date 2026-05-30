@@ -10,7 +10,10 @@ from pathlib import Path
 
 import pymysql
 import requests as http_requests
-from flask import Flask, request, jsonify, render_template, send_file, abort
+import threading
+import queue
+import json as _json_mod
+from flask import Flask, request, jsonify, render_template, send_file, abort, Response, stream_with_context
 from flask_cors import CORS
 from PIL import Image
 
@@ -19,6 +22,59 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
+
+# ── Server-Sent Events broadcaster ────────────────────────────────────────────
+# Each connected client gets a queue. When data changes, we push an event to all.
+_sse_clients: list[queue.Queue] = []
+_sse_lock = threading.Lock()
+
+def sse_push(event_type: str, payload: dict | None = None):
+    """Push a change notification to all connected SSE clients."""
+    data = _json_mod.dumps({"type": event_type, **(payload or {})})
+    with _sse_lock:
+        dead = []
+        for q in _sse_clients:
+            try:
+                q.put_nowait(data)
+            except queue.Full:
+                dead.append(q)
+        for q in dead:
+            _sse_clients.remove(q)
+
+@app.route("/api/events")
+def sse_stream():
+    """SSE endpoint — clients connect once and receive change notifications."""
+    q: queue.Queue = queue.Queue(maxsize=50)
+    with _sse_lock:
+        _sse_clients.append(q)
+
+    def generate():
+        # Send an initial ping so the client knows it's connected
+        yield "event: ping\ndata: {}\n\n"
+        try:
+            while True:
+                try:
+                    data = q.get(timeout=25)
+                    yield f"event: change\ndata: {data}\n\n"
+                except queue.Empty:
+                    # Keepalive comment to prevent proxy timeouts
+                    yield ": keepalive\n\n"
+        except GeneratorExit:
+            pass
+        finally:
+            with _sse_lock:
+                try:
+                    _sse_clients.remove(q)
+                except ValueError:
+                    pass
+
+    ingress_path = request.headers.get("X-Ingress-Path", "").rstrip("/")
+    headers = {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",  # disable nginx buffering (important for HA ingress)
+    }
+    return Response(stream_with_context(generate()), headers=headers)
 
 DB_NAME = os.environ.get("DB_NAME", "box_inventory")
 UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "/data/images"))
@@ -410,6 +466,7 @@ def create_category():
         with conn.cursor() as cur:
             cur.execute("INSERT INTO categories (name) VALUES (%s)", (name,))
             conn.commit()
+            sse_push("categories")
             cur.execute("SELECT id, name FROM categories WHERE id=%s", (cur.lastrowid,))
             return jsonify(cur.fetchone()), 201
     except pymysql.err.IntegrityError:
@@ -429,6 +486,7 @@ def update_category(cat_id):
         with conn.cursor() as cur:
             cur.execute("UPDATE categories SET name=%s WHERE id=%s", (name, cat_id))
             conn.commit()
+            sse_push("categories")
             cur.execute("SELECT id, name FROM categories WHERE id=%s", (cat_id,))
             row = cur.fetchone()
             if not row:
@@ -456,6 +514,7 @@ def delete_category(cat_id):
                 cur.execute("UPDATE items SET category_id=NULL WHERE category_id=%s", (cat_id,))
             cur.execute("DELETE FROM categories WHERE id=%s", (cat_id,))
             conn.commit()
+            sse_push("categories")
             return jsonify({"ok": True})
     finally:
         conn.close()
@@ -566,6 +625,7 @@ def create_room():
         with conn.cursor() as cur:
             cur.execute("INSERT INTO rooms (name, ha_synced) VALUES (%s, 0)", (name,))
             conn.commit()
+            sse_push("rooms")
             cur.execute("SELECT * FROM rooms WHERE id = %s", (cur.lastrowid,))
             return jsonify(cur.fetchone()), 201
     except pymysql.err.IntegrityError:
@@ -590,6 +650,7 @@ def update_room(room_id):
                 return jsonify({"error": "This area is managed by Home Assistant. Rename it in HA."}), 403
             cur.execute("UPDATE rooms SET name=%s WHERE id=%s", (name, room_id))
             conn.commit()
+            sse_push("rooms")
             cur.execute("SELECT * FROM rooms WHERE id=%s", (room_id,))
             row = cur.fetchone()
             if not row:
@@ -610,6 +671,7 @@ def delete_room(room_id):
                 return jsonify({"error": "This area is managed by Home Assistant. Remove it in HA."}), 403
             cur.execute("DELETE FROM rooms WHERE id=%s", (room_id,))
             conn.commit()
+            sse_push("rooms")
             return jsonify({"ok": True})
     finally:
         conn.close()
@@ -723,6 +785,7 @@ def create_box():
                 (box_number, label, description, room_id)
             )
             conn.commit()
+            sse_push("boxes")
             box_id = cur.lastrowid
             cur.execute("""
                 SELECT b.*, r.name as room_name
@@ -748,6 +811,7 @@ def update_box(box_id):
                 (label, description, room_id, box_id)
             )
             conn.commit()
+            sse_push("boxes", {"box_id": box_id})
             cur.execute("""
                 SELECT b.*, r.name as room_name
                 FROM boxes b LEFT JOIN rooms r ON r.id=b.room_id
@@ -772,6 +836,7 @@ def delete_box(box_id):
                 _delete_image_file(row["filename"])
             cur.execute("DELETE FROM boxes WHERE id=%s", (box_id,))
             conn.commit()
+            sse_push("boxes")
             return jsonify({"ok": True})
     finally:
         conn.close()
@@ -819,6 +884,7 @@ def create_item():
         with conn.cursor() as cur:
             cur.execute("INSERT INTO items (name, category_id, upc) VALUES (%s,%s,%s)", (name, category_id, upc))
             conn.commit()
+            sse_push("items")
             item_id = cur.lastrowid
             cur.execute("""
                 SELECT i.id, i.name, i.upc, c.id as category_id, c.name as category
@@ -851,6 +917,7 @@ def update_item(item_id):
                 cur.execute("UPDATE items SET name=%s, category_id=%s WHERE id=%s",
                             (name, category_id, item_id))
             conn.commit()
+            sse_push("items", {"item_id": item_id})
             cur.execute("""
                 SELECT i.id, i.name, i.upc, c.id as category_id, c.name as category
                 FROM items i LEFT JOIN categories c ON c.id=i.category_id
@@ -874,6 +941,7 @@ def delete_item(item_id):
                 _delete_image_file(row["filename"])
             cur.execute("DELETE FROM items WHERE id=%s", (item_id,))
             conn.commit()
+            sse_push("items")
             return jsonify({"ok": True})
     finally:
         conn.close()
@@ -938,6 +1006,8 @@ def add_item_to_box(box_id):
                     (new_qty, existing["id"])
                 )
                 conn.commit()
+                sse_push("boxes", {"box_id": box_id})
+                sse_push("boxes", {"box_id": box_id})
                 return jsonify({"ok": True, "id": existing["id"], "incremented": True, "quantity": new_qty}), 200
             else:
                 cur.execute(
@@ -945,6 +1015,7 @@ def add_item_to_box(box_id):
                     (box_id, item_id, quantity, notes)
                 )
                 conn.commit()
+                sse_push("boxes", {"box_id": box_id})
                 return jsonify({"ok": True, "id": cur.lastrowid, "incremented": False}), 201
     finally:
         conn.close()
@@ -963,6 +1034,7 @@ def update_box_item(box_item_id):
                 (quantity, notes, box_item_id)
             )
             conn.commit()
+            sse_push("boxes")
             return jsonify({"ok": True})
     finally:
         conn.close()
@@ -1021,6 +1093,8 @@ def move_box_item(box_item_id):
                 cur.execute("DELETE FROM box_items WHERE id=%s", (box_item_id,))
 
             conn.commit()
+            sse_push("boxes")
+            sse_push("boxes")
             return jsonify({
                 "ok": True,
                 "merged": existing is not None,
@@ -1038,6 +1112,7 @@ def remove_box_item(box_item_id):
         with conn.cursor() as cur:
             cur.execute("DELETE FROM box_items WHERE id=%s", (box_item_id,))
             conn.commit()
+            sse_push("boxes")
             return jsonify({"ok": True})
     finally:
         conn.close()
