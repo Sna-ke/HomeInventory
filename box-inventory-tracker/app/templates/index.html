@@ -930,8 +930,8 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <h2>Rooms &amp; Areas</h2>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-secondary btn-sm" id="ha-sync-btn" onclick="syncHAAreas()" title="Sync from Home Assistant Areas">⟳ Sync HA</button>
-        <button class="btn btn-secondary btn-sm" onclick="expandAllRooms()" title="Expand all rooms">⊞ All</button>
-        <button class="btn btn-secondary btn-sm" onclick="collapseAllRooms()" title="Collapse all rooms">⊟ All</button>
+        <button class="btn btn-secondary btn-sm" onclick="expandAllRooms()" title="Expand all rooms">⊞ Expand Rooms</button>
+        <button class="btn btn-secondary btn-sm" onclick="collapseAllRooms()" title="Collapse all rooms">⊟ Collapse Rooms</button>
         <button class="btn btn-primary btn-sm" onclick="openRoomModal()">+ Add</button>
       </div>
     </div>
@@ -1739,10 +1739,10 @@ async function toggleRoomExpand(roomId, hdr, chevron, expand) {
     const toolbar = document.createElement('div');
     toolbar.className = 'room-expand-toolbar';
     const expandAll = document.createElement('button');
-    expandAll.textContent = '⊞ Expand all';
+    expandAll.textContent = '⊞ Expand Boxes';
     expandAll.addEventListener('click', () => expandAllRoomBoxes(expand, boxes));
     const collapseAll = document.createElement('button');
-    collapseAll.textContent = '⊟ Collapse all';
+    collapseAll.textContent = '⊟ Collapse Boxes';
     collapseAll.addEventListener('click', () => collapseAllRoomBoxes(expand));
     toolbar.appendChild(expandAll);
     toolbar.appendChild(collapseAll);
