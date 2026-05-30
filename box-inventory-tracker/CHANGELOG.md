@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.1.2
+- Fixed syntax error (stray closing brace) introduced in 2.1.1 that prevented the page from loading
+
 ## 2.1.1
 - Fixed URL hash not updating on navigation (now uses location.hash directly, compatible with HA ingress subpaths)
 - Fixed room item search injecting extra elements — matching boxes now expand in-place with item names highlighted inline
