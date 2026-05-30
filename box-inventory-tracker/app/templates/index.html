@@ -1159,11 +1159,22 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
           </div>
           <input type="file" id="atb-identify-input" accept="image/*" capture="environment" style="display:none"
             onchange="handleIdentifyPhoto(this)">
-          <div id="atb-suggestions-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+          <!-- Result cards (same pattern as barcode tab) -->
+          <div id="atb-image-result"></div>
+          <!-- Merge prompt for image results -->
+          <div id="atb-image-merge" style="display:none;margin-top:10px;
+            background:var(--surface2);border:1px solid var(--accent);padding:10px 12px;">
+            <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">Existing Item Found</div>
+            <div id="atb-image-merge-msg" style="font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.4;"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="imageMergeConfirm()">Use Existing Item</button>
+              <button class="btn btn-secondary btn-sm" onclick="imageKeepSeparate()">Create New</button>
+            </div>
+          </div>
         </div>
       </div>
-      <div style="margin-top:10px;font-size:12px;color:var(--muted);font-style:italic;">
-        After identification, the suggested item name will appear above. Switch to "By Name" to confirm or edit.
+      <div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;">
+        Tap a suggested name to select it, then tap Add to Box.
       </div>
     </div>
 
@@ -1186,9 +1197,8 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
       <!-- Results: selectable cards -->
       <div id="atb-barcode-result"></div>
 
-      <!-- Action row: shown after results appear -->
-      <div id="atb-barcode-actions" style="display:none;margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-primary btn-sm" onclick="barcodeAddSelected()">Add to Box</button>
+      <!-- Secondary actions: shown after results appear (Add to Box is the global footer button) -->
+      <div id="atb-barcode-actions" style="display:none;margin-top:10px;">
         <button class="btn btn-secondary btn-sm" onclick="barcodeNotRight()">Not Right…</button>
       </div>
 
@@ -2505,18 +2515,122 @@ function triggerIdentifyPhoto() {
   inp.click();
 }
 
+// ── Image identification state ─────────────────────────────────────────────
+let imageResults = [];
+let imageSelectedIdx = 0;
+let imagePendingMerge = null;
+
+function resetImageUI() {
+  imageResults = [];
+  imageSelectedIdx = 0;
+  imagePendingMerge = null;
+  document.getElementById('atb-image-result').innerHTML = '';
+  document.getElementById('atb-image-merge').style.display = 'none';
+  document.getElementById('atb-identify-status').textContent = '';
+}
+
+function renderImageResults(results) {
+  imageResults = results;
+  imageSelectedIdx = 0;
+  const el = document.getElementById('atb-image-result');
+  el.innerHTML = '';
+  results.forEach((r, idx) => {
+    const card = document.createElement('div');
+    card.className = 'barcode-result-card' + (idx === 0 ? ' selected' : '');
+    card.dataset.idx = idx;
+    const nameEl = document.createElement('div');
+    nameEl.className = 'barcode-card-name';
+    nameEl.textContent = r.name;
+    const srcEl = document.createElement('div');
+    srcEl.className = 'barcode-card-source';
+    srcEl.textContent = r.source === 'local' ? '✓ Saved' : '🤖 AI';
+    card.appendChild(nameEl); card.appendChild(srcEl);
+    card.addEventListener('click', () => {
+      el.querySelectorAll('.barcode-result-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      imageSelectedIdx = idx;
+    });
+    el.appendChild(card);
+  });
+}
+
+async function imageAddSelected() {
+  const r = imageResults[imageSelectedIdx];
+  if (!r) { toast('No item selected', true); return; }
+  if (!addToBoxId) { toast('Select a box first', true); return; }
+
+  // If this is an AI suggestion (no id), check for name match in local DB
+  if (!r.id) {
+    const matches = await api(`/api/items/find-by-name?name=${encodeURIComponent(r.name)}`);
+    if (matches.length) {
+      const noUpc = matches.filter(m => !m.upc);
+      const withUpc = matches.filter(m => m.upc);
+      // Exact existing item with no UPC → offer merge
+      if (noUpc.length) {
+        imagePendingMerge = { result: r, matchedItem: noUpc[0] };
+        const msg = document.getElementById('atb-image-merge-msg');
+        msg.textContent = `"${noUpc[0].name}" already exists in your inventory. Use the existing item or create a new one?`;
+        document.getElementById('atb-image-merge').style.display = 'block';
+        return;
+      }
+      // Has UPC already — use the existing item directly
+      if (withUpc.length) {
+        await finishImageAdd(withUpc[0].id, withUpc[0].name, false);
+        return;
+      }
+    }
+  }
+
+  await finishImageAdd(r.id || null, r.name, !r.id);
+}
+
+async function imageMergeConfirm() {
+  if (!imagePendingMerge) return;
+  const { matchedItem } = imagePendingMerge;
+  document.getElementById('atb-image-merge').style.display = 'none';
+  await finishImageAdd(matchedItem.id, matchedItem.name, false);
+}
+
+async function imageKeepSeparate() {
+  if (!imagePendingMerge) return;
+  const { result } = imagePendingMerge;
+  document.getElementById('atb-image-merge').style.display = 'none';
+  imagePendingMerge = null;
+  await finishImageAdd(null, result.name, true);
+}
+
+async function finishImageAdd(item_id, name, createNew) {
+  if (createNew) {
+    const newItem = await api('/api/items', { method: 'POST', body: JSON.stringify({ name }) });
+    item_id = newItem.id;
+  }
+  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
+  const notes = document.getElementById('atb-notes').value.trim();
+  const photoCount = atbPendingPhotos.filter(Boolean).length;
+  if (photoCount > 0) await uploadPendingPhotos(item_id);
+
+  const result = await api(`/api/boxes/${addToBoxId}/items`, {
+    method: 'POST', body: JSON.stringify({ item_id, quantity: qty, notes })
+  });
+  closeModal('modal-atb');
+  toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
+  trackRecentItem(item_id);
+  trackRecentBox(addToBoxId);
+  const boxField = document.getElementById('atb-box-field');
+  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+}
+
 async function handleIdentifyPhoto(input) {
   if (!input.files.length) return;
   const file = input.files[0];
   const statusEl = document.getElementById('atb-identify-status');
-  const chipsEl = document.getElementById('atb-suggestions-chips');
   const btn = document.getElementById('atb-identify-btn');
 
-  chipsEl.innerHTML = '';
+  resetImageUI();
   statusEl.innerHTML = '<span class="spinner"></span> Identifying…';
   btn.disabled = true;
 
-  // Also stage this photo as an item photo (user took the pic for a reason)
+  // Stage as item photo
   atbPendingPhotos.push(file);
   const url = URL.createObjectURL(file);
   const idx = atbPendingPhotos.length - 1;
@@ -2531,38 +2645,15 @@ async function handleIdentifyPhoto(input) {
     fd.append('file', file);
     const res = await fetch(API_BASE + '/api/identify', { method: 'POST', body: fd });
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.error || 'Identification failed');
 
     const suggestions = data.suggestions || [];
     if (!suggestions.length) {
-      statusEl.textContent = 'No items detected — type a name below';
-      btn.disabled = false;
+      statusEl.textContent = 'Nothing detected — switch to By Name tab';
       return;
     }
-
-    statusEl.textContent = 'Tap a suggestion or type your own:';
-    suggestions.forEach(name => {
-      const chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'suggest-chip';
-      chip.textContent = name;
-      chip.addEventListener('click', () => {
-        // Put the suggestion into the search field and try to match an existing item
-        document.getElementById('atb-search').value = name;
-        document.getElementById('atb-item-id').value = '';
-        setATBSelection(null, null, null); // reset badge so search field shows
-        document.getElementById('atb-search').value = name;
-        // Trigger a search to see if item exists
-        searchItemsAC(name);
-        chip.style.background = 'var(--accent)';
-        chip.style.color = '#000';
-        // Scroll to item field
-        document.getElementById('atb-search').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        document.getElementById('atb-search').focus();
-      });
-      chipsEl.appendChild(chip);
-    });
+    statusEl.textContent = 'Select a match:';
+    renderImageResults(suggestions.map(n => ({ name: n, source: 'ai' })));
   } catch(e) {
     statusEl.textContent = `Error: ${e.message}`;
     toast(e.message, true);
@@ -2637,8 +2728,7 @@ function resetATBModal() {
   document.getElementById('atb-photo-input').value = '';
   document.getElementById('atb-identify-input').value = '';
   document.getElementById('atb-barcode-input').value = '';
-  document.getElementById('atb-suggestions-chips').innerHTML = '';
-  document.getElementById('atb-identify-status').textContent = '';
+  resetImageUI();
   resetBarcodeUI();
   closeAllATBDropdowns();
   setATBSelection(null, null, null);
@@ -2921,47 +3011,55 @@ async function uploadPendingPhotos(itemId) {
 }
 
 async function confirmAddToBox() {
-  // Validate box selected (required in quick-add mode)
   if (!addToBoxId) { toast('Select a box first', true); return; }
 
+  // Dispatch to the right handler based on active tab
+  const activeTab = document.querySelector('.atb-tab.active')?.dataset?.tab || 'name';
+
+  if (activeTab === 'barcode') {
+    // If results are showing, add the selected one
+    if (barcodeResults.length) {
+      await barcodeAddSelected();
+    } else {
+      toast('Scan a barcode first', true);
+    }
+    return;
+  }
+
+  if (activeTab === 'image') {
+    if (imageResults.length) {
+      await imageAddSelected();
+    } else {
+      toast('Take a photo first', true);
+    }
+    return;
+  }
+
+  // ── By Name (default) ──────────────────────────────────────────────────────
   let item_id = document.getElementById('atb-item-id').value;
   const qty = parseInt(document.getElementById('atb-qty').value) || 1;
   const notes = document.getElementById('atb-notes').value.trim();
   const category = document.getElementById('atb-category').value.trim();
 
   if (!item_id) {
-    // Creating a new item
     const name = document.getElementById('atb-search').value.trim();
     if (!name) { toast('Enter an item name', true); return; }
     const newItem = await api('/api/items', { method:'POST', body:JSON.stringify({name, category}) });
     item_id = newItem.id;
   }
 
-  // Upload any staged photos against the item
   const photoCount = atbPendingPhotos.filter(Boolean).length;
-  if (photoCount > 0) {
-    await uploadPendingPhotos(item_id);
-  }
+  if (photoCount > 0) await uploadPendingPhotos(item_id);
 
   const result = await api(`/api/boxes/${addToBoxId}/items`, {
     method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
   });
   closeModal('modal-atb');
   const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
-  if (result.incremented) {
-    toast(`Quantity updated to ${result.quantity}${photoMsg}`);
-  } else {
-    toast(`Item added${photoMsg}`);
-  }
+  toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
 
-  // If opened from box detail, refresh it. Otherwise offer to go to the box.
   const boxField = document.getElementById('atb-box-field');
-  if (boxField.style.display !== 'none') {
-    // Quick-add mode — stay on current panel, ready for next item
-    // but keep last-used box so next quick-add pre-fills it
-  } else {
-    openBoxDetail(addToBoxId);
-  }
+  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
 }
 
 // ── Items ──────────────────────────────────────────────────────────────────
