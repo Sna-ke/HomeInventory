@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.7
+- Box detail page no longer scrolls to top or re-renders the header when items are added, removed, moved, or quantities changed. A new refreshBoxItemsInPlace() function replaces only the item list and count, leaving scroll position and the box header untouched
+- SSE live-sync on box detail also uses the in-place refresh
+
 ## 2.2.6
 - Fixed unhandled promise rejection errors (3 / [object Object]) when adding items — all add flows now wrapped in try/catch with toast error messages
 - Boxes page no longer fully re-renders on live update — existing cards are updated in-place (thumbnail, title, meta) without wiping the page. New boxes are appended, removed boxes are cleaned up

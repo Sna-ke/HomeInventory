@@ -2619,6 +2619,129 @@ async function openBoxDetail(id) {
   `;
 }
 
+async function refreshBoxItemsInPlace(id) {
+  // Re-fetch box items and update the list without scrolling or re-rendering the header.
+  // Only valid when already viewing this box.
+  if (!id || !document.getElementById('box-items-list')) {
+    // Not on box detail view — fall back to full reload
+    await openBoxDetail(id);
+    return;
+  }
+  try {
+    const box = await api(`/api/boxes/${id}`);
+
+    // Build item rows (same logic as openBoxDetail but only the list part)
+    const itemRowsEl = document.createElement('div');
+    if (box.items && box.items.length) {
+      box.items.forEach(i => {
+        const row = document.createElement('div');
+        row.className = 'item-row';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'item-row-thumb';
+        thumb.dataset.itemId = i.item_id;
+        if (i.thumb_url) {
+          const img = document.createElement('img');
+          img.src = i.thumb_url; img.loading = 'lazy'; img.alt = i.name;
+          thumb.appendChild(img);
+          thumb.dataset.action = 'item-thumb-view';
+          thumb.dataset.url = i.thumb_url;
+          thumb.title = 'View photo';
+        } else {
+          const icon = document.createElement('span');
+          icon.className = 'no-photo'; icon.textContent = '📷';
+          thumb.appendChild(icon);
+          thumb.dataset.action = 'item-thumb-upload';
+          thumb.title = 'Add photo';
+        }
+
+        const info = document.createElement('div');
+        info.className = 'item-row-info';
+        const nameEl = document.createElement('div');
+        nameEl.className = 'item-row-name'; nameEl.textContent = i.name;
+        const metaEl = document.createElement('div');
+        metaEl.className = 'item-row-meta';
+        if (i.category) {
+          const chip = document.createElement('span');
+          chip.className = 'chip cat'; chip.textContent = i.category;
+          metaEl.appendChild(chip);
+        }
+        if (i.notes) {
+          const noteSpan = document.createElement('span');
+          noteSpan.textContent = ' · ' + i.notes;
+          metaEl.appendChild(noteSpan);
+        }
+        info.appendChild(nameEl); info.appendChild(metaEl);
+
+        const qtyCtrl = document.createElement('div');
+        qtyCtrl.className = 'item-qty-control';
+        const minusBtn = document.createElement('button');
+        minusBtn.className = 'item-qty-btn'; minusBtn.textContent = '−';
+        minusBtn.dataset.action = 'qty-minus'; minusBtn.dataset.id = i.box_item_id;
+        const numWrap = document.createElement('div');
+        numWrap.style.position = 'relative';
+        const numEl = document.createElement('div');
+        numEl.className = 'item-qty-num'; numEl.textContent = i.quantity;
+        numEl.dataset.action = 'qty-pick'; numEl.dataset.id = i.box_item_id;
+        numEl.dataset.qty = i.quantity;
+        const dropdown = document.createElement('div');
+        dropdown.className = 'item-qty-dropdown';
+        dropdown.id = `qty-dd-${i.box_item_id}`;
+        const maxQty = Math.max(999, i.quantity + 50);
+        for (let n = 0; n <= maxQty; n++) {
+          const opt = document.createElement('div');
+          opt.className = 'item-qty-option' + (n === i.quantity ? ' selected' : '');
+          opt.textContent = n;
+          opt.dataset.action = 'qty-select'; opt.dataset.id = i.box_item_id; opt.dataset.val = n;
+          dropdown.appendChild(opt);
+        }
+        const plusBtn = document.createElement('button');
+        plusBtn.className = 'item-qty-btn'; plusBtn.textContent = '+';
+        plusBtn.dataset.action = 'qty-plus'; plusBtn.dataset.id = i.box_item_id;
+        numWrap.appendChild(numEl); numWrap.appendChild(dropdown);
+        qtyCtrl.appendChild(minusBtn); qtyCtrl.appendChild(numWrap); qtyCtrl.appendChild(plusBtn);
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-icon';
+        editBtn.dataset.action = 'edit-box-item'; editBtn.dataset.id = i.box_item_id;
+        editBtn.dataset.qty = i.quantity; editBtn.dataset.notes = i.notes || '';
+        editBtn.dataset.name = i.name; editBtn.textContent = '✏️';
+
+        const moveBtn = document.createElement('button');
+        moveBtn.className = 'btn-move';
+        moveBtn.dataset.action = 'move-box-item'; moveBtn.dataset.id = i.box_item_id;
+        moveBtn.dataset.name = i.name; moveBtn.dataset.qty = i.quantity;
+        moveBtn.title = 'Move to another box'; moveBtn.textContent = '⇄';
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-icon danger';
+        delBtn.dataset.action = 'remove-box-item'; delBtn.dataset.id = i.box_item_id;
+        delBtn.textContent = '🗑';
+
+        fillBoxThumb(thumb, i.thumb_url ? { thumb_url: i.thumb_url } : {});
+
+        row.appendChild(thumb); row.appendChild(info); row.appendChild(qtyCtrl);
+        row.appendChild(editBtn); row.appendChild(moveBtn); row.appendChild(delBtn);
+        itemRowsEl.appendChild(row);
+      });
+    } else {
+      itemRowsEl.innerHTML = '<div class="empty">No items yet.</div>';
+    }
+
+    // Swap in-place — no scroll, no header rebuild
+    const list = document.getElementById('box-items-list');
+    if (list) list.innerHTML = itemRowsEl.innerHTML;
+
+    // Update the contents heading count
+    const hdr = document.querySelector('#box-detail-content .section-hdr h3');
+    if (hdr && hdr.textContent.startsWith('Contents')) {
+      hdr.textContent = `Contents (${box.items ? box.items.length : 0})`;
+    }
+  } catch(e) {
+    console.error('refreshBoxItemsInPlace error:', e);
+  }
+}
+
 function renderGallery(images, entityType, entityId) {
   // Build via DOM to avoid putting URLs/strings inside onclick attributes
   const wrap = document.createElement('div');
@@ -2665,7 +2788,7 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
     if (!confirm('Remove this item from the box?')) return;
     await api(`/api/box-items/${btn.dataset.id}`, { method:'DELETE' });
     toast('Item removed');
-    openBoxDetail(currentBoxId);
+    refreshBoxItemsInPlace(currentBoxId);
 
   } else if (action === 'edit-box-item') {
     openEditBoxItemModal(btn.dataset.id, btn.dataset.qty, btn.dataset.notes, btn.dataset.name);
@@ -2677,7 +2800,7 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
       if (confirm('Set quantity to 0? This will remove the item from the box.')) {
         await api(`/api/box-items/${btn.dataset.id}`, { method: 'DELETE' });
         toast('Item removed');
-        openBoxDetail(currentBoxId);
+        refreshBoxItemsInPlace(currentBoxId);
       }
     } else {
       await patchQty(btn.dataset.id, cur - 1, numEl);
@@ -2732,7 +2855,7 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
 
   } else if (action === 'item-thumb-upload') {
     // Tap camera icon — upload a new photo for this item
-    triggerImageUpload('item', parseInt(btn.dataset.itemId), () => openBoxDetail(currentBoxId));
+    triggerImageUpload('item', parseInt(btn.dataset.itemId), () => refreshBoxItemsInPlace(currentBoxId));
   }
 });
 
@@ -2763,7 +2886,7 @@ function showItemPhotoOverlay(url, itemId) {
   replaceBtn.textContent = '🔄 Replace';
   replaceBtn.addEventListener('click', () => {
     overlay.remove();
-    triggerImageUpload('item', itemId, () => openBoxDetail(currentBoxId));
+    triggerImageUpload('item', itemId, () => refreshBoxItemsInPlace(currentBoxId));
   });
 
   const deleteBtn = document.createElement('button');
@@ -2776,7 +2899,7 @@ function showItemPhotoOverlay(url, itemId) {
     await api(`/api/images/${imageId}`, { method: 'DELETE' });
     overlay.remove();
     toast('Photo deleted');
-    openBoxDetail(currentBoxId);
+    refreshBoxItemsInPlace(currentBoxId);
   });
 
   btnRow.appendChild(closeBtn);
@@ -2824,7 +2947,7 @@ async function patchQty(boxItemId, newQty, numEl) {
     if (editBtn) editBtn.dataset.qty = newQty;
   } catch(err) {
     toast('Failed to update quantity', true);
-    openBoxDetail(currentBoxId); // refresh to get real state
+    refreshBoxItemsInPlace(currentBoxId); // refresh to get real state
   }
 }
 
@@ -2884,7 +3007,7 @@ function openEditBoxItemModal(boxItemId, qty, notes, name) {
     closeModal('modal-edit-item');
     await api(`/api/box-items/${boxItemId}`, { method: 'DELETE' });
     toast('Item removed');
-    openBoxDetail(currentBoxId);
+    refreshBoxItemsInPlace(currentBoxId);
   };
 
   openModal('modal-edit-item');
@@ -2899,7 +3022,7 @@ async function saveEditBoxItem() {
     closeModal('modal-edit-item');
     await api(`/api/box-items/${boxItemId}`, { method: 'DELETE' });
     toast('Item removed');
-    openBoxDetail(currentBoxId);
+    refreshBoxItemsInPlace(currentBoxId);
     return;
   }
   await api(`/api/box-items/${boxItemId}`, {
@@ -2908,14 +3031,14 @@ async function saveEditBoxItem() {
   });
   closeModal('modal-edit-item');
   toast('Updated');
-  openBoxDetail(currentBoxId);
+  refreshBoxItemsInPlace(currentBoxId);
 }
 
 async function removeBoxItem(boxItemId) {
   if (!confirm('Remove this item from the box?')) return;
   await api(`/api/box-items/${boxItemId}`, { method:'DELETE' });
   toast('Item removed');
-  openBoxDetail(currentBoxId);
+  refreshBoxItemsInPlace(currentBoxId);
 }
 
 // ── Vision / Identify ─────────────────────────────────────────────────────
@@ -3068,7 +3191,7 @@ async function finishImageAdd(item_id, name, createNew) {
   trackRecentItem(item_id);
   trackRecentBox(addToBoxId);
   const boxField = document.getElementById('atb-box-field');
-  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+  if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
 }
 
 async function handleIdentifyPhoto(input) {
@@ -3565,7 +3688,7 @@ async function confirmAddToBox() {
     toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
 
     const boxField = document.getElementById('atb-box-field');
-    if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+    if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
   } catch(e) {
     toast(`Error: ${e.message || e}`, true);
     console.error('confirmAddToBox error:', e);
@@ -4615,7 +4738,7 @@ async function finishBarcodeAdd(item_id, name, createNew) {
     trackRecentBox(addToBoxId);
 
     const boxField = document.getElementById('atb-box-field');
-    if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+    if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
   } catch(e) {
     toast(`Error: ${e.message || e}`, true);
     console.error('finishBarcodeAdd error:', e);
@@ -4914,7 +5037,7 @@ async function confirmMoveItem() {
       : result.merged ? 'Item moved and merged' : 'Item moved';
     toast(msg);
     Object.keys(roomBoxCache).forEach(k => delete roomBoxCache[k]);
-    if (moveItemSourceBoxId) openBoxDetail(moveItemSourceBoxId);
+    if (moveItemSourceBoxId) refreshBoxItemsInPlace(moveItemSourceBoxId);
   } catch(e) { toast(e.message, true); }
 }
 
@@ -5054,7 +5177,7 @@ function handleRemoteChange(ev) {
 
   } else if (panel === 'box-detail' && type === 'boxes') {
     if (currentBoxId && (ev.box_id === undefined || ev.box_id === currentBoxId)) {
-      scheduleRefresh('box-detail', () => openBoxDetail(currentBoxId));
+      scheduleRefresh('box-detail', () => refreshBoxItemsInPlace(currentBoxId));
     }
   }
 
