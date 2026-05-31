@@ -1174,6 +1174,32 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
           <span id="atb-box-selected-name"></span>
           <button onclick="clearATBBox()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
         </div>
+
+        <!-- Inline create-box panel — shown when user picks "+ Create box" -->
+        <div id="atb-create-box-panel" style="display:none;margin-top:8px;
+          background:var(--surface2);border:1px solid var(--accent);padding:10px 12px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+            color:var(--accent);margin-bottom:8px;">New Box</div>
+          <div class="field" style="margin-bottom:8px;">
+            <label>Label</label>
+            <input type="text" id="atb-new-box-label"
+              style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+                     font-family:var(--sans);font-size:15px;padding:8px 10px;width:100%;outline:none;">
+          </div>
+          <div class="field" style="margin-bottom:10px;">
+            <label>Room (optional)</label>
+            <select id="atb-new-box-room"
+              style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+                     font-family:var(--sans);font-size:15px;padding:8px 10px;width:100%;
+                     -webkit-appearance:none;border-radius:0;outline:none;">
+              <option value="">— No Room —</option>
+            </select>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="confirmCreateATBBox()">Create &amp; Select</button>
+            <button class="btn btn-secondary btn-sm" onclick="cancelCreateATBBox()">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3151,6 +3177,7 @@ function clearATBBox() {
   document.getElementById('atb-box-search').value = '';
   document.getElementById('atb-box-search').style.display = '';
   document.getElementById('atb-box-selected-badge').style.display = 'none';
+  document.getElementById('atb-create-box-panel').style.display = 'none';
   document.getElementById('atb-box-search').focus();
 }
 
@@ -3193,7 +3220,7 @@ async function getBoxesCached() {
   return window._lastBoxes;
 }
 
-function renderBoxSuggestions(boxes, list) {
+function renderBoxSuggestions(boxes, list, createLabel) {
   list.innerHTML = '';
   boxes.forEach(b => {
     const opt = document.createElement('div');
@@ -3203,6 +3230,15 @@ function renderBoxSuggestions(boxes, list) {
     opt.innerHTML = `<span><strong>BOX ${b.box_number}</strong>${b.label ? ' · ' + esc(b.label) : ''}</span><small>${esc(b.room_name || '')}</small>`;
     list.appendChild(opt);
   });
+  // "+ Create box" option when user has typed something
+  if (createLabel) {
+    const create = document.createElement('div');
+    create.className = 'ac-item ac-create';
+    create.dataset.createBox = '1';
+    create.dataset.boxLabel = createLabel;
+    create.textContent = `+ Create box "${createLabel}"`;
+    list.appendChild(create);
+  }
   if (list.children.length) {
     positionDropdownFixed(list);
     list.classList.add('open');
@@ -3261,7 +3297,8 @@ async function searchBoxesAC(q) {
     );
   }
   const sorted = sortByRecency(filtered, recentBoxIds, 'id');
-  renderBoxSuggestions(sorted.slice(0, 10), list);
+  // Pass the typed text as createLabel so user can create a new box
+  renderBoxSuggestions(sorted.slice(0, 10), list, q.trim() || null);
 }
 
 // Delegated listener for box search suggestions
@@ -3269,9 +3306,60 @@ document.getElementById('atb-box-suggestions').addEventListener('mousedown', e =
 document.getElementById('atb-box-suggestions').addEventListener('click', e => {
   const item = e.target.closest('.ac-item');
   if (!item) return;
-  trackRecentBox(parseInt(item.dataset.boxId));
-  setATBBox(parseInt(item.dataset.boxId), item.dataset.boxLabel);
+  if (item.dataset.createBox) {
+    // User wants to create a new box — show inline panel
+    openCreateATBBox(item.dataset.boxLabel);
+  } else {
+    trackRecentBox(parseInt(item.dataset.boxId));
+    setATBBox(parseInt(item.dataset.boxId), item.dataset.boxLabel);
+  }
 });
+
+function openCreateATBBox(label) {
+  // Hide the search input and show the create panel
+  document.getElementById('atb-box-suggestions').classList.remove('open');
+  document.getElementById('atb-box-search').style.display = 'none';
+
+  // Pre-fill label with whatever the user typed
+  document.getElementById('atb-new-box-label').value = label || '';
+
+  // Populate room selector from current rooms list
+  const sel = document.getElementById('atb-new-box-room');
+  sel.innerHTML = '<option value="">— No Room —</option>' +
+    (rooms || []).map(r => `<option value="${r.id}">${esc(r.name)}</option>`).join('');
+
+  document.getElementById('atb-create-box-panel').style.display = 'block';
+  document.getElementById('atb-new-box-label').focus();
+}
+
+function cancelCreateATBBox() {
+  document.getElementById('atb-create-box-panel').style.display = 'none';
+  document.getElementById('atb-box-search').style.display = '';
+  document.getElementById('atb-box-search').value = '';
+  document.getElementById('atb-box-search').focus();
+}
+
+async function confirmCreateATBBox() {
+  const label = document.getElementById('atb-new-box-label').value.trim();
+  const roomId = document.getElementById('atb-new-box-room').value || null;
+
+  try {
+    const newBox = await api('/api/boxes', {
+      method: 'POST',
+      body: JSON.stringify({ label: label || null, room_id: roomId })
+    });
+    // Invalidate box cache so the new box appears in future searches
+    window._lastBoxes = null;
+    // Select the newly created box
+    document.getElementById('atb-create-box-panel').style.display = 'none';
+    const displayLabel = `BOX ${newBox.box_number}${label ? ' · ' + label : ''}`;
+    trackRecentBox(newBox.id);
+    setATBBox(newBox.id, displayLabel);
+    toast(`Box ${newBox.box_number} created`);
+  } catch(e) {
+    toast(`Failed to create box: ${e.message}`, true);
+  }
+}
 
 // Show/hide the "selected item" badge and category field
 function setATBSelection(id, name, cat) {

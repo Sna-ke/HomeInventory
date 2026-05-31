@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.2.5
+- Quick-add from header: box search now shows a "+ Create box" option when typing. Clicking it reveals an inline panel to set a label and optional room, then creates the box and auto-selects it so you can immediately add the item to it
+
 ## 2.2.3
 - Boxes page: live-updates when boxes or items change without reloading rooms
 - Items page: live-updates in-place, preserving which item row is currently expanded
