@@ -2296,6 +2296,12 @@ function renderBoxes(boxes) {
     container.innerHTML = '<div class="empty">No boxes yet. Tap + New to create one.</div>';
     return;
   }
+  // Smart-diff: track which box ids are in the new list
+  const newIds = new Set(boxes.map(b => b.id));
+  // Remove cards for boxes that no longer exist
+  container.querySelectorAll('[data-box-id]').forEach(el => {
+    if (!newIds.has(parseInt(el.dataset.boxId))) el.remove();
+  });
 
   if (boxView === 'list') {
     container.className = 'box-list';
@@ -2353,7 +2359,26 @@ function renderBoxes(boxes) {
       delBtn.addEventListener('click', e => { e.stopPropagation(); deleteBox(b.id); });
       actions.appendChild(editBtn); actions.appendChild(printBtn); actions.appendChild(delBtn);
       card.addEventListener('click', () => openBoxDetail(b.id));
-      container.appendChild(card);
+      card.dataset.boxId = b.id;
+
+      // Update existing card in-place, or insert new one in sorted position
+      const existing = container.querySelector(`[data-box-id="${b.id}"]`);
+      if (existing) {
+        // Swap thumbnail in case photos changed
+        const newThumb = card.querySelector('.card-thumb');
+        const oldThumb = existing.querySelector('.card-thumb');
+        if (newThumb && oldThumb) existing.replaceChild(newThumb, oldThumb);
+        // Update text fields
+        const fields = ['card-num','card-title','card-meta','card-desc'];
+        fields.forEach(cls => {
+          const n = card.querySelector('.'+cls);
+          const o = existing.querySelector('.'+cls);
+          if (n && o && n.textContent !== o.textContent) o.textContent = n.textContent;
+          if (n && !o && existing.querySelector('.card-body')) existing.querySelector('.card-body').appendChild(n);
+        });
+      } else {
+        container.appendChild(card);
+      }
     });
   }
 }
@@ -3501,53 +3526,50 @@ async function uploadPendingPhotos(itemId) {
 async function confirmAddToBox() {
   if (!addToBoxId) { toast('Select a box first', true); return; }
 
-  // Dispatch to the right handler based on active tab
   const activeTab = document.querySelector('.atb-tab.active')?.dataset?.tab || 'name';
 
-  if (activeTab === 'barcode') {
-    // If results are showing, add the selected one
-    if (barcodeResults.length) {
-      await barcodeAddSelected();
-    } else {
-      toast('Scan a barcode first', true);
+  try {
+    if (activeTab === 'barcode') {
+      if (barcodeResults.length) { await barcodeAddSelected(); }
+      else { toast('Scan a barcode first', true); }
+      return;
     }
-    return;
-  }
 
-  if (activeTab === 'image') {
-    if (imageResults.length) {
-      await imageAddSelected();
-    } else {
-      toast('Take a photo first', true);
+    if (activeTab === 'image') {
+      if (imageResults.length) { await imageAddSelected(); }
+      else { toast('Take a photo first', true); }
+      return;
     }
-    return;
+
+    // ── By Name ──────────────────────────────────────────────────────────────
+    let item_id = document.getElementById('atb-item-id').value;
+    const qty = parseInt(document.getElementById('atb-qty').value) || 1;
+    const notes = document.getElementById('atb-notes').value.trim();
+    const category = document.getElementById('atb-category').value.trim();
+
+    if (!item_id) {
+      const name = document.getElementById('atb-search').value.trim();
+      if (!name) { toast('Enter an item name', true); return; }
+      const newItem = await api('/api/items', { method:'POST', body:JSON.stringify({name, category}) });
+      item_id = newItem.id;
+    }
+
+    const photoCount = atbPendingPhotos.filter(Boolean).length;
+    if (photoCount > 0) await uploadPendingPhotos(item_id);
+
+    const result = await api(`/api/boxes/${addToBoxId}/items`, {
+      method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
+    });
+    closeModal('modal-atb');
+    const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
+    toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
+
+    const boxField = document.getElementById('atb-box-field');
+    if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+  } catch(e) {
+    toast(`Error: ${e.message || e}`, true);
+    console.error('confirmAddToBox error:', e);
   }
-
-  // ── By Name (default) ──────────────────────────────────────────────────────
-  let item_id = document.getElementById('atb-item-id').value;
-  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
-  const notes = document.getElementById('atb-notes').value.trim();
-  const category = document.getElementById('atb-category').value.trim();
-
-  if (!item_id) {
-    const name = document.getElementById('atb-search').value.trim();
-    if (!name) { toast('Enter an item name', true); return; }
-    const newItem = await api('/api/items', { method:'POST', body:JSON.stringify({name, category}) });
-    item_id = newItem.id;
-  }
-
-  const photoCount = atbPendingPhotos.filter(Boolean).length;
-  if (photoCount > 0) await uploadPendingPhotos(item_id);
-
-  const result = await api(`/api/boxes/${addToBoxId}/items`, {
-    method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
-  });
-  closeModal('modal-atb');
-  const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
-  toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
-
-  const boxField = document.getElementById('atb-box-field');
-  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
 }
 
 // ── Items ──────────────────────────────────────────────────────────────────
@@ -4562,39 +4584,42 @@ async function barcodeKeepSeparate() {
 }
 
 async function finishBarcodeAdd(item_id, name, createNew) {
-  if (createNew) {
-    const r = barcodeResults[barcodeSelectedIdx];
-    const newItem = await api('/api/items', {
-      method: 'POST',
-      body: JSON.stringify({ name, upc: barcodeCurrentUpc })
-    });
-    item_id = newItem.id;
-  } else if (item_id && barcodeCurrentUpc) {
-    // If local item found without UPC, silently save it
-    const existing = allItems.find(i => i.id === item_id);
-    if (existing && !existing.upc) {
-      await api(`/api/items/${item_id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ name, category: existing?.category || '', upc: barcodeCurrentUpc })
-      }).catch(() => {}); // non-fatal
+  try {
+    if (createNew) {
+      const newItem = await api('/api/items', {
+        method: 'POST',
+        body: JSON.stringify({ name, upc: barcodeCurrentUpc })
+      });
+      item_id = newItem.id;
+    } else if (item_id && barcodeCurrentUpc) {
+      const existing = allItems.find(i => i.id === item_id);
+      if (existing && !existing.upc) {
+        await api(`/api/items/${item_id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ name, category: existing?.category || '', upc: barcodeCurrentUpc })
+        }).catch(() => {});
+      }
     }
+
+    const qty = parseInt(document.getElementById('atb-qty').value) || 1;
+    const notes = document.getElementById('atb-notes').value.trim();
+    const photoCount = atbPendingPhotos.filter(Boolean).length;
+    if (photoCount > 0) await uploadPendingPhotos(item_id);
+
+    const result = await api(`/api/boxes/${addToBoxId}/items`, {
+      method: 'POST', body: JSON.stringify({ item_id, quantity: qty, notes })
+    });
+    closeModal('modal-atb');
+    toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
+    trackRecentItem(item_id);
+    trackRecentBox(addToBoxId);
+
+    const boxField = document.getElementById('atb-box-field');
+    if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
+  } catch(e) {
+    toast(`Error: ${e.message || e}`, true);
+    console.error('finishBarcodeAdd error:', e);
   }
-
-  const qty = parseInt(document.getElementById('atb-qty').value) || 1;
-  const notes = document.getElementById('atb-notes').value.trim();
-  const photoCount = atbPendingPhotos.filter(Boolean).length;
-  if (photoCount > 0) await uploadPendingPhotos(item_id);
-
-  const result = await api(`/api/boxes/${addToBoxId}/items`, {
-    method: 'POST', body: JSON.stringify({ item_id, quantity: qty, notes })
-  });
-  closeModal('modal-atb');
-  toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
-  trackRecentItem(item_id);
-  trackRecentBox(addToBoxId);
-
-  const boxField = document.getElementById('atb-box-field');
-  if (boxField.style.display === 'none') openBoxDetail(addToBoxId);
 }
 
 function barcodeNotRight() {

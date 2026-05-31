@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.2.6
+- Fixed unhandled promise rejection errors (3 / [object Object]) when adding items — all add flows now wrapped in try/catch with toast error messages
+- Boxes page no longer fully re-renders on live update — existing cards are updated in-place (thumbnail, title, meta) without wiping the page. New boxes are appended, removed boxes are cleaned up
+
 ## 2.2.5
 - Quick-add from header: box search now shows a "+ Create box" option when typing. Clicking it reveals an inline panel to set a label and optional room, then creates the box and auto-selects it so you can immediately add the item to it
 
