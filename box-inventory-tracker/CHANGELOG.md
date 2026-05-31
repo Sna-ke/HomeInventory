@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.1
+- Fixed startup error: db.py referenced HA_TOKEN and HA_API_URL without importing them from config.py
+
 ## 2.4.0
 - **Backend refactored**: server.py split from 1603 lines into focused modules:
   - `server.py`          53 lines  — Flask app + blueprint registration (entry point)

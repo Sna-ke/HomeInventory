@@ -7,6 +7,8 @@ import pymysql
 import pymysql.cursors
 import requests as http_requests
 
+from config import HA_TOKEN, HA_API_URL
+
 logger = logging.getLogger(__name__)
 
 DB_NAME = os.environ.get("DB_NAME", "box_inventory")
