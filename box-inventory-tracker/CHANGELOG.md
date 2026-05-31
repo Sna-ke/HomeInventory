@@ -1,5 +1,20 @@
 # Changelog
 
+## 2.3.0
+- **Frontend refactored**: index.html split from 5200 lines into separate files for maintainability:
+  - `static/css/main.css` — all styles (839 lines)
+  - `static/js/state.js` — shared application state
+  - `static/js/api.js` — fetch wrapper, esc(), toast()
+  - `static/js/boxes.js` — box list, box detail, item rows, qty controls (1017 lines)
+  - `static/js/rooms.js` — rooms page, expand/collapse, item search (666 lines)
+  - `static/js/items.js` — items page, filters, expand rows (301 lines)
+  - `static/js/categories.js` — categories page and autocomplete (233 lines)
+  - `static/js/atb.js` — Add-to-Box modal: by name, image, barcode, UPC lookup (978 lines)
+  - `static/js/images.js` — gallery, photo upload, overlay (48 lines)
+  - `static/js/labels.js` — print modal, label preview, QR (178 lines)
+  - `static/js/nav.js` — routing, SSE live-sync, theme, init (243 lines)
+  - `templates/index.html` — HTML structure only (664 lines)
+
 ## 2.2.7
 - Box detail page no longer scrolls to top or re-renders the header when items are added, removed, moved, or quantities changed. A new refreshBoxItemsInPlace() function replaces only the item list and count, leaving scroll position and the box header untouched
 - SSE live-sync on box detail also uses the in-place refresh
