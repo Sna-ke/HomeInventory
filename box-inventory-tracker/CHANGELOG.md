@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.6.0
+- **Settings: Export / Backup** — download a full JSON backup of all rooms, boxes, items, and categories. Optionally select specific boxes to export. The backup file is importable back into BoxTrack to restore your inventory
+- **Settings: Reset All Data** — two-step confirmation: first a warning dialog, then a text field requiring you to type 'I want to delete all data' before the delete button becomes active. Clears all boxes, rooms, items, categories, and photos
+- **Import extended** — import now also handles rooms and full boxes with their contents (from a backup). Item deduplication is by name (case-insensitive); boxes always get fresh box numbers
+
+## 2.5.0
+- **Settings page**: new ⚙️ tab in the navigation with configuration functions
+- **JSON import**: upload any JSON file with 'categories' and 'items' arrays to bulk-load your inventory. Preview shows validation results before committing. Duplicate items (matched by name) are skipped by default
+- **Household starter pack**: 1,000 pre-made items across 30 categories (Kitchen, Bedroom, Bathroom, Tools, Garden, Electronics, Clothing, Toys, Baby, Pets, and more). Download from the Settings page and import with one click to pre-populate your inventory before you start packing
+
 ## 2.4.3
 - Fixed missing imports across refactored modules: request in db.py, pymysql in rooms.py and categories.py, PIL.Image in vision.py. Removed leftover __main__ block from routes/frontend.py
 

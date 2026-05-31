@@ -1,0 +1,4036 @@
+{
+  "categories": [
+    "Kitchen",
+    "Cookware & Bakeware",
+    "Small Appliances",
+    "Pantry & Food",
+    "Dining & Entertaining",
+    "Living Room",
+    "Bedroom",
+    "Bedding & Linens",
+    "Bathroom",
+    "Laundry",
+    "Home Office",
+    "Books & Media",
+    "Clothing \u2013 Men's",
+    "Clothing \u2013 Women's",
+    "Clothing \u2013 Kids'",
+    "Shoes & Accessories",
+    "Tools & Hardware",
+    "Garden & Outdoor",
+    "Garage & Storage",
+    "Sports & Fitness",
+    "Toys & Games",
+    "Baby & Nursery",
+    "Pets",
+    "Art & Crafts",
+    "Holiday & Seasonal",
+    "Electronics",
+    "Cables & Accessories",
+    "Medical & First Aid",
+    "Cleaning Supplies",
+    "Miscellaneous"
+  ],
+  "items": [
+    {
+      "name": "Chef's knife",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Paring knife",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Bread knife",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Knife sharpener",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Knife block",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Cutting board \u2013 large",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Cutting board \u2013 small",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Wooden spoon set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Silicone spatula",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Slotted spoon",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Ladle",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Whisk",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Tongs",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Can opener",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Bottle opener",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Peeler",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Grater / box grater",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Colander",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Mixing bowls \u2013 set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Measuring cups \u2013 set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Measuring spoons \u2013 set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Kitchen scale",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Salad spinner",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Mandoline slicer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Garlic press",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Citrus juicer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Potato masher",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Rolling pin",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Pastry brush",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Kitchen timer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Oven mitts \u2013 pair",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Dish towels",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Apron",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Dish rack",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Sponges",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Dish soap",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Trash bags",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Aluminium foil",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Plastic wrap",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Parchment paper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Zip-lock bags \u2013 assorted",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Food storage containers \u2013 set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Spice rack",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Paper towel holder",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Funnel",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Ice cube trays",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Non-stick frying pan \u2013 10\"",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Non-stick frying pan \u2013 12\"",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Cast iron skillet",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Saucepan \u2013 2 qt",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Saucepan \u2013 4 qt",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Stockpot \u2013 8 qt",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Dutch oven",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Wok",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Grill pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Roasting pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Sheet pan \u2013 half",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Sheet pan \u2013 quarter",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Muffin tin \u2013 12 cup",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Loaf pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Cake pan \u2013 9\" round",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Springform pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Casserole dish \u2013 9\u00d713",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Pie dish",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Ramekins \u2013 set of 4",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Cooling rack",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Steamer basket",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Splatter screen",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Coffee maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Espresso machine",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Electric kettle",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Toaster",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Toaster oven",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Blender",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Immersion blender",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Food processor",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Stand mixer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Hand mixer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Microwave oven",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Air fryer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Instant Pot / pressure cooker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Slow cooker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Rice cooker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Waffle maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Sandwich press / panini grill",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Electric can opener",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Juicer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Bread machine",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Vacuum sealer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Olive oil",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Vegetable oil",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Salt \u2013 kosher",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Black pepper grinder",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Sugar \u2013 white",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Sugar \u2013 brown",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "All-purpose flour",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Baking soda",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Baking powder",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Vinegar \u2013 white wine",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Soy sauce",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Hot sauce",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Honey",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Maple syrup",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Pasta \u2013 assorted",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Rice \u2013 long grain",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Canned tomatoes",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Canned beans \u2013 assorted",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Chicken broth \u2013 cartons",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Spice collection",
+      "category": "Pantry & Food"
+    },
+    {
+      "name": "Dinner plates \u2013 set of 8",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Salad / side plates \u2013 set of 8",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Bowls \u2013 set of 8",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Mugs \u2013 set of 6",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Glasses \u2013 everyday set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Wine glasses \u2013 set of 6",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Champagne flutes \u2013 set of 4",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Flatware / cutlery set \u2013 8 place",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Serving platter \u2013 large",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Serving bowls \u2013 set of 3",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Salad bowl & tongs",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Cheese board",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Placemats \u2013 set of 6",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Cloth napkins \u2013 set of 8",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Tablecloth",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Candles \u2013 pillar & taper",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Candleholders",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Pitcher",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Cake stand",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Cocktail shaker set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Throw blanket",
+      "category": "Living Room"
+    },
+    {
+      "name": "Decorative pillows \u2013 set",
+      "category": "Living Room"
+    },
+    {
+      "name": "Area rug",
+      "category": "Living Room"
+    },
+    {
+      "name": "Floor lamp",
+      "category": "Living Room"
+    },
+    {
+      "name": "Table lamp",
+      "category": "Living Room"
+    },
+    {
+      "name": "Picture frames \u2013 assorted",
+      "category": "Living Room"
+    },
+    {
+      "name": "Wall clock",
+      "category": "Living Room"
+    },
+    {
+      "name": "Bookends",
+      "category": "Living Room"
+    },
+    {
+      "name": "Vase",
+      "category": "Living Room"
+    },
+    {
+      "name": "Decorative bowls / trays",
+      "category": "Living Room"
+    },
+    {
+      "name": "Candles \u2013 decorative",
+      "category": "Living Room"
+    },
+    {
+      "name": "Plants / planters",
+      "category": "Living Room"
+    },
+    {
+      "name": "TV remote",
+      "category": "Living Room"
+    },
+    {
+      "name": "Remote control organiser",
+      "category": "Living Room"
+    },
+    {
+      "name": "Coasters \u2013 set of 6",
+      "category": "Living Room"
+    },
+    {
+      "name": "Coffee table books",
+      "category": "Living Room"
+    },
+    {
+      "name": "Magazine rack",
+      "category": "Living Room"
+    },
+    {
+      "name": "Alarm clock",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Bedside lamp \u2013 pair",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Mirror \u2013 full length",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Mirror \u2013 wall / dresser",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Jewellery box / organiser",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Hangers \u2013 wooden set",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Closet organisers",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Under-bed storage boxes",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Laundry hamper",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Humidifier",
+      "category": "Bedroom"
+    },
+    {
+      "name": "White noise machine",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Blackout curtains",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Duvet / comforter \u2013 queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Duvet cover set \u2013 queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Fitted sheet \u2013 queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Flat sheet \u2013 queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Pillowcases \u2013 pair queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Pillows \u2013 standard pair",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Mattress protector \u2013 queen",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Mattress topper",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Electric blanket",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Duvet \u2013 king",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Sheet set \u2013 king",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Bath towels \u2013 set of 6",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Hand towels \u2013 set of 6",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Washcloths \u2013 set of 12",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Beach towels \u2013 set of 4",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Kitchen towels \u2013 set of 6",
+      "category": "Bedding & Linens"
+    },
+    {
+      "name": "Shower curtain & liner",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Shower curtain rings \u2013 set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bath mat \u2013 pair",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toilet brush & holder",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toilet paper holder",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Towel bar / hooks",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Soap dispenser",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toothbrush holder",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toothbrushes",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Electric toothbrush",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toothpaste",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Floss",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Shampoo",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Conditioner",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Body wash / soap",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Razor & blades",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Shaving cream",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Moisturiser \u2013 face",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Moisturiser \u2013 body",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Sunscreen SPF 50",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Deodorant",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Perfume / cologne",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Hairbrush",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Comb",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Hair dryer",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Curling iron / wand",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Hair straightener",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Hair ties & clips",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bathroom scale",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Medicine cabinet organiser",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Cotton balls & Q-tips",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Nail clippers & file set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Tweezers",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Loofa / bath sponge",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toilet cleaner",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bathroom cleaner spray",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Plunger",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Laundry detergent",
+      "category": "Laundry"
+    },
+    {
+      "name": "Fabric softener",
+      "category": "Laundry"
+    },
+    {
+      "name": "Stain remover spray",
+      "category": "Laundry"
+    },
+    {
+      "name": "Dryer sheets",
+      "category": "Laundry"
+    },
+    {
+      "name": "Dryer balls",
+      "category": "Laundry"
+    },
+    {
+      "name": "Laundry bags \u2013 mesh",
+      "category": "Laundry"
+    },
+    {
+      "name": "Clothespins \u2013 bag",
+      "category": "Laundry"
+    },
+    {
+      "name": "Drying rack \u2013 folding",
+      "category": "Laundry"
+    },
+    {
+      "name": "Iron",
+      "category": "Laundry"
+    },
+    {
+      "name": "Ironing board",
+      "category": "Laundry"
+    },
+    {
+      "name": "Steamer \u2013 handheld",
+      "category": "Laundry"
+    },
+    {
+      "name": "Lint roller",
+      "category": "Laundry"
+    },
+    {
+      "name": "Laptop",
+      "category": "Home Office"
+    },
+    {
+      "name": "Laptop stand",
+      "category": "Home Office"
+    },
+    {
+      "name": "External monitor",
+      "category": "Home Office"
+    },
+    {
+      "name": "Keyboard \u2013 mechanical",
+      "category": "Home Office"
+    },
+    {
+      "name": "Mouse \u2013 wireless",
+      "category": "Home Office"
+    },
+    {
+      "name": "Mouse pad",
+      "category": "Home Office"
+    },
+    {
+      "name": "Webcam",
+      "category": "Home Office"
+    },
+    {
+      "name": "USB hub",
+      "category": "Home Office"
+    },
+    {
+      "name": "Desk lamp",
+      "category": "Home Office"
+    },
+    {
+      "name": "Printer",
+      "category": "Home Office"
+    },
+    {
+      "name": "Printer paper \u2013 ream",
+      "category": "Home Office"
+    },
+    {
+      "name": "Printer ink cartridges",
+      "category": "Home Office"
+    },
+    {
+      "name": "Scanner",
+      "category": "Home Office"
+    },
+    {
+      "name": "Shredder",
+      "category": "Home Office"
+    },
+    {
+      "name": "File folders \u2013 box",
+      "category": "Home Office"
+    },
+    {
+      "name": "File cabinet / box",
+      "category": "Home Office"
+    },
+    {
+      "name": "Stapler & staples",
+      "category": "Home Office"
+    },
+    {
+      "name": "Tape dispenser & tape",
+      "category": "Home Office"
+    },
+    {
+      "name": "Scissors",
+      "category": "Home Office"
+    },
+    {
+      "name": "Pens \u2013 box assorted",
+      "category": "Home Office"
+    },
+    {
+      "name": "Pencils \u2013 box",
+      "category": "Home Office"
+    },
+    {
+      "name": "Highlighters \u2013 set",
+      "category": "Home Office"
+    },
+    {
+      "name": "Markers \u2013 set",
+      "category": "Home Office"
+    },
+    {
+      "name": "Sticky notes \u2013 assorted",
+      "category": "Home Office"
+    },
+    {
+      "name": "Rubber bands \u2013 bag",
+      "category": "Home Office"
+    },
+    {
+      "name": "Paper clips \u2013 box",
+      "category": "Home Office"
+    },
+    {
+      "name": "Binder clips \u2013 assorted",
+      "category": "Home Office"
+    },
+    {
+      "name": "Notebooks \u2013 set of 3",
+      "category": "Home Office"
+    },
+    {
+      "name": "Whiteboard & markers",
+      "category": "Home Office"
+    },
+    {
+      "name": "Desk organiser / tray",
+      "category": "Home Office"
+    },
+    {
+      "name": "Power strip \u2013 surge protected",
+      "category": "Home Office"
+    },
+    {
+      "name": "UPS / battery backup",
+      "category": "Home Office"
+    },
+    {
+      "name": "Label maker",
+      "category": "Home Office"
+    },
+    {
+      "name": "Books \u2013 fiction",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Books \u2013 non-fiction",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Cookbooks",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Children's books",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Magazines \u2013 back issues",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Vinyl record collection",
+      "category": "Books & Media"
+    },
+    {
+      "name": "CD collection",
+      "category": "Books & Media"
+    },
+    {
+      "name": "DVD / Blu-ray collection",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Board games \u2013 assorted",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Jigsaw puzzles",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Playing cards",
+      "category": "Books & Media"
+    },
+    {
+      "name": "T-shirts",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Dress shirts",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Jeans",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Dress trousers",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Shorts",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Sweaters / hoodies",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Suit jacket",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Winter coat",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Rain jacket",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Casual blazer",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Underwear",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Socks \u2013 everyday",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Socks \u2013 athletic",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Pyjamas",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Swimwear",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Gym wear",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Ties & pocket squares",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Belt \u2013 leather",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Wallet",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Watch",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Blouses & tops",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Dresses",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Skirts",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Jeans \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Trousers",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Shorts \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Sweaters & cardigans",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Winter coat \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Rain jacket \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Blazer \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Underwear & bras",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Socks \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Pyjamas \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Swimwear \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Gym wear \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Scarves & wraps",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Handbag \u2013 everyday",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Handbag \u2013 formal",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Jewellery \u2013 necklaces",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Jewellery \u2013 earrings",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Jewellery \u2013 bracelets",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Kids' tops & t-shirts",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' pants & jeans",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' shorts",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' dresses",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' pyjamas",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' swimwear",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' winter coat",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' rain jacket",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' underwear & socks",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "School uniforms",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Sneakers \u2013 casual",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Sneakers \u2013 athletic",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Dress shoes \u2013 leather",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Boots \u2013 winter",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Boots \u2013 ankle",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Sandals",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Flip flops",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Slippers",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Heels \u2013 block",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Kids' sneakers",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Kids' boots",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Sunglasses",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Hats \u2013 winter toque",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Hats \u2013 baseball cap",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Gloves \u2013 winter",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Scarf \u2013 winter",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Backpack \u2013 everyday",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Backpack \u2013 kids' school",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Gym bag",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Luggage \u2013 carry-on",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Luggage \u2013 checked",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Shoe care kit",
+      "category": "Shoes & Accessories"
+    },
+    {
+      "name": "Hammer",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Screwdriver set \u2013 Phillips & flathead",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Power drill & bits",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Level",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Tape measure",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Pliers \u2013 needle nose",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Pliers \u2013 slip joint",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Adjustable wrench",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Allen key set",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Utility knife & blades",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Handsaw",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Stud finder",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Wire stripper",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Voltage tester",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Toolbox",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Nails \u2013 assorted box",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Screws \u2013 assorted box",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Wall anchors",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Picture hooks \u2013 set",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Super glue",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Epoxy",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Duct tape",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Electrical tape",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Cable ties / zip ties",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Work gloves",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Safety glasses",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Extension cord \u2013 indoor",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Extension cord \u2013 outdoor",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Ladder \u2013 6ft",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Stepstool",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Garden hose & nozzle",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Hose reel",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Sprinkler",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Watering can",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Trowel & hand fork",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Spade / shovel",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Garden fork",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Rake",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Hoe",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Pruning shears",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Loppers",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Hedge trimmer",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Lawn mower",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Leaf blower",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Wheelbarrow",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Garden gloves",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Knee pads",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Plant pots \u2013 assorted",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Potting soil \u2013 bags",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Fertiliser",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor furniture \u2013 chairs",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor furniture \u2013 table",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor umbrella & base",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "BBQ / grill",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "BBQ tools set",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "BBQ cover",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Propane tank",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor string lights",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Patio heater",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Bird feeder",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Storage shelves \u2013 metal",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Storage bins \u2013 large",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Storage bins \u2013 medium",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Storage bins \u2013 small",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Plastic drawer unit",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Pegboard & hooks",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Moving boxes \u2013 large",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Moving boxes \u2013 medium",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Moving boxes \u2013 small",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Packing tape & dispenser",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Bubble wrap \u2013 roll",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Packing paper \u2013 newsprint",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Vacuum storage bags",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Bungee cords \u2013 set",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Rope \u2013 utility",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Moving blankets \u2013 pair",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Hand truck / dolly",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Car emergency kit",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Jumper cables",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Snow brush & ice scraper",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Yoga mat",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Yoga blocks \u2013 pair",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Resistance bands \u2013 set",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Dumbbells \u2013 pair",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Kettlebell",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Jump rope",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Foam roller",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Pull-up bar",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Gym gloves",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Water bottle \u2013 insulated",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Sports watch / fitness tracker",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Bicycle",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Bicycle helmet",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Bicycle lock",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Bicycle pump",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Running shoes",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Hiking boots",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Hiking backpack",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Camping tent",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Sleeping bag",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Sleeping pad",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Camping stove & fuel",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Headlamp",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Ski equipment bag",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Ski goggles & helmet",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Swim goggles",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Sports bag \u2013 equipment",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "LEGO sets",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Building blocks \u2013 toddler",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Dolls & accessories",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Action figures",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Toy cars & tracks",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Stuffed animals",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Play kitchen set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Art & drawing set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Puzzles \u2013 kids'",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Board games \u2013 family",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Card games \u2013 kids'",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Outdoor play set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Bicycle \u2013 kids'",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Scooter",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Roller skates / skateboards",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Gaming console",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Video games \u2013 assorted",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Gaming controller",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Handheld gaming device",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Baby monitor",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby carrier / wrap",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Stroller",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Car seat \u2013 infant",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "High chair",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby bouncer / rocker",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Play mat & gym",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby bottles \u2013 set",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Bottle steriliser",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Breast pump",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Nappy bag",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby clothes \u2013 0-3 months",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby clothes \u2013 3-6 months",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby clothes \u2013 6-12 months",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby swaddle blankets \u2013 set",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby bath tub",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby toiletries set",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Nappies / diapers \u2013 bulk",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby wipes \u2013 bulk",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Cot / bassinet bedding set",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Pet food \u2013 dry",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet food \u2013 wet / cans",
+      "category": "Pets"
+    },
+    {
+      "name": "Food & water bowls",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet bed",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet crate / carrier",
+      "category": "Pets"
+    },
+    {
+      "name": "Dog leash",
+      "category": "Pets"
+    },
+    {
+      "name": "Dog collar & tags",
+      "category": "Pets"
+    },
+    {
+      "name": "Dog harness",
+      "category": "Pets"
+    },
+    {
+      "name": "Cat litter box",
+      "category": "Pets"
+    },
+    {
+      "name": "Cat litter \u2013 bag",
+      "category": "Pets"
+    },
+    {
+      "name": "Cat scratching post",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet toys \u2013 assorted",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet brush & grooming kit",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet shampoo",
+      "category": "Pets"
+    },
+    {
+      "name": "Flea & tick treatment",
+      "category": "Pets"
+    },
+    {
+      "name": "Pet first aid kit",
+      "category": "Pets"
+    },
+    {
+      "name": "Poop bags \u2013 roll",
+      "category": "Pets"
+    },
+    {
+      "name": "Acrylic paints \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Watercolour paints \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Paint brushes \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Canvas panels \u2013 pack",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Sketchbooks \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Coloured pencils \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Crayons \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Sewing machine",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Sewing kit \u2013 thread & needles",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Fabric scissors",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Knitting needles & yarn",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Crochet hooks & yarn",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Hot glue gun & sticks",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Craft paper \u2013 assorted",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Scrapbooking supplies",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Clay & sculpting tools",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Christmas ornaments \u2013 box",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Christmas lights \u2013 string",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Christmas tree \u2013 artificial",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Christmas tree stand",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Christmas tree skirt",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Christmas stockings",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Wrapping paper \u2013 roll",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Gift bags \u2013 assorted",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Ribbons & bows \u2013 box",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Halloween decorations",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Halloween costumes",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Easter decorations",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Seasonal table runner \u2013 set",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Smart TV \u2013 55\"",
+      "category": "Electronics"
+    },
+    {
+      "name": "Soundbar",
+      "category": "Electronics"
+    },
+    {
+      "name": "Subwoofer",
+      "category": "Electronics"
+    },
+    {
+      "name": "Bluetooth speaker",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart speaker \u2013 Alexa / Google",
+      "category": "Electronics"
+    },
+    {
+      "name": "Tablet",
+      "category": "Electronics"
+    },
+    {
+      "name": "E-reader / Kindle",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smartphone",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smartwatch",
+      "category": "Electronics"
+    },
+    {
+      "name": "Wireless earbuds",
+      "category": "Electronics"
+    },
+    {
+      "name": "Headphones \u2013 over-ear",
+      "category": "Electronics"
+    },
+    {
+      "name": "Portable charger / power bank",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart home hub",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart thermostat",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart doorbell / camera",
+      "category": "Electronics"
+    },
+    {
+      "name": "Security camera \u2013 indoor",
+      "category": "Electronics"
+    },
+    {
+      "name": "Wi-Fi router",
+      "category": "Electronics"
+    },
+    {
+      "name": "Wi-Fi mesh system",
+      "category": "Electronics"
+    },
+    {
+      "name": "Network switch",
+      "category": "Electronics"
+    },
+    {
+      "name": "External hard drive",
+      "category": "Electronics"
+    },
+    {
+      "name": "USB flash drives \u2013 set",
+      "category": "Electronics"
+    },
+    {
+      "name": "Portable projector",
+      "category": "Electronics"
+    },
+    {
+      "name": "Streaming stick / Apple TV",
+      "category": "Electronics"
+    },
+    {
+      "name": "Digital camera",
+      "category": "Electronics"
+    },
+    {
+      "name": "Camera tripod",
+      "category": "Electronics"
+    },
+    {
+      "name": "Drone",
+      "category": "Electronics"
+    },
+    {
+      "name": "Walkie-talkies",
+      "category": "Electronics"
+    },
+    {
+      "name": "AM/FM radio",
+      "category": "Electronics"
+    },
+    {
+      "name": "HDMI cables \u2013 set",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "USB-C cables \u2013 set",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "USB-A cables \u2013 set",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Lightning cables \u2013 set",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Ethernet cables \u2013 set",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Power cables \u2013 laptop",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Multi-port charger \u2013 USB",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Wireless charging pad",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Adapter \u2013 HDMI to VGA",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Adapter \u2013 USB hub",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Surge protector \u2013 6 outlet",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "AA batteries \u2013 bulk pack",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "AAA batteries \u2013 bulk pack",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "9V batteries",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Battery charger \u2013 rechargeable",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Cable management clips",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Cable sleeves / wrap",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "First aid kit \u2013 comprehensive",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Bandages \u2013 assorted box",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Gauze pads & roll",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Medical tape",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Antiseptic wipes",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Antiseptic cream",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Hydrogen peroxide",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Thermometer \u2013 digital",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Blood pressure monitor",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Pulse oximeter",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Pain reliever \u2013 ibuprofen",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Pain reliever \u2013 acetaminophen",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Antihistamine",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Cold & flu medicine",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Antacids",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Vitamins & supplements",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Prescription medications",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Eye drops",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Heating pad",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Ice pack \u2013 reusable",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Tweezers \u2013 medical",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Scissors \u2013 medical",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Elastic bandage / tensor wrap",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Insect repellent",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Sunscreen SPF 30",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Vacuum cleaner \u2013 upright",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Vacuum cleaner \u2013 robot",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Vacuum \u2013 handheld cordless",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Mop & bucket",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Mop \u2013 spray",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Broom & dustpan",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Scrub brushes \u2013 set",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Microfibre cloths \u2013 pack",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Rubber gloves \u2013 pair",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "All-purpose cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Glass cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Floor cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Furniture polish",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Stainless steel cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Bleach",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Oven cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Drain cleaner",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Mould & mildew remover",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Air freshener \u2013 spray",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Air freshener \u2013 plug-in",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Bin / trash cans \u2013 kitchen",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Bin / trash cans \u2013 bathroom",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Recycling bin",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Compost bin",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Fire extinguisher",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Smoke detectors \u2013 pair",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Carbon monoxide detector",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Flashlights \u2013 set",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Candles \u2013 emergency",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Matches & lighter",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Emergency water \u2013 gallon",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Safe \u2013 home fireproof",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Key holder / hooks",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Spare keys",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Landline phone",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Guest book",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Address book",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Calendar \u2013 wall",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Umbrella \u2013 compact",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Umbrella \u2013 full size",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Umbrella stand",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Shoe rack",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Door stopper",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Door mat \u2013 indoor",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Door mat \u2013 outdoor",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Boot tray",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Wall hooks \u2013 set",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Command strips \u2013 set",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Furniture felt pads",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Child safety locks \u2013 set",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Baby gates",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Surge protector \u2013 travel",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "International power adaptor",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Box cutter / Stanley knife",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Cheese grater \u2013 handheld",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Kitchen shears",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Silicone baking mat",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Jar opener",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Melon baller",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Apple corer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Avocado slicer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Herb stripper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Pasta measurer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Egg slicer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Butter dish",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Salt & pepper shakers",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Sugar canister",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Flour canister",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Coffee canister",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Bread box",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Fruit bowl",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Dish scrubber",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Silicone trivet set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Pot lid organiser",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Fridge organiser bins",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Beeswax wraps \u2013 set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Oil & vinegar cruet set",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Mortar & pestle",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Salad dressing shaker",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Enamelled cast iron pot",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Copper skillet",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Non-stick griddle",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Stainless saucepan \u2013 1 qt",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Bamboo steamer",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Tagine",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Pizza stone",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Donut pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Bundt cake pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Tart pan",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Mini loaf pan \u2013 set of 4",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Sous vide precision cooker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Dehydrator",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Egg cooker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Milk frother",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Crepe maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Hot plate",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Deep fryer",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Yogurt maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Ice cream maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Pasta maker",
+      "category": "Small Appliances"
+    },
+    {
+      "name": "Gravy boat",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Salt cellar",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Butter dish \u2013 ceramic",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Condiment set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Fondue set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Chafing dish",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Punch bowl & ladle",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Ice bucket",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Wine decanter",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Beer glasses \u2013 set of 4",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Espresso cups \u2013 set of 4",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Teapot",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Tea cups & saucers \u2013 set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Sugar bowl & creamer set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Bread basket",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "TV stand / media console",
+      "category": "Living Room"
+    },
+    {
+      "name": "Bookshelf \u2013 freestanding",
+      "category": "Living Room"
+    },
+    {
+      "name": "Side table",
+      "category": "Living Room"
+    },
+    {
+      "name": "Ottoman",
+      "category": "Living Room"
+    },
+    {
+      "name": "Room divider / screen",
+      "category": "Living Room"
+    },
+    {
+      "name": "Air purifier",
+      "category": "Living Room"
+    },
+    {
+      "name": "Dehumidifier",
+      "category": "Living Room"
+    },
+    {
+      "name": "Fan \u2013 tower",
+      "category": "Living Room"
+    },
+    {
+      "name": "Fan \u2013 desk",
+      "category": "Living Room"
+    },
+    {
+      "name": "Smart plug \u2013 set of 4",
+      "category": "Living Room"
+    },
+    {
+      "name": "Window blinds / shades",
+      "category": "Living Room"
+    },
+    {
+      "name": "Curtain rods & rings",
+      "category": "Living Room"
+    },
+    {
+      "name": "Curtains \u2013 blackout",
+      "category": "Living Room"
+    },
+    {
+      "name": "Bedside table organiser",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Drawer dividers \u2013 set",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Over-door hooks",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Shoe organiser \u2013 door",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Tie & belt rack",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Scarf organiser",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Folding mirror",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Room spray / linen spray",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Sleep mask",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Ear plugs \u2013 box",
+      "category": "Bedroom"
+    },
+    {
+      "name": "Electric shaver",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Epilator",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Face wash",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Toner",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Serum \u2013 vitamin C",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Eye cream",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Lip balm",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup remover",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup \u2013 foundation",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup \u2013 mascara",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup \u2013 eyeshadow palette",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup \u2013 lipstick set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup brushes \u2013 set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Makeup organiser",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Hair mask / treatment",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Dry shampoo",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Exfoliating scrub",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bath bombs \u2013 set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bath salts",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Bathroom cup & dispenser set",
+      "category": "Bathroom"
+    },
+    {
+      "name": "Monitor stand / riser",
+      "category": "Home Office"
+    },
+    {
+      "name": "Cable management box",
+      "category": "Home Office"
+    },
+    {
+      "name": "Desk pad / mat",
+      "category": "Home Office"
+    },
+    {
+      "name": "Document camera",
+      "category": "Home Office"
+    },
+    {
+      "name": "Ring light",
+      "category": "Home Office"
+    },
+    {
+      "name": "Noise-cancelling headphones",
+      "category": "Home Office"
+    },
+    {
+      "name": "Ergonomic keyboard \u2013 split",
+      "category": "Home Office"
+    },
+    {
+      "name": "Ergonomic mouse \u2013 vertical",
+      "category": "Home Office"
+    },
+    {
+      "name": "Wrist rest \u2013 set",
+      "category": "Home Office"
+    },
+    {
+      "name": "Footrest",
+      "category": "Home Office"
+    },
+    {
+      "name": "Standing desk converter",
+      "category": "Home Office"
+    },
+    {
+      "name": "Monitor arm",
+      "category": "Home Office"
+    },
+    {
+      "name": "Desk calendar",
+      "category": "Home Office"
+    },
+    {
+      "name": "Inbox / outbox tray",
+      "category": "Home Office"
+    },
+    {
+      "name": "Business card holder",
+      "category": "Home Office"
+    },
+    {
+      "name": "Pen holder",
+      "category": "Home Office"
+    },
+    {
+      "name": "Envelopes \u2013 box",
+      "category": "Home Office"
+    },
+    {
+      "name": "Postage stamps",
+      "category": "Home Office"
+    },
+    {
+      "name": "Calculator",
+      "category": "Home Office"
+    },
+    {
+      "name": "Photo albums \u2013 set",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Photo boxes \u2013 set",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Sheet music \u2013 collection",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Musical instrument \u2013 guitar",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Musical instrument \u2013 keyboard",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Graphic novels / comics",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Reference books",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Language learning books",
+      "category": "Books & Media"
+    },
+    {
+      "name": "Dress pants \u2013 men's",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Polo shirts",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Vest / waistcoat",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Thermal underwear \u2013 men's",
+      "category": "Clothing \u2013 Men's"
+    },
+    {
+      "name": "Dungarees / overalls",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Jumpsuit / romper",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Thermal underwear \u2013 women's",
+      "category": "Clothing \u2013 Women's"
+    },
+    {
+      "name": "Kids' thermals",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' sports uniform",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Kids' formal wear",
+      "category": "Clothing \u2013 Kids'"
+    },
+    {
+      "name": "Jigsaw",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Circular saw",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Random orbital sander",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Heat gun",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Soldering iron",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "C-clamps \u2013 set",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Wood glue",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Paint rollers & tray",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Paint brushes \u2013 decorating",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Sandpaper \u2013 assorted grit",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Caulk gun & tubes",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Putty knife",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Wire brush",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Multimeter",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Pipe wrench",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Plumber's tape",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Drain snake",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Shop vacuum",
+      "category": "Tools & Hardware"
+    },
+    {
+      "name": "Garden kneeling pad",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Plant labels \u2013 set",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Garden twine",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Bamboo stakes \u2013 pack",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Hanging planters \u2013 set",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Self-watering planters",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Compost bin \u2013 outdoor",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Weed barrier fabric",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Garden edging",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor rug",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor cushions \u2013 set",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Outdoor storage box",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Firewood rack",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Chiminea / fire pit",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Solar garden lights \u2013 set",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Motion sensor light",
+      "category": "Garden & Outdoor"
+    },
+    {
+      "name": "Bike rack \u2013 wall mount",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Sports equipment bag rack",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Wall-mount storage hooks",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Tool chest / cabinet",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Oil drain pan",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Car wax & polish",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Car wash bucket & mitt",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Windshield sun shade",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Tire pressure gauge",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Tow straps \u2013 set",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Pilates ring",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Ankle weights \u2013 pair",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Weight bench",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Barbell set",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Pull-up station",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Punching bag & gloves",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Tennis racquet & balls",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Badminton set",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Volleyball & net",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Basketball & hoop",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Soccer ball",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Baseball glove & ball",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Frisbee",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Kayak paddle",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Life jacket",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Snorkel & mask",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Rock climbing harness",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Trekking poles \u2013 pair",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "GPS hiking device",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Rocking horse",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Dollhouse",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Train set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Play tent / teepee",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Trampoline",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Bubble machine",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Sandpit & tools",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Water guns \u2013 set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Kite",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Remote control car",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Science kit",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Telescope \u2013 kids'",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Musical toys \u2013 set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Smart light bulbs \u2013 set",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart switch set",
+      "category": "Electronics"
+    },
+    {
+      "name": "Smart lock",
+      "category": "Electronics"
+    },
+    {
+      "name": "Video doorbell",
+      "category": "Electronics"
+    },
+    {
+      "name": "Dash cam",
+      "category": "Electronics"
+    },
+    {
+      "name": "Action camera",
+      "category": "Electronics"
+    },
+    {
+      "name": "Bluetooth tracker tags",
+      "category": "Electronics"
+    },
+    {
+      "name": "Electric toothbrush heads \u2013 set",
+      "category": "Electronics"
+    },
+    {
+      "name": "Electric shaver replacement heads",
+      "category": "Electronics"
+    },
+    {
+      "name": "DisplayPort cable",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Thunderbolt cable",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Coaxial cable",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "3.5mm audio cables",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Speaker wire \u2013 spool",
+      "category": "Cables & Accessories"
+    },
+    {
+      "name": "Knee brace",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Wrist brace",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Reading glasses",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Contact lenses & solution",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Crutches",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Pill organiser",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Nasal spray",
+      "category": "Medical & First Aid"
+    },
+    {
+      "name": "Spin mop",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Steam cleaner \u2013 floor",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Grout brush",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Squeegee \u2013 window",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Window cleaning kit",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Tile scrubber \u2013 electric",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Wet & dry wipes \u2013 bulk",
+      "category": "Cleaning Supplies"
+    },
+    {
+      "name": "Suitcase name tags",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Travel pillow",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Travel adapter \u2013 universal",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Moving binder / folder",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Home inventory binder",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Spare light bulbs \u2013 LED",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Spare fuses \u2013 box",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Corkboard & pins",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Magnetic whiteboard \u2013 fridge",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Letter box / mail organiser",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Parcel weighing scale",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Magnifying glass",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Binoculars",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Karaoke machine",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Board game storage tower",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Safe deposit box \u2013 personal",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Passport holder \u2013 set",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Document organiser \u2013 accordion",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Emergency contact list \u2013 laminated",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Spare house keys \u2013 labelled",
+      "category": "Miscellaneous"
+    },
+    {
+      "name": "Cheese knives \u2013 set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Olive oil dispenser",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Clip-on strainer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Avocado keeper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Corn stripper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Mango splitter",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Cherry pitter",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Strawberry huller",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Herb scissors",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Adjustable measuring cup",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Dough scraper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Bench scraper",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Cake tester / skewer",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Basting brush \u2013 silicone",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Poultry shears",
+      "category": "Cookware & Bakeware"
+    },
+    {
+      "name": "Meat thermometer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Candy thermometer",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Kitchen torch",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Sushi mat",
+      "category": "Kitchen"
+    },
+    {
+      "name": "Chopsticks \u2013 set of 8",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Ramen bowls \u2013 set of 4",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Soup spoons \u2013 set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Steak knives \u2013 set of 6",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Bread basket liner",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Trivet \u2013 decorative",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Lazy Susan",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Toothpick holder",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Napkin rings \u2013 set",
+      "category": "Dining & Entertaining"
+    },
+    {
+      "name": "Reading lamp \u2013 adjustable",
+      "category": "Home Office"
+    },
+    {
+      "name": "Drafting light pad",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Lightbox tracing pad",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Embroidery hoop & thread",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Macram\u00e9 cord & ring",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Resin casting kit",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Stamp set \u2013 decorative",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Ink pads \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Origami paper \u2013 pack",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Foam sheets \u2013 pack",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Felt sheets \u2013 pack",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Glitter set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Washi tape \u2013 set",
+      "category": "Art & Crafts"
+    },
+    {
+      "name": "Halloween candy bowl",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Hanukkah menorah",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Eid decorations",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "New Year's Eve supplies",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Birthday party supplies",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Birthday banner set",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Balloon pump & balloons",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Gift tissue paper \u2013 pack",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Greeting cards \u2013 assorted",
+      "category": "Holiday & Seasonal"
+    },
+    {
+      "name": "Packing tape \u2013 double-sided",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Labels \u2013 self-adhesive roll",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Furniture sliders \u2013 set",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Cable reel \u2013 heavy duty",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Cargo net \u2013 trunk",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Roof cargo bag",
+      "category": "Garage & Storage"
+    },
+    {
+      "name": "Weight lifting belt",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Skipping rope \u2013 heavy",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Ab roller",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Balance board",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Mini trampoline / rebounder",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Pool noodles",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Swim fins",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Cricket bat & ball",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Rugby ball",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Golf clubs \u2013 set",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Golf bag",
+      "category": "Sports & Fitness"
+    },
+    {
+      "name": "Table tennis set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Foosball table",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Dartboard & darts",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Chess set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Poker chip set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Dominoes set",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Outdoor game set \u2013 ring toss",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Cornhole boards & bags",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Magnetic drawing board",
+      "category": "Toys & Games"
+    },
+    {
+      "name": "Sensory toys \u2013 set",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby gate \u2013 pressure mount",
+      "category": "Baby & Nursery"
+    },
+    {
+      "name": "Baby food maker",
+      "category": "Baby & Nursery"
+    }
+  ]
+}

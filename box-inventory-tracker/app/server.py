@@ -33,6 +33,8 @@ from routes.items       import bp as items_bp
 from routes.images      import bp as images_bp
 from routes.vision      import bp as vision_bp
 from routes.frontend    import bp as frontend_bp
+from routes.import_data  import bp as import_bp
+from routes.export_reset import bp as export_reset_bp
 
 app.register_blueprint(sse_bp)
 app.register_blueprint(categories_bp)
@@ -42,6 +44,8 @@ app.register_blueprint(items_bp)
 app.register_blueprint(images_bp)
 app.register_blueprint(vision_bp)
 app.register_blueprint(frontend_bp)
+app.register_blueprint(import_bp)
+app.register_blueprint(export_reset_bp)
 
 # ── Startup ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

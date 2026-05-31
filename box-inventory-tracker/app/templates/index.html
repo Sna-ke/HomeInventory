@@ -53,6 +53,7 @@
   <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
   <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
   <button id="sidebar-categories" onclick="showPanel('categories')">🏷️ Categories</button>
+  <button id="sidebar-settings" onclick="showPanel('settings')">⚙️ Settings</button>
 </nav>
 
 <div class="content" id="mainContent">
@@ -253,6 +254,131 @@
     </div>
   </div>
 </div>
+
+<!-- SETTINGS -->
+  <div id="panel-settings" class="panel">
+    <div class="panel-hdr"><h2>Settings</h2></div>
+    <div style="max-width:680px;">
+
+      <!-- ── Import ──────────────────────────────────────────────────── -->
+      <h3 class="settings-section-hdr">Import Data</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;line-height:1.5;">
+        Upload a JSON backup or the household starter pack to bulk-import rooms,
+        boxes, items, and categories. Existing records are skipped by default.
+        <br><a id="household-json-link" href="#" style="color:var(--accent);">
+          ⬇ Download household starter pack
+        </a> — 1,000 common moving items across 30 categories.
+      </p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px;">
+        <div class="field" style="margin:0;flex:1;min-width:200px;">
+          <label>JSON File</label>
+          <input type="file" id="import-file" accept=".json"
+            style="font-family:var(--mono);font-size:13px;color:var(--muted);
+                   background:var(--bg);border:1px solid var(--border);padding:8px;width:100%;"
+            onchange="importPreview(this)">
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;
+                      cursor:pointer;padding-bottom:8px;white-space:nowrap;">
+          <input type="checkbox" id="import-skip-existing" checked>
+          Skip existing records
+        </label>
+      </div>
+      <div id="import-preview" style="display:none;background:var(--surface2);
+           border:1px solid var(--border);padding:12px 14px;margin-bottom:12px;
+           font-family:var(--mono);font-size:13px;line-height:1.7;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-primary btn-sm" id="import-run-btn"
+          style="display:none;" onclick="importRun()">✓ Import Now</button>
+        <button class="btn btn-secondary btn-sm" onclick="importReset()">Clear</button>
+      </div>
+      <div id="import-result" style="margin-top:12px;font-family:var(--mono);font-size:13px;"></div>
+
+      <!-- ── Export ─────────────────────────────────────────────────── -->
+      <h3 class="settings-section-hdr" style="margin-top:32px;">Export / Backup</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;line-height:1.5;">
+        Download a JSON backup of your data. The file can be re-imported to restore
+        your inventory on any BoxTrack instance.
+      </p>
+      <div style="margin-bottom:12px;">
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;
+                      cursor:pointer;margin-bottom:10px;">
+          <input type="radio" name="export-scope" id="export-all" value="all"
+            checked onchange="exportScopeChanged()">
+          Export everything (all rooms, boxes, items &amp; categories)
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:14px;cursor:pointer;">
+          <input type="radio" name="export-scope" id="export-select" value="select"
+            onchange="exportScopeChanged()">
+          Select specific boxes
+        </label>
+      </div>
+      <div id="export-box-picker" style="display:none;margin-bottom:14px;
+           background:var(--surface2);border:1px solid var(--border);
+           padding:10px 12px;max-height:240px;overflow-y:auto;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+             color:var(--muted);margin-bottom:8px;">Select boxes to export</div>
+        <div id="export-box-list"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-primary btn-sm" onclick="exportRun()">⬇ Download Backup</button>
+        <span id="export-status" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></span>
+      </div>
+
+      <!-- ── Reset ──────────────────────────────────────────────────── -->
+      <h3 class="settings-section-hdr"
+          style="margin-top:32px;color:#cc2200;border-color:#cc2200;">
+        Reset All Data
+      </h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:16px;line-height:1.5;">
+        Permanently delete all boxes, rooms, items, and categories, including photos.
+        Export a backup first if you want to preserve your data.
+      </p>
+      <button class="btn btn-danger btn-sm" onclick="resetStep1()">
+        🗑 Reset All Data…
+      </button>
+    </div>
+  </div>
+
+  <!-- Reset confirmation — step 1 -->
+  <div id="modal-reset-1" class="modal-backdrop">
+    <div class="modal">
+      <h3 style="color:#cc2200;">⚠ Reset All Data</h3>
+      <p style="margin-bottom:16px;line-height:1.5;">
+        This will permanently delete <strong>all boxes, rooms, items, and categories</strong>.
+        Photos will also be removed. There is no undo.
+      </p>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:20px;">
+        Are you sure you want to continue?
+      </p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-reset-1')">Cancel</button>
+        <button class="btn btn-danger btn-sm" onclick="resetStep2()">Continue →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset confirmation — step 2 (type the phrase) -->
+  <div id="modal-reset-2" class="modal-backdrop">
+    <div class="modal">
+      <h3 style="color:#cc2200;">⚠ Final Confirmation</h3>
+      <p style="margin-bottom:14px;line-height:1.5;">
+        Type <strong style="font-family:var(--mono);color:#cc2200;">I want to delete all data</strong> to confirm.
+      </p>
+      <div class="field">
+        <input type="text" id="reset-confirm-input"
+          placeholder="Type the phrase above…"
+          oninput="resetConfirmCheck()"
+          style="background:var(--bg);border:2px solid #cc2200;color:var(--text);
+                 font-family:var(--mono);font-size:14px;padding:10px;width:100%;outline:none;">
+      </div>
+      <div class="modal-actions" style="margin-top:14px;">
+        <button class="btn btn-secondary btn-sm"
+          onclick="closeModal('modal-reset-2');closeModal('modal-reset-1')">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="reset-confirm-btn"
+          disabled onclick="resetRun()">Delete Everything</button>
+      </div>
+    </div>
+  </div>
 
 <!-- Add item to box modal -->
 <!-- Move Item modal -->
@@ -660,5 +786,6 @@
 <script src="{{ ingress_path }}/static/js/atb.js"></script>
 <script src="{{ ingress_path }}/static/js/boxes.js"></script>
 <script src="{{ ingress_path }}/static/js/nav.js"></script>
+<script src="{{ ingress_path }}/static/js/settings.js"></script>
 </body>
 </html>
