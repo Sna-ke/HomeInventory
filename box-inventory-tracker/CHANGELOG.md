@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.3
+- Fixed missing imports across refactored modules: request in db.py, pymysql in rooms.py and categories.py, PIL.Image in vision.py. Removed leftover __main__ block from routes/frontend.py
+
 ## 2.4.2
 - Fixed NameError on startup: routes/vision.py had leftover inline env var reads (HA_TOKEN, VISION_BACKEND, etc.) from the old monolithic server.py. These are now imported from config.py
 

@@ -2,6 +2,7 @@
 import logging
 from flask import Blueprint, request, jsonify
 
+import pymysql
 from db import get_db, images_for, image_url, get_or_create_category, next_box_number
 from sse import sse_push
 

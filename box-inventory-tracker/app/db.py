@@ -7,6 +7,7 @@ import pymysql
 import pymysql.cursors
 import requests as http_requests
 
+from flask import request
 from config import HA_TOKEN, HA_API_URL
 
 logger = logging.getLogger(__name__)

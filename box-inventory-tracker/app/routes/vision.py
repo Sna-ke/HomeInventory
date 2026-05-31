@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 import base64, mimetypes, io
 import requests as http_requests
 from flask import abort
+from PIL import Image
 from config import VISION_BACKEND, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_MODEL, HA_TOKEN, HA_API_URL
 
 bp = Blueprint("vision", __name__)

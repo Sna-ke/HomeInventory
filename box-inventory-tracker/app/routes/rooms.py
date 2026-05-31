@@ -8,6 +8,7 @@ from sse import sse_push
 logger = logging.getLogger(__name__)
 import json as _json_mod
 import requests as http_requests
+import pymysql
 from config import HA_TOKEN, HA_API_URL
 from db import sync_ha_areas
 
