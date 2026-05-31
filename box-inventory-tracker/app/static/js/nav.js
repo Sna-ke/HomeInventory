@@ -19,6 +19,7 @@ function showPanel(name, writeHash = true) {
   else if (name === 'rooms') loadRooms();
   else if (name === 'items') loadItems();
   else if (name === 'categories') loadCategories();
+  else if (name === 'settings') loadCreditCardsSettings();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }

@@ -117,6 +117,42 @@ def init_db():
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
                 """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS credit_cards (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        warranty_months INT NOT NULL DEFAULT 12,
+                        notes VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS item_metadata (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        item_id INT NOT NULL UNIQUE,
+                        serial_number VARCHAR(255),
+                        model_number VARCHAR(255),
+                        purchase_date DATE,
+                        purchase_price DECIMAL(10,2),
+                        purchase_store VARCHAR(255),
+                        warranty_expiry DATE,
+                        credit_card_id INT,
+                        notes TEXT,
+                        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+                        FOREIGN KEY (credit_card_id) REFERENCES credit_cards(id) ON DELETE SET NULL
+                    )
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS room_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        room_id INT NOT NULL,
+                        item_id INT NOT NULL,
+                        quantity INT NOT NULL DEFAULT 1,
+                        notes TEXT,
+                        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+                        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+                    )
+                """)
             conn.commit()
             conn.close()
             logger.info("Database initialized successfully.")
@@ -221,6 +257,66 @@ def migrate_db():
                 logger.info("Migration: adding items.upc column")
                 cur.execute("ALTER TABLE items ADD COLUMN upc VARCHAR(64) NULL AFTER name")
                 cur.execute("CREATE INDEX IF NOT EXISTS idx_items_upc ON items(upc)")
+
+            # Migration 6: credit_cards table (added v2.7.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'credit_cards'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating credit_cards table")
+                cur.execute("""
+                    CREATE TABLE credit_cards (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        warranty_months INT NOT NULL DEFAULT 12,
+                        notes VARCHAR(255),
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    )
+                """)
+
+            # Migration 7: item_metadata table (added v2.7.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'item_metadata'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating item_metadata table")
+                cur.execute("""
+                    CREATE TABLE item_metadata (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        item_id INT NOT NULL UNIQUE,
+                        serial_number VARCHAR(255),
+                        model_number VARCHAR(255),
+                        purchase_date DATE,
+                        purchase_price DECIMAL(10,2),
+                        purchase_store VARCHAR(255),
+                        warranty_expiry DATE,
+                        credit_card_id INT,
+                        notes TEXT,
+                        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+                        FOREIGN KEY (credit_card_id) REFERENCES credit_cards(id) ON DELETE SET NULL
+                    )
+                """)
+
+            # Migration 8: room_items table (added v2.7.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'room_items'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating room_items table")
+                cur.execute("""
+                    CREATE TABLE room_items (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        room_id INT NOT NULL,
+                        item_id INT NOT NULL,
+                        quantity INT NOT NULL DEFAULT 1,
+                        notes TEXT,
+                        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
+                        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
+                    )
+                """)
 
         conn.commit()
         logger.info("Database migrations complete.")

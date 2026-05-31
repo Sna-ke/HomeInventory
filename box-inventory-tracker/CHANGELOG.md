@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.7.0
+- **Room placements**: items can now be placed directly in a room without being in a box. Each room on the Rooms page shows an 'Items in Room' section when expanded, with a '+ Place Item in Room' button. Useful for furniture, appliances, wall-mounted items, and anything that isn't getting packed
+- **Asset metadata**: every item now has a 📋 button in box detail (and room placements). Opens an Asset Details modal with: Serial Number, Model Number, Purchase Date, Purchase Price, Store/Vendor, Manufacturer Warranty Expiry, and Notes
+- **Credit card warranty tracking**: add your credit cards in Settings with their warranty extension period (in months). When a card is linked to an item's purchase, the effective warranty end date is calculated and displayed automatically (e.g. 1-year manufacturer + 1-year Visa = 2027-06-15)
+- **Schema migrations 6/7/8**: credit_cards, item_metadata, and room_items tables added automatically on upgrade
+
 ## 2.6.0
 - **Settings: Export / Backup** — download a full JSON backup of all rooms, boxes, items, and categories. Optionally select specific boxes to export. The backup file is importable back into BoxTrack to restore your inventory
 - **Settings: Reset All Data** — two-step confirmation: first a warning dialog, then a text field requiring you to type 'I want to delete all data' before the delete button becomes active. Clears all boxes, rooms, items, categories, and photos

@@ -333,6 +333,15 @@ async function openBoxDetail(id) {
       moveBtn.title = 'Move to another box';
       moveBtn.textContent = '⇄';
 
+      const metaBtn = document.createElement('button');
+      metaBtn.className = 'btn-icon';
+      metaBtn.title = 'Asset details (serial, warranty, purchase info)';
+      metaBtn.textContent = '📋';
+      metaBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openMetadataModal(i.item_id, i.name);
+      });
+
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger';
       delBtn.dataset.action = 'remove-box-item';
@@ -344,6 +353,7 @@ async function openBoxDetail(id) {
       row.appendChild(qtyCtrl);
       row.appendChild(editBtn);
       row.appendChild(moveBtn);
+      row.appendChild(metaBtn);
       row.appendChild(delBtn);
       itemRowsEl.appendChild(row);
     });

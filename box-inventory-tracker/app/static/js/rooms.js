@@ -183,6 +183,23 @@ async function toggleRoomExpand(roomId, hdr, chevron, expand) {
   hdr.classList.add('expanded');
   chevron.classList.add('open');
   expand.classList.add('open');
+  // Render room placements section at the top of the expand area (once)
+  if (!expand.querySelector('.room-placements-section')) {
+    const placementsSection = document.createElement('div');
+    placementsSection.className = 'room-placements-section';
+    placementsSection.style.cssText =
+      'margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--border);';
+    const hdr2 = document.createElement('div');
+    hdr2.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:1.5px;' +
+      'text-transform:uppercase;color:var(--muted);margin-bottom:6px;';
+    hdr2.textContent = 'Items in Room';
+    placementsSection.appendChild(hdr2);
+    const placementsBody = document.createElement('div');
+    placementsBody.className = 'room-placements-body';
+    placementsSection.appendChild(placementsBody);
+    expand.insertBefore(placementsSection, expand.firstChild);
+    loadRoomPlacements(roomId, placementsBody);
+  }
 
   // Only fetch if not already populated
   if (roomBoxCache[roomId]) return;
