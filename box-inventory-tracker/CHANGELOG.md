@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.4.2
+- Fixed NameError on startup: routes/vision.py had leftover inline env var reads (HA_TOKEN, VISION_BACKEND, etc.) from the old monolithic server.py. These are now imported from config.py
+
 ## 2.4.1
 - Fixed startup error: db.py referenced HA_TOKEN and HA_API_URL without importing them from config.py
 

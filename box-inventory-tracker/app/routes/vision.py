@@ -9,19 +9,11 @@ logger = logging.getLogger(__name__)
 import base64, mimetypes, io
 import requests as http_requests
 from flask import abort
-from config import VISION_BACKEND, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_MODEL
+from config import VISION_BACKEND, ANTHROPIC_API_KEY, OLLAMA_URL, OLLAMA_MODEL, HA_TOKEN, HA_API_URL
 
 bp = Blueprint("vision", __name__)
 
 # ── Vision / Item Identification ──────────────────────────────────────────
-
-HA_TOKEN = os.environ.get("HA_TOKEN", "").strip()
-HA_API_URL = "http://supervisor/core/api"
-
-VISION_BACKEND = os.environ.get("VISION_BACKEND", "none").lower()
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://homeassistant.local:11434").rstrip("/")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llava").strip()
 
 IDENTIFY_PROMPT = (
     "You are helping label moving boxes. Look at this photo and identify the "
