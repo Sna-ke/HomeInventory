@@ -184,6 +184,9 @@
   <button id="tab-categories" onclick="showPanel('categories')">
     <span class="icon">🏷️</span>Categories
   </button>
+  <button id="tab-settings" onclick="showPanel('settings')">
+    <span class="icon">⚙️</span>Settings
+  </button>
 </div>
 
 <!-- ══ MODALS ══════════════════════════════════════════════════════════════ -->
@@ -348,46 +351,48 @@
     </div>
   </div>
 
-  <!-- Reset confirmation — step 1 -->
-  <div id="modal-reset-1" class="modal-backdrop">
-    <div class="modal">
-      <h3 style="color:#cc2200;">⚠ Reset All Data</h3>
-      <p style="margin-bottom:16px;line-height:1.5;">
-        This will permanently delete <strong>all boxes, rooms, items, and categories</strong>.
-        Photos will also be removed. There is no undo.
-      </p>
-      <p style="color:var(--muted);font-size:14px;margin-bottom:20px;">
-        Are you sure you want to continue?
-      </p>
-      <div class="modal-actions">
-        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-reset-1')">Cancel</button>
-        <button class="btn btn-danger btn-sm" onclick="resetStep2()">Continue →</button>
-      </div>
-    </div>
-  </div>
+</div><!-- end #mainContent -->
 
-  <!-- Reset confirmation — step 2 (type the phrase) -->
-  <div id="modal-reset-2" class="modal-backdrop">
-    <div class="modal">
-      <h3 style="color:#cc2200;">⚠ Final Confirmation</h3>
-      <p style="margin-bottom:14px;line-height:1.5;">
-        Type <strong style="font-family:var(--mono);color:#cc2200;">I want to delete all data</strong> to confirm.
-      </p>
-      <div class="field">
-        <input type="text" id="reset-confirm-input"
-          placeholder="Type the phrase above…"
-          oninput="resetConfirmCheck()"
-          style="background:var(--bg);border:2px solid #cc2200;color:var(--text);
-                 font-family:var(--mono);font-size:14px;padding:10px;width:100%;outline:none;">
-      </div>
-      <div class="modal-actions" style="margin-top:14px;">
-        <button class="btn btn-secondary btn-sm"
-          onclick="closeModal('modal-reset-2');closeModal('modal-reset-1')">Cancel</button>
-        <button class="btn btn-danger btn-sm" id="reset-confirm-btn"
-          disabled onclick="resetRun()">Delete Everything</button>
-      </div>
+<!-- ── Reset confirmation — step 1 ───────────────────────────────────────── -->
+<div id="modal-reset-1" class="modal-backdrop">
+  <div class="modal">
+    <h3 style="color:#cc2200;">⚠ Reset All Data</h3>
+    <p style="margin-bottom:16px;line-height:1.5;">
+      This will permanently delete <strong>all boxes, rooms, items, and categories</strong>.
+      Photos will also be removed. There is no undo.
+    </p>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:20px;">
+      Are you sure you want to continue?
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-reset-1')">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="resetStep2()">Continue →</button>
     </div>
   </div>
+</div>
+
+<!-- ── Reset confirmation — step 2 ───────────────────────────────────────── -->
+<div id="modal-reset-2" class="modal-backdrop">
+  <div class="modal">
+    <h3 style="color:#cc2200;">⚠ Final Confirmation</h3>
+    <p style="margin-bottom:14px;line-height:1.5;">
+      Type <strong style="font-family:var(--mono);color:#cc2200;">I want to delete all data</strong> to confirm.
+    </p>
+    <div class="field">
+      <input type="text" id="reset-confirm-input"
+        placeholder="Type the phrase above…"
+        oninput="resetConfirmCheck()"
+        style="background:var(--bg);border:2px solid #cc2200;color:var(--text);
+               font-family:var(--mono);font-size:14px;padding:10px;width:100%;outline:none;">
+    </div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button class="btn btn-secondary btn-sm"
+        onclick="closeModal('modal-reset-2');closeModal('modal-reset-1')">Cancel</button>
+      <button class="btn btn-danger btn-sm" id="reset-confirm-btn"
+        disabled onclick="resetRun()">Delete Everything</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Item Metadata modal ──────────────────────────────────────────── -->
 <div id="modal-metadata" class="modal-backdrop">
@@ -404,27 +409,44 @@
       </div>
       <div class="meta-field">
         <label>Purchase Date</label>
-        <input type="date" id="metadata-purchase-date">
+        <input type="date" id="metadata-purchase-date"
+          oninput="updateMetaWarrantyPreview()">
       </div>
       <div class="meta-field">
         <label>Purchase Price</label>
         <input type="number" id="metadata-price" placeholder="0.00" step="0.01" min="0">
       </div>
-      <div class="meta-field">
+      <div class="meta-field" style="grid-column:1/-1;">
         <label>Store / Vendor</label>
         <input type="text" id="metadata-store" placeholder="Amazon, Best Buy…">
       </div>
-      <div class="meta-field">
-        <label>Manufacturer Warranty Expiry</label>
-        <input type="date" id="metadata-warranty-expiry" oninput="updateEffectiveWarranty()">
+      <div class="meta-field" style="grid-column:1/-1;">
+        <label>Manufacturer Warranty</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="metadata-warranty-value" placeholder="e.g. 2"
+            min="1" style="width:80px;font-family:var(--mono);text-align:center;font-size:16px;"
+            oninput="updateMetaWarrantyPreview()">
+          <select id="metadata-warranty-unit" onchange="updateMetaWarrantyPreview()"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);
+                   color:var(--text);font-family:var(--sans);font-size:14px;
+                   padding:8px 10px;-webkit-appearance:none;border-radius:0;">
+            <option value="days">Days</option>
+            <option value="months">Months</option>
+            <option value="years" selected>Years</option>
+          </select>
+          <span style="color:var(--muted);font-size:13px;white-space:nowrap;">from purchase</span>
+        </div>
       </div>
       <div class="meta-field" style="grid-column:1/-1;">
         <label>Purchased on Credit Card</label>
-        <select id="metadata-card-select" onchange="updateEffectiveWarranty()">
+        <select id="metadata-card-select" onchange="updateMetaWarrantyPreview()">
           <option value="">— No card used —</option>
         </select>
-        <div id="metadata-effective-warranty"
-          style="font-size:12px;color:var(--accent);margin-top:4px;font-family:var(--mono);min-height:16px;"></div>
+      </div>
+      <div class="meta-field" style="grid-column:1/-1;">
+        <!-- Live warranty preview -->
+        <div id="metadata-warranty-preview"
+          style="font-size:13px;font-family:var(--mono);min-height:16px;line-height:1.6;"></div>
       </div>
       <div class="meta-field" style="grid-column:1/-1;">
         <label>Notes</label>
@@ -440,20 +462,51 @@
 
 <!-- ── Credit Card modal ─────────────────────────────────────────────────── -->
 <div id="modal-credit-card" class="modal-backdrop">
-  <div class="modal" style="max-width:400px;">
+  <div class="modal" style="max-width:440px;">
     <h3 id="cc-modal-title">Add Card</h3>
     <div class="field">
       <label>Card Name</label>
       <input type="text" id="cc-name" placeholder="Visa Infinite, Amex Cobalt…">
     </div>
     <div class="field">
-      <label>Warranty Extension (months)</label>
-      <input type="number" id="cc-months" value="12" min="1" max="24"
-        style="font-family:var(--mono);">
+      <label>Warranty Extension Type</label>
+      <select id="cc-ext-type" onchange="toggleCCCapField()"
+        style="width:100%;background:var(--bg);border:1px solid var(--border);
+               color:var(--text);font-family:var(--sans);font-size:14px;
+               padding:8px 10px;-webkit-appearance:none;border-radius:0;">
+        <option value="add">Add fixed duration to manufacturer warranty</option>
+        <option value="double">Double the manufacturer warranty (with optional cap)</option>
+      </select>
+    </div>
+    <div class="field" id="cc-add-row">
+      <label>Extension Amount</label>
+      <div style="display:flex;gap:8px;">
+        <input type="number" id="cc-ext-value" value="1" min="1"
+          style="width:80px;font-family:var(--mono);text-align:center;font-size:16px;
+                 background:var(--bg);border:1px solid var(--border);color:var(--text);
+                 padding:8px;outline:none;">
+        <select id="cc-ext-unit"
+          style="flex:1;background:var(--bg);border:1px solid var(--border);
+                 color:var(--text);font-family:var(--sans);font-size:14px;
+                 padding:8px 10px;-webkit-appearance:none;border-radius:0;">
+          <option value="days">Days</option>
+          <option value="months">Months</option>
+          <option value="years" selected>Years</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" id="cc-cap-row" style="display:none;">
+      <label>Maximum Total Warranty (months) <span style="color:var(--muted);font-size:11px;">optional</span></label>
+      <input type="number" id="cc-cap" placeholder="e.g. 24"
+        style="font-family:var(--mono);background:var(--bg);border:1px solid var(--border);
+               color:var(--text);padding:8px 10px;width:100%;outline:none;">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;">
+        Total warranty (manufacturer + extension) cannot exceed this many months
+      </div>
     </div>
     <div class="field">
       <label>Notes <span style="color:var(--muted);font-size:11px;">(optional)</span></label>
-      <input type="text" id="cc-notes" placeholder="Max $10k per claim…">
+      <input type="text" id="cc-notes" placeholder="Max $10k per claim, electronics only…">
     </div>
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-credit-card')">Cancel</button>

@@ -121,7 +121,10 @@ def init_db():
                     CREATE TABLE IF NOT EXISTS credit_cards (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         name VARCHAR(255) NOT NULL,
-                        warranty_months INT NOT NULL DEFAULT 12,
+                        extension_type ENUM('add','double') NOT NULL DEFAULT 'add',
+                        extension_value INT NOT NULL DEFAULT 12,
+                        extension_unit ENUM('days','months','years') NOT NULL DEFAULT 'months',
+                        extension_cap_months INT,
                         notes VARCHAR(255),
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
@@ -135,7 +138,8 @@ def init_db():
                         purchase_date DATE,
                         purchase_price DECIMAL(10,2),
                         purchase_store VARCHAR(255),
-                        warranty_expiry DATE,
+                        warranty_value INT,
+                        warranty_unit ENUM('days','months','years') DEFAULT 'years',
                         credit_card_id INT,
                         notes TEXT,
                         FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
@@ -317,6 +321,45 @@ def migrate_db():
                         FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
                     )
                 """)
+
+            # Migration 9: credit_cards extension columns + item_metadata warranty columns (v2.8.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'credit_cards'
+                AND COLUMN_NAME = 'extension_type'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: updating credit_cards for new warranty extension model")
+                cur.execute("ALTER TABLE credit_cards ADD COLUMN extension_type ENUM('add','double') NOT NULL DEFAULT 'add' AFTER name")
+                cur.execute("ALTER TABLE credit_cards ADD COLUMN extension_value INT NOT NULL DEFAULT 12 AFTER extension_type")
+                cur.execute("ALTER TABLE credit_cards ADD COLUMN extension_unit ENUM('days','months','years') NOT NULL DEFAULT 'months' AFTER extension_value")
+                cur.execute("ALTER TABLE credit_cards ADD COLUMN extension_cap_months INT AFTER extension_unit")
+                # Migrate old warranty_months -> extension_value
+                cur.execute("UPDATE credit_cards SET extension_value = warranty_months WHERE warranty_months IS NOT NULL")
+                # Drop old column if it exists
+                cur.execute("""
+                    SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'credit_cards' AND COLUMN_NAME = 'warranty_months'
+                """, (DB_NAME,))
+                if cur.fetchone()["n"] > 0:
+                    cur.execute("ALTER TABLE credit_cards DROP COLUMN warranty_months")
+
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'item_metadata'
+                AND COLUMN_NAME = 'warranty_value'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: updating item_metadata for duration-based warranty")
+                cur.execute("ALTER TABLE item_metadata ADD COLUMN warranty_value INT AFTER purchase_store")
+                cur.execute("ALTER TABLE item_metadata ADD COLUMN warranty_unit ENUM('days','months','years') DEFAULT 'years' AFTER warranty_value")
+                # Drop old expiry column if exists
+                cur.execute("""
+                    SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                    WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'item_metadata' AND COLUMN_NAME = 'warranty_expiry'
+                """, (DB_NAME,))
+                if cur.fetchone()["n"] > 0:
+                    cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
 
         conn.commit()
         logger.info("Database migrations complete.")

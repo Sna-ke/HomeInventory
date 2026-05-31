@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.8.0
+- **Fixed Settings page**: was rendering under other panels due to unclosed mainContent div; reset modals were inside the content area rather than outside it. Settings now opens correctly and is fully interactive
+- **Fixed Settings missing from mobile tabbar**: ⚙️ Settings tab now appears in the bottom navigation on iPhone/mobile
+- **Warranty redesigned**: warranty is now entered as a duration from purchase date (e.g. '2 years', '30 days', '18 months') rather than a raw expiry date. The expiry is calculated automatically from purchase date + duration
+- **Credit card warranty extension types**: two modes: (1) Add a fixed duration to the manufacturer warranty (e.g. +1 year); (2) Double the manufacturer warranty, with an optional total cap in months (e.g. Amex doubles up to 2 years total = cap 24 months). A live preview shows both manufacturer expiry and effective expiry as you fill in the form
+- **DB migration 9**: updates credit_cards and item_metadata tables for new warranty model; migrates existing data automatically
+
 ## 2.7.0
 - **Room placements**: items can now be placed directly in a room without being in a box. Each room on the Rooms page shows an 'Items in Room' section when expanded, with a '+ Place Item in Room' button. Useful for furniture, appliances, wall-mounted items, and anything that isn't getting packed
 - **Asset metadata**: every item now has a 📋 button in box detail (and room placements). Opens an Asset Details modal with: Serial Number, Model Number, Purchase Date, Purchase Price, Store/Vendor, Manufacturer Warranty Expiry, and Notes
