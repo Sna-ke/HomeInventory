@@ -274,19 +274,162 @@ function openItemModal(id = null) {
   document.getElementById('item-category').value = item ? (item.category||'') : '';
   document.getElementById('item-upc').value = item ? (item.upc||'') : '';
   document.getElementById('cat-suggestions').classList.remove('open');
+
+  // Reset metadata section (closed by default)
+  collapseItemMetaSection();
+  clearItemMetaForm();
+
+  // If editing, load existing metadata
+  if (id) {
+    api(`/api/items/${id}/metadata`).then(meta => {
+      if (meta) fillItemMetaForm(meta);
+    }).catch(() => {});
+  }
+
+  // Populate card dropdown
+  if (typeof creditCards !== 'undefined') {
+    populateItemMetaCardSelect();
+  } else {
+    loadCreditCards().then(populateItemMetaCardSelect);
+  }
+
   openModal('modal-item');
 }
 
+function toggleItemMetaSection() {
+  const section = document.getElementById('item-meta-section');
+  const chevron = document.getElementById('item-meta-chevron');
+  const open = section.style.display !== 'none';
+  section.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(90deg)';
+}
+
+function collapseItemMetaSection() {
+  const section = document.getElementById('item-meta-section');
+  const chevron = document.getElementById('item-meta-chevron');
+  if (section) { section.style.display = 'none'; }
+  if (chevron) { chevron.style.transform = ''; }
+}
+
+function clearItemMetaForm() {
+  ['item-meta-serial','item-meta-model','item-meta-purchase-date',
+   'item-meta-price','item-meta-store','item-meta-warranty-value',
+   'item-meta-notes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  const u = document.getElementById('item-meta-warranty-unit');
+  if (u) u.value = 'years';
+  const c = document.getElementById('item-meta-card-select');
+  if (c) c.value = '';
+  const p = document.getElementById('item-meta-warranty-preview');
+  if (p) p.textContent = '';
+}
+
+function fillItemMetaForm(meta) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+  set('item-meta-serial',          meta.serial_number || '');
+  set('item-meta-model',           meta.model_number || '');
+  set('item-meta-purchase-date',   meta.purchase_date || '');
+  set('item-meta-price',           meta.purchase_price != null ? meta.purchase_price : '');
+  set('item-meta-store',           meta.purchase_store || '');
+  set('item-meta-warranty-value',  meta.warranty_value || '');
+  set('item-meta-warranty-unit',   meta.warranty_unit || 'years');
+  set('item-meta-card-select',     meta.credit_card_id || '');
+  set('item-meta-notes',           meta.notes || '');
+  // Auto-expand if any metadata exists
+  if (meta.serial_number || meta.purchase_date || meta.warranty_value) {
+    const section = document.getElementById('item-meta-section');
+    const chevron = document.getElementById('item-meta-chevron');
+    if (section) section.style.display = 'block';
+    if (chevron) chevron.style.transform = 'rotate(90deg)';
+  }
+  updateItemMetaWarrantyPreview();
+}
+
+function populateItemMetaCardSelect() {
+  const sel = document.getElementById('item-meta-card-select');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— No card used —</option>';
+  (creditCards || []).forEach(c => {
+    const desc = c.extension_type === 'double'
+      ? `doubles warranty${c.extension_cap_months ? `, max ${c.extension_cap_months} mo total` : ''}`
+      : `+${c.extension_value} ${c.extension_unit}`;
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = `${c.name} (${desc})`;
+    if (String(c.id) === String(prev)) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+function updateItemMetaWarrantyPreview() {
+  const preview = document.getElementById('item-meta-warranty-preview');
+  if (!preview) return;
+  const purchaseDate  = document.getElementById('item-meta-purchase-date')?.value;
+  const wValue        = parseInt(document.getElementById('item-meta-warranty-value')?.value);
+  const wUnit         = document.getElementById('item-meta-warranty-unit')?.value || 'years';
+  const cardId        = document.getElementById('item-meta-card-select')?.value;
+  if (!purchaseDate || !wValue) { preview.textContent = ''; return; }
+  // Reuse addDuration from metadata.js
+  const purchase = new Date(purchaseDate + 'T00:00:00');
+  const mfrExpiry = addDuration(purchase, wValue, wUnit);
+  const card = (creditCards || []).find(c => String(c.id) === String(cardId));
+  let effectiveExpiry = mfrExpiry;
+  if (card) {
+    if (card.extension_type === 'double') {
+      effectiveExpiry = addDuration(mfrExpiry, wValue, wUnit);
+    } else {
+      effectiveExpiry = addDuration(mfrExpiry, card.extension_value, card.extension_unit);
+    }
+    if (card.extension_cap_months) {
+      const cap = addDuration(purchase, card.extension_cap_months, 'months');
+      if (effectiveExpiry > cap) effectiveExpiry = cap;
+    }
+  }
+  const mfrStr = mfrExpiry.toISOString().slice(0, 10);
+  const effStr = effectiveExpiry.toISOString().slice(0, 10);
+  const daysLeft = Math.ceil((effectiveExpiry - new Date()) / 86400000);
+  const color = daysLeft < 0 ? '#c33' : daysLeft < 90 ? '#f90' : 'var(--accent)';
+  preview.innerHTML = card
+    ? `<span style="color:var(--muted)">Manufacturer expires: ${mfrStr}</span><br>` +
+      `<span style="color:${color};font-weight:700;">Effective with ${esc(card.name)}: ${effStr}${daysLeft < 0 ? ' (expired)' : ''}</span>`
+    : `<span style="color:${color};font-weight:700;">Expires: ${mfrStr}${daysLeft < 0 ? ' (expired)' : ''}</span>`;
+}
+
 async function saveItem() {
-  const name = document.getElementById('item-name').value.trim();
+  const name     = document.getElementById('item-name').value.trim();
   const category = document.getElementById('item-category').value.trim();
-  const upc = document.getElementById('item-upc').value.trim() || null;
+  const upc      = document.getElementById('item-upc').value.trim() || null;
   if (!name) { toast('Item name required', true); return; }
   try {
-    if (editingItem)
-      await api(`/api/items/${editingItem}`, { method:'PUT', body:JSON.stringify({name, category, upc}) });
-    else
-      await api('/api/items', { method:'POST', body:JSON.stringify({name, category, upc}) });
+    let item;
+    if (editingItem) {
+      item = await api(`/api/items/${editingItem}`, { method:'PUT', body:JSON.stringify({name, category, upc}) });
+    } else {
+      item = await api('/api/items', { method:'POST', body:JSON.stringify({name, category, upc}) });
+    }
+    // Save metadata if the section was expanded / has content
+    const section = document.getElementById('item-meta-section');
+    const hasAnyMeta = ['item-meta-serial','item-meta-model','item-meta-purchase-date',
+      'item-meta-price','item-meta-store','item-meta-warranty-value','item-meta-notes']
+      .some(id => document.getElementById(id)?.value?.trim());
+    if (hasAnyMeta && item?.id) {
+      const get = id => document.getElementById(id)?.value?.trim() || null;
+      const meta = {
+        serial_number:   get('item-meta-serial'),
+        model_number:    get('item-meta-model'),
+        purchase_date:   get('item-meta-purchase-date') || null,
+        purchase_price:  get('item-meta-price') ? parseFloat(get('item-meta-price')) : null,
+        purchase_store:  get('item-meta-store'),
+        warranty_value:  get('item-meta-warranty-value') ? parseInt(get('item-meta-warranty-value')) : null,
+        warranty_unit:   get('item-meta-warranty-unit') || 'years',
+        credit_card_id:  get('item-meta-card-select') ? parseInt(get('item-meta-card-select')) : null,
+        notes:           get('item-meta-notes'),
+      };
+      await api(`/api/items/${item.id}/metadata`, { method:'PUT', body:JSON.stringify(meta) }).catch(() => {});
+    }
     closeModal('modal-item');
     toast(editingItem ? 'Item updated' : 'Item added');
     await loadItems();

@@ -335,12 +335,11 @@ async function openBoxDetail(id) {
 
       const metaBtn = document.createElement('button');
       metaBtn.className = 'btn-icon';
-      metaBtn.title = 'Asset details (serial, warranty, purchase info)';
+      metaBtn.title = 'Asset details';
       metaBtn.textContent = '📋';
-      metaBtn.addEventListener('click', e => {
-        e.stopPropagation();
-        openMetadataModal(i.item_id, i.name);
-      });
+      metaBtn.dataset.action = 'open-metadata';
+      metaBtn.dataset.itemId = i.item_id;
+      metaBtn.dataset.name = i.name;
 
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger';
@@ -491,6 +490,14 @@ async function refreshBoxItemsInPlace(id) {
         moveBtn.dataset.name = i.name; moveBtn.dataset.qty = i.quantity;
         moveBtn.title = 'Move to another box'; moveBtn.textContent = '⇄';
 
+        const metaBtnR = document.createElement('button');
+        metaBtnR.className = 'btn-icon';
+        metaBtnR.title = 'Asset details';
+        metaBtnR.textContent = '📋';
+        metaBtnR.dataset.action = 'open-metadata';
+        metaBtnR.dataset.itemId = i.item_id;
+        metaBtnR.dataset.name = i.name;
+
         const delBtn = document.createElement('button');
         delBtn.className = 'btn-icon danger';
         delBtn.dataset.action = 'remove-box-item'; delBtn.dataset.id = i.box_item_id;
@@ -499,16 +506,20 @@ async function refreshBoxItemsInPlace(id) {
         fillBoxThumb(thumb, i.thumb_url ? { thumb_url: i.thumb_url } : {});
 
         row.appendChild(thumb); row.appendChild(info); row.appendChild(qtyCtrl);
-        row.appendChild(editBtn); row.appendChild(moveBtn); row.appendChild(delBtn);
+        row.appendChild(editBtn); row.appendChild(moveBtn); row.appendChild(metaBtnR);
+        row.appendChild(delBtn);
         itemRowsEl.appendChild(row);
       });
     } else {
       itemRowsEl.innerHTML = '<div class="empty">No items yet.</div>';
     }
 
-    // Swap in-place — no scroll, no header rebuild
+    // Swap in-place using direct DOM move (not innerHTML — preserves delegated events)
     const list = document.getElementById('box-items-list');
-    if (list) list.innerHTML = itemRowsEl.innerHTML;
+    if (list) {
+      list.innerHTML = '';
+      while (itemRowsEl.firstChild) list.appendChild(itemRowsEl.firstChild);
+    }
 
     // Update the contents heading count
     const hdr = document.querySelector('#box-detail-content .section-hdr h3');
@@ -622,6 +633,9 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
 
   } else if (action === 'move-box-item') {
     openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId, btn.dataset.qty);
+
+  } else if (action === 'open-metadata') {
+    openMetadataModal(parseInt(btn.dataset.itemId), btn.dataset.name);
 
   } else if (action === 'upload-box-photo') {
     const boxId = parseInt(btn.dataset.boxId);

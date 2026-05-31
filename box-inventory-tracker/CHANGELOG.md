@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.8.1
+- **Fixed metadata button not opening**: the 📋 button used addEventListener which was stripped when refreshBoxItemsInPlace used innerHTML swap to update the item list. Switched all buttons to dataset.action delegated events and fixed the DOM swap to use direct node moves instead
+- **Fixed 📋 missing on first load**: the button was only added in refreshBoxItemsInPlace but not in openBoxDetail's initial render
+- **Metadata moved into item modal**: clicking 📋 now opens the standard Add/Edit Item modal with an expandable 'Asset Details' section at the bottom (collapsed by default). Saves name/category/UPC and metadata in one step. Section auto-expands when editing an item that already has metadata
+
 ## 2.8.0
 - **Fixed Settings page**: was rendering under other panels due to unclosed mainContent div; reset modals were inside the content area rather than outside it. Settings now opens correctly and is fully interactive
 - **Fixed Settings missing from mobile tabbar**: ⚙️ Settings tab now appears in the bottom navigation on iPhone/mobile

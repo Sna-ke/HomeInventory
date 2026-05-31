@@ -10,16 +10,21 @@ async function loadCreditCards() {
 let metadataItemId = null;
 
 async function openMetadataModal(itemId, itemName) {
-  metadataItemId = itemId;
-  document.getElementById('metadata-item-name').textContent = itemName;
+  // Open the standard item modal, pre-populated with this item, metadata section expanded
   if (!creditCards.length) await loadCreditCards();
-  populateMetaCardSelect(null);
-  clearMetadataForm();
-  try {
-    const meta = await api(`/api/items/${itemId}/metadata`);
-    if (meta) fillMetadataForm(meta);
-  } catch(e) { /* no metadata yet */ }
-  openModal('modal-metadata');
+  // Fake the item into allItems if not present (e.g. called from box detail)
+  let item = allItems.find(i => i.id === itemId);
+  if (!item) {
+    try { item = await api(`/api/items/${itemId}`); } catch(e) {}
+  }
+  openItemModal(itemId);
+  // Force the metadata section open
+  setTimeout(() => {
+    const section = document.getElementById('item-meta-section');
+    const chevron = document.getElementById('item-meta-chevron');
+    if (section) section.style.display = 'block';
+    if (chevron) chevron.style.transform = 'rotate(90deg)';
+  }, 50);
 }
 
 function clearMetadataForm() {
