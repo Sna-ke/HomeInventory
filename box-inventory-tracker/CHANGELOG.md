@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.8.2
+- Fixed Settings panel first-click going to Boxes: 'settings' was missing from the applyNav panels list, so the hashchange event triggered by showPanel('settings') resolved to the 'boxes' fallback
+- Fixed Settings buttons/inputs not clickable: added pointer-events:auto and z-index:1 to .panel.active, preventing any invisible overlapping element from intercepting clicks
+- Fixed re-entrant showPanel calls: setting location.hash inside showPanel fired hashchange which called applyNav → showPanel again. Added guard flag and temporary hashchange listener removal while the hash is being set
+- loadCreditCardsSettings now wrapped in try/catch so a failed API call can't break the settings UI
+
 ## 2.8.1
 - **Fixed metadata button not opening**: the 📋 button used addEventListener which was stripped when refreshBoxItemsInPlace used innerHTML swap to update the item list. Switched all buttons to dataset.action delegated events and fixed the DOM swap to use direct node moves instead
 - **Fixed 📋 missing on first load**: the button was only added in refreshBoxItemsInPlace but not in openBoxDetail's initial render

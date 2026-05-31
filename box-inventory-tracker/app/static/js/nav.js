@@ -1,25 +1,39 @@
 // ── Navigation ─────────────────────────────────────────────────────────────
+let _showPanelInProgress = false;
 function showPanel(name, writeHash = true) {
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
-  document.getElementById(`panel-${name}`).classList.add('active');
-  const tab = document.getElementById(`tab-${name}`);
-  if (tab) tab.classList.add('active');
-  const sideBtn = document.getElementById(`sidebar-${name}`);
-  if (sideBtn) sideBtn.classList.add('active');
-  document.getElementById('mainContent').scrollTop = 0;
+  // Guard against re-entrant calls (e.g. hashchange firing mid-showPanel)
+  if (_showPanelInProgress) return;
+  _showPanelInProgress = true;
+  try {
+    const panelEl = document.getElementById(`panel-${name}`);
+    if (!panelEl) return; // unknown panel
 
-  // Write URL hash and persist to sessionStorage (fallback for HA ingress)
-  if (writeHash) {
-    location.hash = name;
-    saveNav(name);
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
+    panelEl.classList.add('active');
+    const tab = document.getElementById(`tab-${name}`);
+    if (tab) tab.classList.add('active');
+    const sideBtn = document.getElementById(`sidebar-${name}`);
+    if (sideBtn) sideBtn.classList.add('active');
+    document.getElementById('mainContent').scrollTop = 0;
+
+    if (writeHash) {
+      // Temporarily remove hashchange listener to prevent re-entrance
+      window.removeEventListener('hashchange', applyNav);
+      location.hash = name;
+      saveNav(name);
+      // Re-attach after a tick
+      setTimeout(() => window.addEventListener('hashchange', applyNav), 0);
+    }
+
+    if (name === 'boxes') loadBoxes();
+    else if (name === 'rooms') loadRooms();
+    else if (name === 'items') loadItems();
+    else if (name === 'categories') loadCategories();
+    else if (name === 'settings') loadCreditCardsSettings();
+  } finally {
+    _showPanelInProgress = false;
   }
-
-  if (name === 'boxes') loadBoxes();
-  else if (name === 'rooms') loadRooms();
-  else if (name === 'items') loadItems();
-  else if (name === 'categories') loadCategories();
-  else if (name === 'settings') loadCreditCardsSettings();
 }
 
 function openModal(id) { document.getElementById(id).classList.add('open'); }
@@ -138,7 +152,7 @@ function applyNav() {
     if (id) { openBoxDetail(id); return; }
   }
 
-  const panels = ['boxes', 'rooms', 'items', 'categories'];
+  const panels = ['boxes', 'rooms', 'items', 'categories', 'settings'];
   const target = panels.includes(loc) ? loc : 'boxes';
   showPanel(target, false);
 }

@@ -156,8 +156,8 @@ async function saveMetadata() {
 let editingCardId = null;
 
 async function loadCreditCardsSettings() {
-  await loadCreditCards();
-  renderCreditCardsSettings();
+  try { await loadCreditCards(); renderCreditCardsSettings(); }
+  catch(e) { console.warn('[Settings] loadCreditCardsSettings error:', e); }
 }
 
 function renderCreditCardsSettings() {
