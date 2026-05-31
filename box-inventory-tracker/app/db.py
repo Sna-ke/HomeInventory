@@ -279,7 +279,7 @@ def migrate_db():
                     )
                 """)
 
-            # Migration 7: item_metadata table (added v2.7.0)
+            # Migration 7: item_metadata table (added v2.7.0, updated v2.9.0)
             cur.execute("""
                 SELECT COUNT(*) as n FROM information_schema.TABLES
                 WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'item_metadata'
@@ -289,16 +289,18 @@ def migrate_db():
                 cur.execute("""
                     CREATE TABLE item_metadata (
                         id INT AUTO_INCREMENT PRIMARY KEY,
-                        item_id INT NOT NULL UNIQUE,
+                        placement_type ENUM('box_item','room_item','item') NOT NULL DEFAULT 'item',
+                        placement_id INT NOT NULL,
                         serial_number VARCHAR(255),
                         model_number VARCHAR(255),
                         purchase_date DATE,
                         purchase_price DECIMAL(10,2),
                         purchase_store VARCHAR(255),
-                        warranty_expiry DATE,
+                        warranty_value INT,
+                        warranty_unit ENUM('days','months','years') DEFAULT 'years',
                         credit_card_id INT,
                         notes TEXT,
-                        FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+                        UNIQUE KEY uq_placement (placement_type, placement_id),
                         FOREIGN KEY (credit_card_id) REFERENCES credit_cards(id) ON DELETE SET NULL
                     )
                 """)
@@ -360,6 +362,27 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 10: item_metadata → placement model (v2.9.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA = %s AND TABLE_NAME = 'item_metadata'
+                AND COLUMN_NAME = 'item_id'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] > 0:
+                logger.info("Migration: converting item_metadata to placement model")
+                cur.execute("ALTER TABLE item_metadata ADD COLUMN placement_type ENUM('box_item','room_item','item') NOT NULL DEFAULT 'item' AFTER id")
+                cur.execute("ALTER TABLE item_metadata ADD COLUMN placement_id INT NOT NULL DEFAULT 0 AFTER placement_type")
+                cur.execute("UPDATE item_metadata SET placement_id = item_id WHERE placement_id = 0")
+                try:
+                    cur.execute("ALTER TABLE item_metadata DROP FOREIGN KEY item_metadata_ibfk_1")
+                except Exception:
+                    pass
+                cur.execute("ALTER TABLE item_metadata DROP COLUMN item_id")
+                try:
+                    cur.execute("ALTER TABLE item_metadata ADD UNIQUE KEY uq_placement (placement_type, placement_id)")
+                except Exception:
+                    pass
 
         conn.commit()
         logger.info("Database migrations complete.")

@@ -1,4 +1,4 @@
-"""Item metadata, credit cards, and room placements."""
+"""Item metadata (placement-level), credit cards, and room placements."""
 import logging
 import datetime
 import calendar
@@ -14,69 +14,72 @@ bp = Blueprint("metadata", __name__)
 # ── Warranty helpers ──────────────────────────────────────────────────────────
 
 def add_duration(d: datetime.date, value: int, unit: str) -> datetime.date:
-    """Add a duration (days/months/years) to a date."""
     if unit == 'days':
         return d + datetime.timedelta(days=value)
     elif unit == 'months':
         month = d.month - 1 + value
-        year = d.year + month // 12
+        year  = d.year + month // 12
         month = month % 12 + 1
-        day = min(d.day, calendar.monthrange(year, month)[1])
+        day   = min(d.day, calendar.monthrange(year, month)[1])
         return datetime.date(year, month, day)
     elif unit == 'years':
         try:
             return d.replace(year=d.year + value)
         except ValueError:
-            # Feb 29 edge case
             return d.replace(year=d.year + value, day=28)
     return d
 
 
-def to_months(value: int, unit: str) -> float:
-    """Rough conversion to months for cap comparison."""
-    if unit == 'days':   return value / 30.44
-    if unit == 'months': return value
-    if unit == 'years':  return value * 12
-    return value
-
-
 def compute_warranty(purchase_date, warranty_value, warranty_unit, card):
-    """
-    Calculate manufacturer expiry and effective (post-CC) expiry.
-
-    card fields: extension_type ('add'|'double'), extension_value, extension_unit,
-                 extension_cap_months (nullable)
-    """
     if not purchase_date or not warranty_value:
         return None, None
-
     if isinstance(purchase_date, str):
-        purchase_date = datetime.date.fromisoformat(purchase_date)
+        try:
+            purchase_date = datetime.date.fromisoformat(purchase_date)
+        except ValueError:
+            return None, None
 
     mfr_expiry = add_duration(purchase_date, int(warranty_value), warranty_unit or 'years')
 
     if not card:
         return str(mfr_expiry), str(mfr_expiry)
 
-    ext_type  = card.get("extension_type", "add")
-    ext_val   = int(card.get("extension_value") or 0)
-    ext_unit  = card.get("extension_unit", "months")
-    cap_months = card.get("extension_cap_months")  # max total warranty months, or None
+    ext_type   = card.get("extension_type", "add")
+    ext_val    = int(card.get("extension_value") or 0)
+    ext_unit   = card.get("extension_unit", "months")
+    cap_months = card.get("extension_cap_months")
 
     if ext_type == 'double':
-        # Double the manufacturer warranty duration (add same duration again)
         extended_expiry = add_duration(mfr_expiry, int(warranty_value), warranty_unit or 'years')
     else:
-        # Add fixed extension
         extended_expiry = add_duration(mfr_expiry, ext_val, ext_unit)
 
-    # Apply cap if specified
     if cap_months:
         cap_expiry = add_duration(purchase_date, int(cap_months), 'months')
         if extended_expiry > cap_expiry:
             extended_expiry = cap_expiry
 
     return str(mfr_expiry), str(extended_expiry)
+
+
+def serialize_meta(row):
+    if not row:
+        return None
+    if row.get("purchase_date"):
+        row["purchase_date"] = str(row["purchase_date"])
+    card = {
+        "extension_type":      row.get("card_extension_type"),
+        "extension_value":     row.get("card_extension_value"),
+        "extension_unit":      row.get("card_extension_unit"),
+        "extension_cap_months": row.get("card_cap_months"),
+    } if row.get("card_name") else None
+    mfr_exp, eff_exp = compute_warranty(
+        row.get("purchase_date"), row.get("warranty_value"),
+        row.get("warranty_unit"), card
+    )
+    row["manufacturer_warranty_expiry"] = mfr_exp
+    row["effective_warranty_expiry"]    = eff_exp
+    return row
 
 
 # ── Credit Cards ──────────────────────────────────────────────────────────────
@@ -95,20 +98,19 @@ def get_credit_cards():
 @bp.route("/api/credit-cards", methods=["POST"])
 def create_credit_card():
     data = request.json or {}
-    name           = (data.get("name") or "").strip()
-    ext_type       = data.get("extension_type", "add")
-    ext_val        = int(data.get("extension_value") or 12)
-    ext_unit       = data.get("extension_unit", "months")
-    cap_months     = data.get("extension_cap_months") or None
-    notes          = (data.get("notes") or "").strip() or None
+    name       = (data.get("name") or "").strip()
+    ext_type   = data.get("extension_type", "add")
+    ext_val    = int(data.get("extension_value") or 12)
+    ext_unit   = data.get("extension_unit", "months")
+    cap_months = data.get("extension_cap_months") or None
+    notes      = (data.get("notes") or "").strip() or None
     if not name:
         return jsonify({"error": "Card name is required"}), 400
     conn = get_db()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO credit_cards "
-                "(name, extension_type, extension_value, extension_unit, extension_cap_months, notes) "
+                "INSERT INTO credit_cards (name,extension_type,extension_value,extension_unit,extension_cap_months,notes) "
                 "VALUES (%s,%s,%s,%s,%s,%s)",
                 (name, ext_type, ext_val, ext_unit, cap_months, notes)
             )
@@ -134,8 +136,8 @@ def update_credit_card(card_id):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "UPDATE credit_cards SET name=%s, extension_type=%s, extension_value=%s, "
-                "extension_unit=%s, extension_cap_months=%s, notes=%s WHERE id=%s",
+                "UPDATE credit_cards SET name=%s,extension_type=%s,extension_value=%s,"
+                "extension_unit=%s,extension_cap_months=%s,notes=%s WHERE id=%s",
                 (name, ext_type, ext_val, ext_unit, cap_months, notes, card_id)
             )
             conn.commit()
@@ -157,35 +159,11 @@ def delete_credit_card(card_id):
         conn.close()
 
 
-# ── Item Metadata ─────────────────────────────────────────────────────────────
+# ── Item Metadata (placement-level) ──────────────────────────────────────────
+# placement_type: 'box_item' | 'room_item' | 'item'
+# placement_id:   the id from box_items, room_items, or items table
 
-def _serialize_meta(row):
-    """Stringify dates and compute effective warranty."""
-    if not row:
-        return None
-    for f in ("purchase_date",):
-        if row.get(f):
-            row[f] = str(row[f])
-    card = {
-        "extension_type":      row.get("card_extension_type"),
-        "extension_value":     row.get("card_extension_value"),
-        "extension_unit":      row.get("card_extension_unit"),
-        "extension_cap_months": row.get("card_cap_months"),
-    } if row.get("card_name") else None
-
-    mfr_exp, eff_exp = compute_warranty(
-        row.get("purchase_date"),
-        row.get("warranty_value"),
-        row.get("warranty_unit"),
-        card
-    )
-    row["manufacturer_warranty_expiry"] = mfr_exp
-    row["effective_warranty_expiry"]    = eff_exp
-    return row
-
-
-@bp.route("/api/items/<int:item_id>/metadata", methods=["GET"])
-def get_item_metadata(item_id):
+def _get_meta(placement_type, placement_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
@@ -198,21 +176,15 @@ def get_item_metadata(item_id):
                        cc.extension_cap_months as card_cap_months
                 FROM item_metadata m
                 LEFT JOIN credit_cards cc ON cc.id = m.credit_card_id
-                WHERE m.item_id = %s
-            """, (item_id,))
-            row = cur.fetchone()
-            return jsonify(_serialize_meta(row))
+                WHERE m.placement_type=%s AND m.placement_id=%s
+            """, (placement_type, placement_id))
+            return serialize_meta(cur.fetchone())
     finally:
         conn.close()
 
 
-@bp.route("/api/items/<int:item_id>/metadata", methods=["PUT"])
-def upsert_item_metadata(item_id):
-    data = request.json or {}
-
-    def opt_str(k):
-        v = (data.get(k) or "").strip(); return v or None
-
+def _upsert_meta(placement_type, placement_id, data):
+    def opt_str(k): v = (data.get(k) or "").strip(); return v or None
     serial_number  = opt_str("serial_number")
     model_number   = opt_str("model_number")
     purchase_date  = opt_str("purchase_date")
@@ -229,31 +201,63 @@ def upsert_item_metadata(item_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT id FROM item_metadata WHERE item_id=%s", (item_id,))
+            cur.execute(
+                "SELECT id FROM item_metadata WHERE placement_type=%s AND placement_id=%s",
+                (placement_type, placement_id)
+            )
             existing = cur.fetchone()
             if existing:
                 cur.execute("""
                     UPDATE item_metadata
-                    SET serial_number=%s, model_number=%s, purchase_date=%s,
-                        purchase_price=%s, purchase_store=%s,
-                        warranty_value=%s, warranty_unit=%s,
-                        credit_card_id=%s, notes=%s
-                    WHERE item_id=%s
+                    SET serial_number=%s,model_number=%s,purchase_date=%s,
+                        purchase_price=%s,purchase_store=%s,
+                        warranty_value=%s,warranty_unit=%s,
+                        credit_card_id=%s,notes=%s
+                    WHERE placement_type=%s AND placement_id=%s
                 """, (serial_number, model_number, purchase_date, purchase_price,
                       purchase_store, warranty_value, warranty_unit,
-                      credit_card_id, notes, item_id))
+                      credit_card_id, notes, placement_type, placement_id))
             else:
                 cur.execute("""
                     INSERT INTO item_metadata
-                    (item_id, serial_number, model_number, purchase_date, purchase_price,
-                     purchase_store, warranty_value, warranty_unit, credit_card_id, notes)
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                """, (item_id, serial_number, model_number, purchase_date, purchase_price,
-                      purchase_store, warranty_value, warranty_unit, credit_card_id, notes))
+                    (placement_type,placement_id,serial_number,model_number,purchase_date,
+                     purchase_price,purchase_store,warranty_value,warranty_unit,credit_card_id,notes)
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                """, (placement_type, placement_id, serial_number, model_number, purchase_date,
+                      purchase_price, purchase_store, warranty_value, warranty_unit,
+                      credit_card_id, notes))
             conn.commit()
-        return get_item_metadata(item_id)
+        return _get_meta(placement_type, placement_id)
     finally:
         conn.close()
+
+
+# box_item metadata
+@bp.route("/api/box-items/<int:box_item_id>/metadata", methods=["GET"])
+def get_box_item_metadata(box_item_id):
+    return jsonify(_get_meta("box_item", box_item_id))
+
+@bp.route("/api/box-items/<int:box_item_id>/metadata", methods=["PUT"])
+def upsert_box_item_metadata(box_item_id):
+    return jsonify(_upsert_meta("box_item", box_item_id, request.json or {}))
+
+# room_item metadata
+@bp.route("/api/room-items/<int:room_item_id>/metadata", methods=["GET"])
+def get_room_item_metadata(room_item_id):
+    return jsonify(_get_meta("room_item", room_item_id))
+
+@bp.route("/api/room-items/<int:room_item_id>/metadata", methods=["PUT"])
+def upsert_room_item_metadata(room_item_id):
+    return jsonify(_upsert_meta("room_item", room_item_id, request.json or {}))
+
+# generic item metadata (fallback for item-level, e.g. from Items tab)
+@bp.route("/api/items/<int:item_id>/metadata", methods=["GET"])
+def get_item_metadata(item_id):
+    return jsonify(_get_meta("item", item_id))
+
+@bp.route("/api/items/<int:item_id>/metadata", methods=["PUT"])
+def upsert_item_metadata(item_id):
+    return jsonify(_upsert_meta("item", item_id, request.json or {}))
 
 
 # ── Room Placements ───────────────────────────────────────────────────────────
@@ -297,7 +301,7 @@ def add_room_item(room_id):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, quantity FROM room_items WHERE room_id=%s AND item_id=%s "
+                "SELECT id,quantity FROM room_items WHERE room_id=%s AND item_id=%s "
                 "AND (notes=%s OR (notes IS NULL AND %s IS NULL))",
                 (room_id, item_id, notes, notes)
             )
@@ -310,7 +314,7 @@ def add_room_item(room_id):
                 return jsonify({"ok": True, "id": existing["id"], "incremented": True, "quantity": new_qty}), 200
             else:
                 cur.execute(
-                    "INSERT INTO room_items (room_id, item_id, quantity, notes) VALUES (%s,%s,%s,%s)",
+                    "INSERT INTO room_items (room_id,item_id,quantity,notes) VALUES (%s,%s,%s,%s)",
                     (room_id, item_id, quantity, notes)
                 )
                 conn.commit()
@@ -328,7 +332,7 @@ def update_room_item(room_item_id):
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE room_items SET quantity=%s, notes=%s WHERE id=%s",
+            cur.execute("UPDATE room_items SET quantity=%s,notes=%s WHERE id=%s",
                         (quantity, notes, room_item_id))
             conn.commit()
             sse_push("rooms")

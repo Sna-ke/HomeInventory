@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.9.0
+- **Asset metadata is now placement-level**: metadata (serial number, warranty, purchase info) is tracked per box-item or room-item instance, not per item type. Each physical instance of the same item can have its own serial number and warranty. The 📋 button in box detail passes the box_item_id; in room placements it passes the room_item_id
+- **Room items UI fully working**: fixed expand.innerHTML wipe that was destroying the room placements section every time boxes loaded. Room placements now persist correctly alongside boxes in the room expand area, including the 📋 metadata button on each placed item
+- **Credit card CRUD accessible**: Settings panel navigation now fully works. Credit cards can be added/edited/deleted from Settings → Credit Cards
+- **DB migration 10**: converts item_metadata from item_id-based to placement_type/placement_id-based schema
+- Settings panel navigation fixes from 2.8.2 (first-click, overlay, sidebar z-index)
+
 ## 2.8.2
 - Fixed Settings panel first-click going to Boxes: 'settings' was missing from the applyNav panels list, so the hashchange event triggered by showPanel('settings') resolved to the 'boxes' fallback
 - Fixed Settings buttons/inputs not clickable: added pointer-events:auto and z-index:1 to .panel.active, preventing any invisible overlapping element from intercepting clicks

@@ -338,7 +338,7 @@ async function openBoxDetail(id) {
       metaBtn.title = 'Asset details';
       metaBtn.textContent = '📋';
       metaBtn.dataset.action = 'open-metadata';
-      metaBtn.dataset.itemId = i.item_id;
+      metaBtn.dataset.boxItemId = i.box_item_id;
       metaBtn.dataset.name = i.name;
 
       const delBtn = document.createElement('button');
@@ -495,7 +495,7 @@ async function refreshBoxItemsInPlace(id) {
         metaBtnR.title = 'Asset details';
         metaBtnR.textContent = '📋';
         metaBtnR.dataset.action = 'open-metadata';
-        metaBtnR.dataset.itemId = i.item_id;
+        metaBtnR.dataset.boxItemId = i.box_item_id;
         metaBtnR.dataset.name = i.name;
 
         const delBtn = document.createElement('button');

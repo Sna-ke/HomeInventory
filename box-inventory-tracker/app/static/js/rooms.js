@@ -201,15 +201,21 @@ async function toggleRoomExpand(roomId, hdr, chevron, expand) {
     loadRoomPlacements(roomId, placementsBody);
   }
 
-  // Only fetch if not already populated
+  // Only fetch boxes if not already populated
   if (roomBoxCache[roomId]) return;
   roomBoxCache[roomId] = true;
 
   try {
     const boxes = await api(`/api/rooms/${roomId}/boxes`);
-    expand.innerHTML = '';
+    // Remove only non-placements children (preserve the placements section at top)
+    [...expand.children].forEach(child => {
+      if (!child.classList.contains('room-placements-section')) child.remove();
+    });
     if (!boxes.length) {
-      expand.innerHTML = '<div style="color:var(--muted);font-size:12px;font-family:var(--mono);">No boxes in this room.</div>';
+      const empty = document.createElement('div');
+      empty.style.cssText = 'color:var(--muted);font-size:12px;font-family:var(--mono);';
+      empty.textContent = 'No boxes in this room.';
+      expand.appendChild(empty);
       return;
     }
 

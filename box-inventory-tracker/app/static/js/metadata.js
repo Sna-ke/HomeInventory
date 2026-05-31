@@ -7,24 +7,47 @@ async function loadCreditCards() {
 }
 
 // ── Metadata modal ─────────────────────────────────────────────────────────
-let metadataItemId = null;
+// placementType: 'box_item' | 'room_item' | 'item'
+// placementId: the id from box_items, room_items, or items table
+let _metaPlacementType = 'item';
+let _metaPlacementId   = null;
 
-async function openMetadataModal(itemId, itemName) {
-  // Open the standard item modal, pre-populated with this item, metadata section expanded
+async function openMetadataModal(placementType, placementId, itemName) {
+  _metaPlacementType = placementType;
+  _metaPlacementId   = placementId;
   if (!creditCards.length) await loadCreditCards();
-  // Fake the item into allItems if not present (e.g. called from box detail)
-  let item = allItems.find(i => i.id === itemId);
-  if (!item) {
-    try { item = await api(`/api/items/${itemId}`); } catch(e) {}
-  }
-  openItemModal(itemId);
-  // Force the metadata section open
-  setTimeout(() => {
-    const section = document.getElementById('item-meta-section');
-    const chevron = document.getElementById('item-meta-chevron');
-    if (section) section.style.display = 'block';
-    if (chevron) chevron.style.transform = 'rotate(90deg)';
-  }, 50);
+  populateMetaCardSelect(null);
+  clearMetadataForm();
+  document.getElementById('metadata-item-name').textContent = itemName;
+  try {
+    const meta = await api(`/api/${placementType === 'box_item' ? 'box-items' : placementType === 'room_item' ? 'room-items' : 'items'}/${placementId}/metadata`);
+    if (meta) fillMetadataForm(meta);
+  } catch(e) { /* no metadata yet */ }
+  openModal('modal-metadata');
+}
+
+async function saveMetadata() {
+  if (!_metaPlacementId) return;
+  const get = id => document.getElementById(id)?.value?.trim() || null;
+  const payload = {
+    serial_number:   get('metadata-serial'),
+    model_number:    get('metadata-model'),
+    purchase_date:   get('metadata-purchase-date') || null,
+    purchase_price:  get('metadata-price') ? parseFloat(get('metadata-price')) : null,
+    purchase_store:  get('metadata-store'),
+    warranty_value:  get('metadata-warranty-value') ? parseInt(get('metadata-warranty-value')) : null,
+    warranty_unit:   get('metadata-warranty-unit') || 'years',
+    credit_card_id:  get('metadata-card-select') ? parseInt(get('metadata-card-select')) : null,
+    notes:           get('metadata-notes'),
+  };
+  const baseUrl = _metaPlacementType === 'box_item'  ? 'box-items'
+                : _metaPlacementType === 'room_item' ? 'room-items'
+                : 'items';
+  try {
+    await api(`/api/${baseUrl}/${_metaPlacementId}/metadata`, { method: 'PUT', body: JSON.stringify(payload) });
+    closeModal('modal-metadata');
+    toast('Asset details saved');
+  } catch(e) { toast(`Save failed: ${e.message}`, true); }
 }
 
 function clearMetadataForm() {
@@ -131,26 +154,7 @@ function addDuration(date, value, unit) {
   return d;
 }
 
-async function saveMetadata() {
-  if (!metadataItemId) return;
-  const get = id => document.getElementById(id)?.value?.trim() || null;
-  const payload = {
-    serial_number:   get('metadata-serial'),
-    model_number:    get('metadata-model'),
-    purchase_date:   get('metadata-purchase-date') || null,
-    purchase_price:  get('metadata-price') ? parseFloat(get('metadata-price')) : null,
-    purchase_store:  get('metadata-store'),
-    warranty_value:  get('metadata-warranty-value') ? parseInt(get('metadata-warranty-value')) : null,
-    warranty_unit:   get('metadata-warranty-unit') || 'years',
-    credit_card_id:  get('metadata-card-select') ? parseInt(get('metadata-card-select')) : null,
-    notes:           get('metadata-notes'),
-  };
-  try {
-    await api(`/api/items/${metadataItemId}/metadata`, { method: 'PUT', body: JSON.stringify(payload) });
-    closeModal('modal-metadata');
-    toast('Asset details saved');
-  } catch(e) { toast(`Save failed: ${e.message}`, true); }
-}
+
 
 // ── Credit card management (Settings page) ────────────────────────────────
 let editingCardId = null;

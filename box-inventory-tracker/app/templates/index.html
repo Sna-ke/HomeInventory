@@ -473,6 +473,71 @@
   </div>
 </div>
 
+<!-- ── Item Metadata modal (placement-level) ────────────────────────────── -->
+<div id="modal-metadata" class="modal-backdrop">
+  <div class="modal" style="max-width:560px;">
+    <h3>Asset Details — <span id="metadata-item-name" style="color:var(--accent);font-size:16px;"></span></h3>
+    <div class="meta-grid" style="margin-bottom:12px;">
+      <div class="meta-field">
+        <label>Serial Number</label>
+        <input type="text" id="metadata-serial" placeholder="ABC123456">
+      </div>
+      <div class="meta-field">
+        <label>Model Number</label>
+        <input type="text" id="metadata-model" placeholder="Model X200">
+      </div>
+      <div class="meta-field">
+        <label>Purchase Date</label>
+        <input type="date" id="metadata-purchase-date" oninput="updateMetaWarrantyPreview()">
+      </div>
+      <div class="meta-field">
+        <label>Purchase Price</label>
+        <input type="number" id="metadata-price" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="meta-field" style="grid-column:1/-1;">
+        <label>Store / Vendor</label>
+        <input type="text" id="metadata-store" placeholder="Amazon, Best Buy…">
+      </div>
+      <div class="meta-field" style="grid-column:1/-1;">
+        <label>Manufacturer Warranty</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="number" id="metadata-warranty-value" placeholder="e.g. 2" min="1"
+            style="width:80px;font-family:var(--mono);font-size:16px;text-align:center;"
+            oninput="updateMetaWarrantyPreview()">
+          <select id="metadata-warranty-unit" onchange="updateMetaWarrantyPreview()"
+            style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                   font-family:var(--sans);font-size:14px;padding:8px 10px;
+                   -webkit-appearance:none;border-radius:0;">
+            <option value="days">Days</option>
+            <option value="months">Months</option>
+            <option value="years" selected>Years</option>
+          </select>
+          <span style="color:var(--muted);font-size:13px;white-space:nowrap;">from purchase</span>
+        </div>
+      </div>
+      <div class="meta-field" style="grid-column:1/-1;">
+        <label>Purchased on Credit Card</label>
+        <select id="metadata-card-select" onchange="updateMetaWarrantyPreview()"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                 font-family:var(--sans);font-size:14px;padding:8px 10px;
+                 -webkit-appearance:none;border-radius:0;">
+          <option value="">— No card used —</option>
+        </select>
+        <div id="metadata-warranty-preview"
+          style="font-size:13px;font-family:var(--mono);margin-top:6px;min-height:16px;line-height:1.6;"></div>
+      </div>
+      <div class="meta-field" style="grid-column:1/-1;">
+        <label>Notes</label>
+        <textarea id="metadata-notes" placeholder="Receipt location, notes…" style="min-height:50px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-metadata')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveMetadata()">Save</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── Credit Card modal ─────────────────────────────────────────────────── -->
 <div id="modal-credit-card" class="modal-backdrop">
   <div class="modal" style="max-width:440px;">

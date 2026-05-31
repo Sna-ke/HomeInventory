@@ -50,6 +50,15 @@ function renderRoomPlacements(roomId, items, container) {
         'font-weight:700;flex-shrink:0;';
       qtySpan.textContent = `×${item.quantity}`;
 
+      const metaBtn = document.createElement('button');
+      metaBtn.className = 'btn-icon';
+      metaBtn.title = 'Asset details';
+      metaBtn.textContent = '📋';
+      metaBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openMetadataModal('room_item', item.room_item_id, item.name);
+      });
+
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger';
       delBtn.textContent = '🗑';
@@ -65,7 +74,7 @@ function renderRoomPlacements(roomId, items, container) {
       });
 
       row.appendChild(thumb); row.appendChild(info);
-      row.appendChild(qtySpan); row.appendChild(delBtn);
+      row.appendChild(qtySpan); row.appendChild(metaBtn); row.appendChild(delBtn);
       container.appendChild(row);
     });
   }
