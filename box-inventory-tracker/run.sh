@@ -25,7 +25,7 @@ bashio::log.info "Vision backend: ${VISION_BACKEND}"
 
 cd /app
 
-python3 -c "from server import init_db, migrate_db, sync_ha_areas; init_db(); migrate_db(); sync_ha_areas()"
+python3 -c "from db import init_db, migrate_db, sync_ha_areas; init_db(); migrate_db(); sync_ha_areas()"
 
 # Single worker with multiple threads.
 # SSE live-sync uses an in-memory client registry (_sse_clients) which must be

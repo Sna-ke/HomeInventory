@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.4.0
+- **Backend refactored**: server.py split from 1603 lines into focused modules:
+  - `server.py`          53 lines  — Flask app + blueprint registration (entry point)
+  - `config.py`          28 lines  — all env var configuration
+  - `db.py`             360 lines  — DB connection, init, migrations, shared helpers
+  - `sse.py`             66 lines  — Server-Sent Events broadcaster
+  - `routes/boxes.py`   313 lines  — box CRUD + box_items CRUD
+  - `routes/rooms.py`   131 lines  — room CRUD + HA area sync
+  - `routes/items.py`   173 lines  — item CRUD + search + find-by-name
+  - `routes/categories.py` 141 lines — category CRUD
+  - `routes/images.py`   98 lines  — image upload / serve / delete
+  - `routes/vision.py`  365 lines  — AI identification + UPC lookup
+  - `routes/frontend.py`  27 lines  — index page route
+
 ## 2.3.0
 - **Frontend refactored**: index.html split from 5200 lines into separate files for maintainability:
   - `static/css/main.css` — all styles (839 lines)
