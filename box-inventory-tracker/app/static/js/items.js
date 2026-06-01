@@ -275,24 +275,6 @@ function openItemModal(id = null) {
   document.getElementById('item-upc').value = item ? (item.upc||'') : '';
   document.getElementById('cat-suggestions').classList.remove('open');
 
-  // Reset metadata section (closed by default)
-  collapseItemMetaSection();
-  clearItemMetaForm();
-
-  // If editing, load existing metadata
-  if (id) {
-    api(`/api/items/${id}/metadata`).then(meta => {
-      if (meta) fillItemMetaForm(meta);
-    }).catch(() => {});
-  }
-
-  // Populate card dropdown
-  if (typeof creditCards !== 'undefined') {
-    populateItemMetaCardSelect();
-  } else {
-    loadCreditCards().then(populateItemMetaCardSelect);
-  }
-
   openModal('modal-item');
 }
 
@@ -404,31 +386,10 @@ async function saveItem() {
   const upc      = document.getElementById('item-upc').value.trim() || null;
   if (!name) { toast('Item name required', true); return; }
   try {
-    let item;
     if (editingItem) {
-      item = await api(`/api/items/${editingItem}`, { method:'PUT', body:JSON.stringify({name, category, upc}) });
+      await api(`/api/items/${editingItem}`, { method:'PUT', body:JSON.stringify({name, category, upc}) });
     } else {
-      item = await api('/api/items', { method:'POST', body:JSON.stringify({name, category, upc}) });
-    }
-    // Save metadata if the section was expanded / has content
-    const section = document.getElementById('item-meta-section');
-    const hasAnyMeta = ['item-meta-serial','item-meta-model','item-meta-purchase-date',
-      'item-meta-price','item-meta-store','item-meta-warranty-value','item-meta-notes']
-      .some(id => document.getElementById(id)?.value?.trim());
-    if (hasAnyMeta && item?.id) {
-      const get = id => document.getElementById(id)?.value?.trim() || null;
-      const meta = {
-        serial_number:   get('item-meta-serial'),
-        model_number:    get('item-meta-model'),
-        purchase_date:   get('item-meta-purchase-date') || null,
-        purchase_price:  get('item-meta-price') ? parseFloat(get('item-meta-price')) : null,
-        purchase_store:  get('item-meta-store'),
-        warranty_value:  get('item-meta-warranty-value') ? parseInt(get('item-meta-warranty-value')) : null,
-        warranty_unit:   get('item-meta-warranty-unit') || 'years',
-        credit_card_id:  get('item-meta-card-select') ? parseInt(get('item-meta-card-select')) : null,
-        notes:           get('item-meta-notes'),
-      };
-      await api(`/api/items/${item.id}/metadata`, { method:'PUT', body:JSON.stringify(meta) }).catch(() => {});
+      await api('/api/items', { method:'POST', body:JSON.stringify({name, category, upc}) });
     }
     closeModal('modal-item');
     toast(editingItem ? 'Item updated' : 'Item added');

@@ -58,7 +58,6 @@
 
 <div class="content" id="mainContent">
 
-  <!-- BOXES -->
   <div id="panel-boxes" class="panel active">
     <div class="panel-hdr">
       <h2>Boxes</h2>
@@ -79,12 +78,10 @@
     <div id="boxes-grid"></div>
   </div>
 
-  <!-- BOX DETAIL -->
   <div id="panel-box-detail" class="panel">
     <div id="box-detail-content"></div>
   </div>
 
-  <!-- ROOMS -->
   <div id="panel-rooms" class="panel">
     <div class="panel-hdr">
       <h2>Rooms &amp; Areas</h2>
@@ -114,7 +111,6 @@
     </div>
   </div>
 
-  <!-- ITEMS -->
   <div id="panel-items" class="panel">
     <div class="panel-hdr">
       <h2>Items</h2>
@@ -153,7 +149,6 @@
     </div>
   </div>
 
-  <!-- CATEGORIES -->
   <div id="panel-categories" class="panel">
     <div class="panel-hdr">
       <h2>Categories</h2>
@@ -162,182 +157,11 @@
     <div id="categories-list"></div>
   </div>
 
-  <!-- SEARCH RESULTS -->
-  <div id="panel-search" class="panel">
+    <div id="panel-search" class="panel">
     <div class="panel-hdr"><h2>Search</h2></div>
     <div id="search-results"></div>
   </div>
 
-</div>
-
-<!-- Bottom tab bar -->
-<div class="tabbar">
-  <button class="active" id="tab-boxes" onclick="showPanel('boxes')">
-    <span class="icon">📦</span>Boxes
-  </button>
-  <button id="tab-rooms" onclick="showPanel('rooms')">
-    <span class="icon">🏠</span>Rooms
-  </button>
-  <button id="tab-items" onclick="showPanel('items')">
-    <span class="icon">📋</span>Items
-  </button>
-  <button id="tab-categories" onclick="showPanel('categories')">
-    <span class="icon">🏷️</span>Categories
-  </button>
-  <button id="tab-settings" onclick="showPanel('settings')">
-    <span class="icon">⚙️</span>Settings
-  </button>
-</div>
-
-<!-- ══ MODALS ══════════════════════════════════════════════════════════════ -->
-
-<!-- Box modal -->
-<div id="modal-box" class="modal-backdrop">
-  <div class="modal">
-    <h3 id="modal-box-title">New Box</h3>
-    <div class="field">
-      <label>Label / Short Name (optional)</label>
-      <input type="text" id="box-label" placeholder="e.g. Kitchen Essentials">
-    </div>
-    <div class="field">
-      <label>Description (optional)</label>
-      <textarea id="box-description" placeholder="e.g. Contains everyday cooking items, spices, and small appliances"></textarea>
-    </div>
-    <div class="field">
-      <label>Room</label>
-      <select id="box-room"><option value="">— No Room —</option></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-box')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveBox()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Room modal -->
-<div id="modal-room" class="modal-backdrop">
-  <div class="modal">
-    <h3 id="modal-room-title">Add Room</h3>
-    <div class="field">
-      <label>Room Name</label>
-      <input type="text" id="room-name" placeholder="e.g. Living Room">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-room')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveRoom()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- Item modal -->
-<div id="modal-item" class="modal-backdrop">
-  <div class="modal">
-    <h3 id="modal-item-title">Add Item</h3>
-    <div class="field">
-      <label>Item Name</label>
-      <input type="text" id="item-name" placeholder="e.g. Rice Cooker">
-    </div>
-    <div class="field">
-      <label>Category</label>
-      <div class="ac-wrap">
-        <input type="text" id="item-category" placeholder="e.g. Kitchen"
-          oninput="searchCategories(this.value, 'cat-suggestions')" autocomplete="off"
-          onblur="setTimeout(()=>document.getElementById('cat-suggestions').classList.remove('open'),150)">
-        <div id="cat-suggestions" class="ac-list"></div>
-      </div>
-    </div>
-    <div class="field">
-      <label>UPC / Barcode <span style="color:var(--muted);font-size:11px;">(optional)</span></label>
-      <input type="text" id="item-upc" placeholder="e.g. 012345678901"
-        style="font-family:var(--mono);" inputmode="numeric">
-    </div>
-
-    <!-- Collapsible asset details section -->
-    <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:10px;">
-      <button type="button" onclick="toggleItemMetaSection()"
-        style="background:none;border:none;color:var(--muted);cursor:pointer;
-               font-family:var(--mono);font-size:12px;font-weight:700;
-               letter-spacing:1px;text-transform:uppercase;display:flex;
-               align-items:center;gap:6px;padding:0;width:100%;">
-        <span id="item-meta-chevron" style="transition:transform .2s;">▶</span>
-        Asset Details
-        <span style="margin-left:auto;font-weight:400;font-size:11px;color:var(--muted);">
-          serial, warranty, purchase…
-        </span>
-      </button>
-      <div id="item-meta-section" style="display:none;margin-top:12px;">
-        <div class="meta-grid">
-          <div class="meta-field">
-            <label>Serial Number</label>
-            <input type="text" id="item-meta-serial" placeholder="ABC123456">
-          </div>
-          <div class="meta-field">
-            <label>Model Number</label>
-            <input type="text" id="item-meta-model" placeholder="Model X200">
-          </div>
-          <div class="meta-field">
-            <label>Purchase Date</label>
-            <input type="date" id="item-meta-purchase-date"
-              oninput="updateItemMetaWarrantyPreview()">
-          </div>
-          <div class="meta-field">
-            <label>Purchase Price</label>
-            <input type="number" id="item-meta-price" placeholder="0.00"
-              step="0.01" min="0">
-          </div>
-          <div class="meta-field" style="grid-column:1/-1;">
-            <label>Store / Vendor</label>
-            <input type="text" id="item-meta-store" placeholder="Amazon, Best Buy…">
-          </div>
-          <div class="meta-field" style="grid-column:1/-1;">
-            <label>Manufacturer Warranty</label>
-            <div style="display:flex;gap:8px;align-items:center;">
-              <input type="number" id="item-meta-warranty-value" placeholder="e.g. 2"
-                min="1" style="width:80px;font-family:var(--mono);font-size:16px;
-                text-align:center;" oninput="updateItemMetaWarrantyPreview()">
-              <select id="item-meta-warranty-unit"
-                onchange="updateItemMetaWarrantyPreview()"
-                style="flex:1;background:var(--bg);border:1px solid var(--border);
-                       color:var(--text);font-family:var(--sans);font-size:14px;
-                       padding:8px 10px;-webkit-appearance:none;border-radius:0;">
-                <option value="days">Days</option>
-                <option value="months">Months</option>
-                <option value="years" selected>Years</option>
-              </select>
-              <span style="color:var(--muted);font-size:13px;white-space:nowrap;">from purchase</span>
-            </div>
-          </div>
-          <div class="meta-field" style="grid-column:1/-1;">
-            <label>Purchased on Credit Card</label>
-            <select id="item-meta-card-select"
-              onchange="updateItemMetaWarrantyPreview()"
-              style="width:100%;background:var(--bg);border:1px solid var(--border);
-                     color:var(--text);font-family:var(--sans);font-size:14px;
-                     padding:8px 10px;-webkit-appearance:none;border-radius:0;">
-              <option value="">— No card used —</option>
-            </select>
-            <div id="item-meta-warranty-preview"
-              style="font-size:13px;font-family:var(--mono);margin-top:6px;
-                     min-height:16px;line-height:1.6;"></div>
-          </div>
-          <div class="meta-field" style="grid-column:1/-1;">
-            <label>Notes</label>
-            <textarea id="item-meta-notes"
-              placeholder="Receipt location, notes…"
-              style="min-height:50px;"></textarea>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-item')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="saveItem()">Save</button>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS -->
   <div id="panel-settings" class="panel">
     <div class="panel-hdr"><h2>Settings</h2></div>
     <div style="max-width:680px;">
@@ -431,6 +255,91 @@
   </div>
 
 </div><!-- end #mainContent -->
+
+<div class="tabbar">
+  <button class="active" id="tab-boxes" onclick="showPanel('boxes')">
+    <span class="icon">📦</span>Boxes
+  </button>
+  <button id="tab-rooms" onclick="showPanel('rooms')">
+    <span class="icon">🏠</span>Rooms
+  </button>
+  <button id="tab-items" onclick="showPanel('items')">
+    <span class="icon">📋</span>Items
+  </button>
+  <button id="tab-categories" onclick="showPanel('categories')">
+    <span class="icon">🏷️</span>Categories
+  </button>
+  <button id="tab-settings" onclick="showPanel('settings')">
+    <span class="icon">⚙️</span>Settings
+  </button>
+</div>
+
+<div id="modal-box" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-box-title">New Box</h3>
+    <div class="field">
+      <label>Label / Short Name (optional)</label>
+      <input type="text" id="box-label" placeholder="e.g. Kitchen Essentials">
+    </div>
+    <div class="field">
+      <label>Description (optional)</label>
+      <textarea id="box-description" placeholder="e.g. Contains everyday cooking items, spices, and small appliances"></textarea>
+    </div>
+    <div class="field">
+      <label>Room</label>
+      <select id="box-room"><option value="">— No Room —</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-box')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveBox()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-room" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-room-title">Add Room</h3>
+    <div class="field">
+      <label>Room Name</label>
+      <input type="text" id="room-name" placeholder="e.g. Living Room">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-room')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveRoom()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-item" class="modal-backdrop">
+  <div class="modal">
+    <h3 id="modal-item-title">Add Item</h3>
+    <div class="field">
+      <label>Item Name</label>
+      <input type="text" id="item-name" placeholder="e.g. Rice Cooker">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <div class="ac-wrap">
+        <input type="text" id="item-category" placeholder="e.g. Kitchen"
+          oninput="searchCategories(this.value, 'cat-suggestions')" autocomplete="off"
+          onblur="setTimeout(()=>document.getElementById('cat-suggestions').classList.remove('open'),150)">
+        <div id="cat-suggestions" class="ac-list"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>UPC / Barcode <span style="color:var(--muted);font-size:11px;">(optional)</span></label>
+      <input type="text" id="item-upc" placeholder="e.g. 012345678901"
+        style="font-family:var(--mono);" inputmode="numeric">
+    </div>
+
+
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-item')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveItem()">Save</button>
+    </div>
+  </div>
+</div>
+
 
 <!-- ── Reset confirmation — step 1 ───────────────────────────────────────── -->
 <div id="modal-reset-1" class="modal-backdrop">
@@ -876,6 +785,78 @@
       <button type="button" class="btn btn-secondary btn-sm" onclick="triggerATBPhoto()">📷 Add Photo</button>
       <input type="file" id="atb-photo-input" accept="image/*" multiple style="display:none"
         onchange="handleATBPhotoSelect(this)">
+    </div>
+
+    <!-- Collapsible asset details — saved against this specific box placement -->
+    <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:10px;">
+      <button type="button" onclick="toggleATBMetaSection()"
+        style="background:none;border:none;color:var(--muted);cursor:pointer;
+               font-family:var(--mono);font-size:12px;font-weight:700;
+               letter-spacing:1px;text-transform:uppercase;display:flex;
+               align-items:center;gap:6px;padding:0;width:100%;">
+        <span id="atb-meta-chevron" style="transition:transform .2s;">▶</span>
+        Asset Details
+        <span style="margin-left:auto;font-weight:400;font-size:11px;color:var(--muted);">
+          serial, warranty, purchase…
+        </span>
+      </button>
+      <div id="atb-meta-section" style="display:none;margin-top:10px;">
+        <div class="meta-grid">
+          <div class="meta-field">
+            <label>Serial Number</label>
+            <input type="text" id="atb-meta-serial" placeholder="ABC123456">
+          </div>
+          <div class="meta-field">
+            <label>Model Number</label>
+            <input type="text" id="atb-meta-model" placeholder="Model X200">
+          </div>
+          <div class="meta-field">
+            <label>Purchase Date</label>
+            <input type="date" id="atb-meta-purchase-date" oninput="updateATBMetaWarrantyPreview()">
+          </div>
+          <div class="meta-field">
+            <label>Purchase Price</label>
+            <input type="number" id="atb-meta-price" placeholder="0.00" step="0.01" min="0">
+          </div>
+          <div class="meta-field" style="grid-column:1/-1;">
+            <label>Store / Vendor</label>
+            <input type="text" id="atb-meta-store" placeholder="Amazon, Best Buy…">
+          </div>
+          <div class="meta-field" style="grid-column:1/-1;">
+            <label>Manufacturer Warranty</label>
+            <div style="display:flex;gap:8px;align-items:center;">
+              <input type="number" id="atb-meta-warranty-value" placeholder="e.g. 2" min="1"
+                style="width:80px;font-family:var(--mono);font-size:16px;text-align:center;"
+                oninput="updateATBMetaWarrantyPreview()">
+              <select id="atb-meta-warranty-unit" onchange="updateATBMetaWarrantyPreview()"
+                style="flex:1;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                       font-family:var(--sans);font-size:14px;padding:8px 10px;
+                       -webkit-appearance:none;border-radius:0;">
+                <option value="days">Days</option>
+                <option value="months">Months</option>
+                <option value="years" selected>Years</option>
+              </select>
+              <span style="color:var(--muted);font-size:13px;white-space:nowrap;">from purchase</span>
+            </div>
+          </div>
+          <div class="meta-field" style="grid-column:1/-1;">
+            <label>Purchased on Credit Card</label>
+            <select id="atb-meta-card-select" onchange="updateATBMetaWarrantyPreview()"
+              style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
+                     font-family:var(--sans);font-size:14px;padding:8px 10px;
+                     -webkit-appearance:none;border-radius:0;">
+              <option value="">— No card used —</option>
+            </select>
+            <div id="atb-meta-warranty-preview"
+              style="font-size:13px;font-family:var(--mono);margin-top:6px;min-height:16px;line-height:1.6;"></div>
+          </div>
+          <div class="meta-field" style="grid-column:1/-1;">
+            <label>Asset Notes</label>
+            <textarea id="atb-meta-notes" placeholder="Receipt location, warranty info…"
+              style="min-height:50px;"></textarea>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="modal-actions">

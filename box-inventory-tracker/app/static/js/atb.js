@@ -640,6 +640,8 @@ async function confirmAddToBox() {
     const result = await api(`/api/boxes/${addToBoxId}/items`, {
       method:'POST', body:JSON.stringify({ item_id, quantity:qty, notes })
     });
+    // Save asset details for this specific box_item placement
+    if (result.id) await saveATBMetaForBoxItem(result.id);
     closeModal('modal-atb');
     const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
     toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
@@ -974,5 +976,90 @@ async function handleBarcodePhoto(input) {
     statusEl.textContent = `Error: ${e.message}`;
   } finally {
     btn.disabled = false;
+  }
+}
+
+// ── ATB Asset Details (applies to the box_item placement created) ──────────
+
+function toggleATBMetaSection() {
+  const section = document.getElementById('atb-meta-section');
+  const chevron = document.getElementById('atb-meta-chevron');
+  const open = section.style.display !== 'none';
+  section.style.display = open ? 'none' : 'block';
+  chevron.style.transform = open ? '' : 'rotate(90deg)';
+}
+
+function resetATBMetaSection() {
+  ['atb-meta-serial','atb-meta-model','atb-meta-purchase-date',
+   'atb-meta-price','atb-meta-store','atb-meta-warranty-value','atb-meta-notes']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const u = document.getElementById('atb-meta-warranty-unit');
+  if (u) u.value = 'years';
+  const c = document.getElementById('atb-meta-card-select');
+  if (c) c.value = '';
+  const p = document.getElementById('atb-meta-warranty-preview');
+  if (p) p.textContent = '';
+  const section = document.getElementById('atb-meta-section');
+  const chevron = document.getElementById('atb-meta-chevron');
+  if (section) section.style.display = 'none';
+  if (chevron) chevron.style.transform = '';
+  // Populate card dropdown
+  if (typeof populateMetaCardSelect === 'function') {
+    populateMetaCardSelect(null, 'atb-meta-card-select');
+  }
+}
+
+function updateATBMetaWarrantyPreview() {
+  const preview = document.getElementById('atb-meta-warranty-preview');
+  if (!preview) return;
+  const purchaseDate = document.getElementById('atb-meta-purchase-date')?.value;
+  const wValue = parseInt(document.getElementById('atb-meta-warranty-value')?.value);
+  const wUnit  = document.getElementById('atb-meta-warranty-unit')?.value || 'years';
+  const cardId = document.getElementById('atb-meta-card-select')?.value;
+  if (!purchaseDate || !wValue) { preview.textContent = ''; return; }
+  const purchase = new Date(purchaseDate + 'T00:00:00');
+  const mfrExpiry = addDuration(purchase, wValue, wUnit);
+  const card = (creditCards || []).find(c => String(c.id) === String(cardId));
+  let eff = mfrExpiry;
+  if (card) {
+    eff = card.extension_type === 'double'
+      ? addDuration(mfrExpiry, wValue, wUnit)
+      : addDuration(mfrExpiry, card.extension_value, card.extension_unit);
+    if (card.extension_cap_months) {
+      const cap = addDuration(purchase, card.extension_cap_months, 'months');
+      if (eff > cap) eff = cap;
+    }
+  }
+  const mfrStr = mfrExpiry.toISOString().slice(0, 10);
+  const effStr = eff.toISOString().slice(0, 10);
+  const daysLeft = Math.ceil((eff - new Date()) / 86400000);
+  const color = daysLeft < 0 ? '#c33' : daysLeft < 90 ? '#f90' : 'var(--accent)';
+  preview.innerHTML = card
+    ? `<span style="color:var(--muted)">Mfr expires: ${mfrStr}</span><br><span style="color:${color};font-weight:700;">Effective with ${esc(card.name)}: ${effStr}</span>`
+    : `<span style="color:${color};font-weight:700;">Expires: ${mfrStr}</span>`;
+}
+
+async function saveATBMetaForBoxItem(boxItemId) {
+  // Called after a box_item is created; saves meta if any field is filled
+  const hasAny = ['atb-meta-serial','atb-meta-model','atb-meta-purchase-date',
+    'atb-meta-price','atb-meta-store','atb-meta-warranty-value','atb-meta-notes']
+    .some(id => document.getElementById(id)?.value?.trim());
+  if (!hasAny) return;
+  const get = id => document.getElementById(id)?.value?.trim() || null;
+  const payload = {
+    serial_number:   get('atb-meta-serial'),
+    model_number:    get('atb-meta-model'),
+    purchase_date:   get('atb-meta-purchase-date') || null,
+    purchase_price:  get('atb-meta-price') ? parseFloat(get('atb-meta-price')) : null,
+    purchase_store:  get('atb-meta-store'),
+    warranty_value:  get('atb-meta-warranty-value') ? parseInt(get('atb-meta-warranty-value')) : null,
+    warranty_unit:   get('atb-meta-warranty-unit') || 'years',
+    credit_card_id:  get('atb-meta-card-select') ? parseInt(get('atb-meta-card-select')) : null,
+    notes:           get('atb-meta-notes'),
+  };
+  try {
+    await api(`/api/box-items/${boxItemId}/metadata`, { method: 'PUT', body: JSON.stringify(payload) });
+  } catch(e) {
+    console.warn('Failed to save ATB metadata:', e.message);
   }
 }

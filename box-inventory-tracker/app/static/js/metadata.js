@@ -77,8 +77,8 @@ function fillMetadataForm(meta) {
   updateMetaWarrantyPreview();
 }
 
-function populateMetaCardSelect(selectedId) {
-  const sel = document.getElementById('metadata-card-select');
+function populateMetaCardSelect(selectedId, selectId = 'metadata-card-select') {
+  const sel = document.getElementById(selectId);
   if (!sel) return;
   const prev = selectedId != null ? selectedId : sel.value;
   sel.innerHTML = '<option value="">— No card used —</option>';

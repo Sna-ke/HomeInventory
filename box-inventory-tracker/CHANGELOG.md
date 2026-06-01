@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.1
+- **Fixed Settings panel being rendered outside mainContent**: modal-box, modal-room, modal-item were inside the mainContent div which pushed panel-settings outside it; all three modals moved outside mainContent
+- **Fixed sidebar covering Settings**: #mainContent z-index raised to 60 (above sidebar's 50) so content correctly renders above the sidebar
+- **Asset details moved to Add-to-Box modal**: removed from Add/Edit Item modal (which defines an item type, not an instance). The ATB modal now has a collapsible Asset Details section at the bottom — serial number, model, purchase date, price, store, warranty duration + unit, credit card, asset notes. Saved against the box_item placement when confirmed
+- **Rooms expansion no longer wipes placements**: fixed expand.innerHTML wipe that destroyed the room placements section when boxes loaded
+
 ## 2.9.0
 - **Asset metadata is now placement-level**: metadata (serial number, warranty, purchase info) is tracked per box-item or room-item instance, not per item type. Each physical instance of the same item can have its own serial number and warranty. The 📋 button in box detail passes the box_item_id; in room placements it passes the room_item_id
 - **Room items UI fully working**: fixed expand.innerHTML wipe that was destroying the room placements section every time boxes loaded. Room placements now persist correctly alongside boxes in the room expand area, including the 📋 metadata button on each placed item
