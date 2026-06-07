@@ -1,6 +1,9 @@
 # Changelog
 
 ## 2.9.6
+- **Fix Rooms Being Empty With Items in them**: if an item had no boxes but items, it was considered empty.  This is fixed.
+
+## 2.9.6
 - **FAB**: floating + button on the Boxes panel (bottom-right) opens the Add Item modal immediately — no need to open a box first
 - **Box card quick-add**: each box card now has a '+ Item' button that opens the Add Item modal pre-loaded with that box, from the grid view without drilling in
 - **Recent items**: the By Name tab shows up to 8 recently-added items the moment you open it (before typing), with a 'Recently added' header. Tap to select instantly during a packing session

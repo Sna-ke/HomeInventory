@@ -19,8 +19,8 @@ async function loadRooms() {
   if (!occupied) return;
 
   const sorted = [...rooms].sort((a,b) => a.name.localeCompare(b.name));
-  const occupiedRooms = sorted.filter(r => r.box_count > 0);
-  const emptyRooms    = sorted.filter(r => r.box_count === 0);
+  const occupiedRooms = sorted.filter(r => r.box_count > 0 || r.room_item_count > 0);
+  const emptyRooms    = sorted.filter(r => r.box_count === 0 && (r.room_item_count || 0) === 0);
 
   if (!sorted.length) {
     occupied.innerHTML = '<div class="empty">No rooms or areas yet.</div>';
@@ -38,16 +38,17 @@ async function loadRooms() {
 
     const chevron = document.createElement('span');
     chevron.className = 'cat-chevron'; chevron.textContent = '▶';
-    chevron.style.visibility = r.box_count > 0 ? 'visible' : 'hidden';
+    chevron.style.visibility = (r.box_count > 0 || r.room_item_count > 0) ? 'visible' : 'hidden';
 
     const nameEl = document.createElement('div');
     nameEl.className = 'room-row-name'; nameEl.textContent = r.name;
 
     const countEl = document.createElement('div');
     countEl.className = 'room-row-count';
-    countEl.textContent = r.box_count > 0
-      ? `${r.box_count} box${r.box_count!=1?'es':''}`
-      : 'empty';
+    const parts = [];
+    if (r.box_count > 0) parts.push(`${r.box_count} box${r.box_count!=1?'es':''}`);
+    if (r.room_item_count > 0) parts.push(`${r.room_item_count} item${r.room_item_count!=1?'s':''}`);
+    countEl.textContent = parts.length ? parts.join(', ') : 'empty';
 
     // HA area badge
     if (r.ha_area_id) {

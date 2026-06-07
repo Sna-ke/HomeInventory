@@ -23,9 +23,11 @@ def get_rooms():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT r.id, r.name, r.ha_area_id, r.ha_synced,
-                       COUNT(b.id) as box_count
+                       COUNT(DISTINCT b.id) as box_count,
+                       COUNT(DISTINCT ri.id) as room_item_count
                 FROM rooms r
                 LEFT JOIN boxes b ON b.room_id = r.id
+                LEFT JOIN room_items ri ON ri.room_id = r.id
                 GROUP BY r.id
                 ORDER BY r.name
             """)
