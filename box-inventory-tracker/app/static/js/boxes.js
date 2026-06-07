@@ -116,16 +116,25 @@ function renderBoxes(boxes) {
       fillBoxThumb(card.querySelector('.card-thumb'), b);
       // Actions via JS to avoid interpolation
       const actions = card.querySelector('.card-actions');
+      const addItemBtn = document.createElement('button');
+      addItemBtn.className = 'btn btn-sm btn-primary card-quick-add';
+      addItemBtn.textContent = '+ Item';
+      addItemBtn.title = 'Add item to this box';
+      addItemBtn.addEventListener('click', e => {
+        e.stopPropagation();
+        openATBForBox(b.id, `BOX ${b.box_number}${b.label ? ' · ' + b.label : ''}`);
+      });
       const editBtn = document.createElement('button');
       editBtn.className = 'btn btn-sm btn-secondary'; editBtn.textContent = 'Edit';
       editBtn.addEventListener('click', e => { e.stopPropagation(); openBoxModal(b.id); });
       const printBtn = document.createElement('button');
-      printBtn.className = 'btn btn-sm btn-primary'; printBtn.textContent = '🖨';
+      printBtn.className = 'btn btn-sm btn-secondary'; printBtn.textContent = '🖨';
       printBtn.addEventListener('click', e => { e.stopPropagation(); openPrintModal(b.id); });
       const delBtn = document.createElement('button');
-      delBtn.className = 'btn btn-sm btn-danger'; delBtn.textContent = 'Delete';
+      delBtn.className = 'btn btn-sm btn-danger'; delBtn.textContent = '🗑';
       delBtn.addEventListener('click', e => { e.stopPropagation(); deleteBox(b.id); });
-      actions.appendChild(editBtn); actions.appendChild(printBtn); actions.appendChild(delBtn);
+      actions.appendChild(addItemBtn); actions.appendChild(editBtn);
+      actions.appendChild(printBtn); actions.appendChild(delBtn);
       card.addEventListener('click', () => openBoxDetail(b.id));
       card.dataset.boxId = b.id;
 

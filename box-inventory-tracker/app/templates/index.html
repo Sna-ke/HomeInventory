@@ -76,6 +76,15 @@
       </select>
     </div>
     <div id="boxes-grid"></div>
+
+    <!-- Floating action button — add item from anywhere on Boxes panel -->
+    <button id="boxes-fab" onclick="openQuickAddItem()"
+      title="Add item to a box"
+      style="position:fixed;bottom:calc(var(--tab-h) + var(--safe-bottom) + 16px);right:16px;
+             width:56px;height:56px;border-radius:50%;background:var(--accent);color:#000;
+             border:none;font-size:26px;font-weight:900;cursor:pointer;
+             box-shadow:0 4px 16px rgba(0,0,0,.5);z-index:55;display:none;
+             align-items:center;justify-content:center;line-height:1;">+</button>
   </div>
 
   <div id="panel-box-detail" class="panel">

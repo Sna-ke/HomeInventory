@@ -741,6 +741,31 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 }
 .meta-field textarea { resize: vertical; min-height: 60px; }
 
+/* ── FAB (floating action button) ── */
+#boxes-fab {
+  display: none;   /* shown by JS when panel-boxes is active */
+}
+.panel.active #boxes-fab {
+  display: flex !important;
+}
+@media (min-width: 900px) {
+  #boxes-fab { right: 32px; bottom: 24px; }
+}
+
+/* ── Box card quick-add button ── */
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.card-quick-add {
+  flex: 1 0 auto;
+  font-weight: 700 !important;
+  letter-spacing: .5px;
+}
+
+/* ── ATB item suggestion create-new ── */
+.ac-create {
+  color: var(--accent) !important;
+}
+.ac-create span { font-weight: 700; }
+
 /* ── Settings sections ── */
 .settings-section-hdr {
   font-size: 16px; font-weight: 700; letter-spacing: 1px;

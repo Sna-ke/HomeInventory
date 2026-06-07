@@ -199,11 +199,10 @@ let atbPendingPhotos = []; // File objects staged before the item is saved
 let lastUsedBoxId = null; // persists across quick-add calls
 
 function openAddToBoxModal(boxId) {
-  // Called from box detail page — box is known, hide box selector
-  addToBoxId = boxId;
-  lastUsedBoxId = boxId;
-  document.getElementById('atb-dest-field').style.display = 'none';
-  resetATBModal();
+  // Called from box detail page — box is known
+  const box = (window._lastBoxes || []).find(b => b.id === boxId);
+  const label = box ? `BOX ${box.box_number}${box.label ? ' · ' + box.label : ''}` : `BOX ${boxId}`;
+  openATBForBox(boxId, label);
 }
 
 function toggleQuickAddMenu(e) {
@@ -232,6 +231,18 @@ function openQuickAddWithTab(tab) {
   openQuickAddItem();
   // setATBTab is called in resetATBModal to 'name'; override after
   setTimeout(() => setATBTab(tab), 0);
+}
+
+function openATBForBox(boxId, boxLabel) {
+  // Called from box card or box detail — destination already known
+  addToBoxId = boxId; addToRoomId = null;
+  setATBDest('box', boxId, boxLabel);
+  document.getElementById('atb-dest-field').style.display = 'none';
+  document.getElementById('atb-room-location-field').style.display = 'none';
+  resetATBModal();
+  document.getElementById('atb-dest-field').style.display = 'none';
+  openModal('modal-atb');
+  setTimeout(() => document.getElementById('atb-search').focus(), 80);
 }
 
 function openQuickAddItem() {
@@ -608,8 +619,15 @@ function clearATBItem() {
   inp.focus();
 }
 
-function renderItemSuggestions(items, list, showCreate, createLabel) {
+function renderItemSuggestions(items, list, showCreate, createLabel, showRecentHeader = false) {
   list.innerHTML = '';
+  if (showRecentHeader && items.length) {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;' +
+      'color:var(--muted);padding:6px 12px 3px;';
+    hdr.textContent = 'Recently added';
+    list.appendChild(hdr);
+  }
   items.forEach(i => {
     const div = document.createElement('div');
     div.className = 'ac-item';
@@ -619,15 +637,21 @@ function renderItemSuggestions(items, list, showCreate, createLabel) {
     div.innerHTML = `<span>${esc(i.name)}</span><small>${esc(i.category||'')}</small>`;
     list.appendChild(div);
   });
+  // "Create new" always appears first when user has typed something
   if (showCreate && createLabel) {
     const createDiv = document.createElement('div');
     createDiv.className = 'ac-item ac-create';
+    createDiv.style.cssText = 'order:-1;font-weight:700;';
     createDiv.dataset.createNew = '1';
-    createDiv.textContent = `+ Create "${createLabel}"`;
-    list.appendChild(createDiv);
+    createDiv.innerHTML = `<span>＋ Add "<strong>${esc(createLabel)}</strong>"</span><small style="color:var(--accent)">new item</small>`;
+    list.insertBefore(createDiv, list.firstChild);
   }
-  if (list.children.length) list.classList.add('open');
-  else list.classList.remove('open');
+  if (list.children.length) {
+    positionDropdownFixed(list);
+    list.classList.add('open');
+  } else {
+    list.classList.remove('open');
+  }
 }
 
 async function showInitialItemSuggestions() {
@@ -636,7 +660,9 @@ async function showInitialItemSuggestions() {
   const list = document.getElementById('atb-suggestions');
   let items = allItems && allItems.length ? allItems : await api('/api/items');
   const sorted = sortByRecency(items, recentItemIds, 'id');
-  renderItemSuggestions(sorted.slice(0, 5), list, false, null);
+  const recent = sorted.filter(i => recentItemIds.includes(i.id)).slice(0, 8);
+  const other  = sorted.filter(i => !recentItemIds.includes(i.id)).slice(0, recent.length ? 0 : 5);
+  renderItemSuggestions(recent.length ? recent : other, list, false, null, recent.length > 0);
 }
 
 async function searchItemsAC(q) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.9.6
+- **FAB**: floating + button on the Boxes panel (bottom-right) opens the Add Item modal immediately — no need to open a box first
+- **Box card quick-add**: each box card now has a '+ Item' button that opens the Add Item modal pre-loaded with that box, from the grid view without drilling in
+- **Recent items**: the By Name tab shows up to 8 recently-added items the moment you open it (before typing), with a 'Recently added' header. Tap to select instantly during a packing session
+- **Prominent create-new**: when you type a name that doesn't match any existing item, '＋ Add name' appears at the top of the list in bold — not buried at the bottom. Tap it to create and add in one step
+- **Box detail + Item button**: the box detail + Item button now focuses the search field immediately on open
+
 ## 2.9.5
 - **Named locations within rooms**: room_items now has an optional 'location' field (e.g. 'Top shelf', 'Freezer', 'Shelf B'). Items in a room are grouped by location when you expand the room. Locations can be set when placing an item directly from the unified Add Item modal
 - **Unified Add Item modal**: the separate 'Place Item in Room' modal has been removed. The same Add Item modal (three tabs: By Name, By Image, By Barcode) now handles both boxes and rooms. The destination field shows both boxes and rooms in grouped autocomplete — type a room name to select a room, or a box number/label to select a box

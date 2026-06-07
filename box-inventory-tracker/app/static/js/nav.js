@@ -31,6 +31,10 @@ function showPanel(name, writeHash = true) {
     else if (name === 'items') loadItems();
     else if (name === 'categories') loadCategories();
     else if (name === 'settings') loadCreditCardsSettings();
+
+    // Show FAB only on Boxes panel
+    const fab = document.getElementById('boxes-fab');
+    if (fab) fab.style.display = (name === 'boxes') ? 'flex' : 'none';
   } finally {
     _showPanelInProgress = false;
   }
