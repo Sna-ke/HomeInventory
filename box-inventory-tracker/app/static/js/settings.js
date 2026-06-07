@@ -6,6 +6,8 @@ let _importData = null;
 document.addEventListener('DOMContentLoaded', () => {
   const link = document.getElementById('household-json-link');
   if (link) link.href = API_BASE + '/static/household_items.json';
+  const link2 = document.getElementById('household-json-2-link');
+  if (link2) link2.href = API_BASE + '/static/household_items_2.json';
 });
 
 // ── Import ────────────────────────────────────────────────────────────────
