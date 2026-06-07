@@ -1,297 +1,207 @@
 # Changelog
 
+## 2.9.8
+- **Item starter packs cleaned up**: removed all "set of N" quantity descriptors from both the household starter pack and the storage locker pack (e.g. "Bath towels – set of 6" → "Bath towels"). 121 items updated across both files
+
 ## 2.9.7
-- **Fix Rooms Being Empty With Items in them**: if an item had no boxes but items, it was considered empty.  This is fixed.
+- **Rooms with only placed items no longer show as empty**: the occupied/empty split now checks both box_count and room_item_count. The room count label shows "2 boxes, 5 items", "4 items" (no boxes), or "empty" as appropriate. DB query updated to include room_item_count via LEFT JOIN on room_items
 
 ## 2.9.6
 - **FAB**: floating + button on the Boxes panel (bottom-right) opens the Add Item modal immediately — no need to open a box first
 - **Box card quick-add**: each box card now has a '+ Item' button that opens the Add Item modal pre-loaded with that box, from the grid view without drilling in
 - **Recent items**: the By Name tab shows up to 8 recently-added items the moment you open it (before typing), with a 'Recently added' header. Tap to select instantly during a packing session
-- **Prominent create-new**: when you type a name that doesn't match any existing item, '＋ Add name' appears at the top of the list in bold — not buried at the bottom. Tap it to create and add in one step
-- **Box detail + Item button**: the box detail + Item button now focuses the search field immediately on open
+- **Prominent create-new**: when you type a name that doesn't match any existing item, '＋ Add "name"' appears at the top of the list in bold — not buried at the bottom. Tap it to create and add in one step
+- **Box detail + Item button**: now auto-focuses the search field when the modal opens
 
 ## 2.9.5
-- **Named locations within rooms**: room_items now has an optional 'location' field (e.g. 'Top shelf', 'Freezer', 'Shelf B'). Items in a room are grouped by location when you expand the room. Locations can be set when placing an item directly from the unified Add Item modal
-- **Unified Add Item modal**: the separate 'Place Item in Room' modal has been removed. The same Add Item modal (three tabs: By Name, By Image, By Barcode) now handles both boxes and rooms. The destination field shows both boxes and rooms in grouped autocomplete — type a room name to select a room, or a box number/label to select a box
-- **Quick-add destination includes rooms**: the + menu at the top now lets you type a room name as the destination, not just boxes
+- **Named locations within rooms**: room_items now has an optional 'location' field (e.g. 'Top shelf', 'Freezer', 'Shelf B'). Items in a room are grouped by location when you expand the room. Locations can be set when placing an item from the unified Add Item modal
+- **Unified Add Item modal**: the separate 'Place Item in Room' modal has been removed. The same Add Item modal (three tabs: By Name, By Image, By Barcode) now handles both boxes and rooms. The destination field shows boxes and rooms in grouped autocomplete — type a room name to select a room, or a box number/label to select a box
+- **Quick-add destination includes rooms**: the + menu at the top now lets you choose a room as the destination, not just boxes
 - **DB migration 11**: room_items.location column added
 
 ## 2.9.4
-- **Added more potential items**: Added a second set of item JSONs.
+- **Storage locker starter pack**: second item JSON (household_items_2.json) with 1,000 items across 30 categories covering automotive, cycling, winter sports, water sports, camping, fitness, team & racket sports, golf, fishing & hunting, skateboarding, motorsports, musical instruments, photography, collectibles, luggage, storage, workshop, marine, safety, and more. Available for download from Settings → Import
 
 ## 2.9.3
-- **Fixed Issue Adding Items to Rooms without boxes**: can now add items to rooms without boxes.
+- **Fixed adding items to rooms with no boxes**: room header click handler was gated on box_count > 0, so rooms with no boxes could not be expanded and the 'Items in Room' section was never shown. Click handler now always attaches regardless of box count
+
+## 2.9.2
+- **Fixed panel-settings outside mainContent**: modal extraction script had left panel-search unclosed, causing panel-settings to nest inside it and fall outside mainContent when parsed. Reconstructed mainContent with all seven panels as direct children, no modals inside
+- Reverted unnecessary z-index changes introduced in 2.9.1 — the correct fix was structural placement, not z-index manipulation
 
 ## 2.9.1
-- **Fixed Settings panel being rendered outside mainContent**: modal-box, modal-room, modal-item were inside the mainContent div which pushed panel-settings outside it; all three modals moved outside mainContent
-- **Fixed sidebar covering Settings**: #mainContent z-index raised to 60 (above sidebar's 50) so content correctly renders above the sidebar
-- **Asset details moved to Add-to-Box modal**: removed from Add/Edit Item modal (which defines an item type, not an instance). The ATB modal now has a collapsible Asset Details section at the bottom — serial number, model, purchase date, price, store, warranty duration + unit, credit card, asset notes. Saved against the box_item placement when confirmed
-- **Rooms expansion no longer wipes placements**: fixed expand.innerHTML wipe that destroyed the room placements section when boxes loaded
+- **Fixed Settings panel rendered outside mainContent**: modal-box, modal-room, and modal-item were inside the mainContent div, pushing panel-settings outside it. All three modals moved to after the mainContent closing tag
+- **Asset details moved to Add-to-Box modal**: removed from Add/Edit Item modal (which defines an item type). The ATB modal now has a collapsible Asset Details section — serial number, model, purchase date, price, store, warranty duration + unit, credit card, asset notes — saved against the box_item placement when confirmed
+- **Rooms expansion no longer wipes placements**: fixed expand.innerHTML wipe that destroyed the room placements section each time boxes loaded
 
 ## 2.9.0
-- **Asset metadata is now placement-level**: metadata (serial number, warranty, purchase info) is tracked per box-item or room-item instance, not per item type. Each physical instance of the same item can have its own serial number and warranty. The 📋 button in box detail passes the box_item_id; in room placements it passes the room_item_id
-- **Room items UI fully working**: fixed expand.innerHTML wipe that was destroying the room placements section every time boxes loaded. Room placements now persist correctly alongside boxes in the room expand area, including the 📋 metadata button on each placed item
-- **Credit card CRUD accessible**: Settings panel navigation now fully works. Credit cards can be added/edited/deleted from Settings → Credit Cards
+- **Asset metadata is now placement-level**: serial number, warranty, and purchase info are tracked per box-item or room-item instance, not per item type. Two units of the same item can have different serial numbers and warranty start dates. The 📋 button passes the box_item_id or room_item_id as appropriate
+- **Room items UI fully working**: room placements persist correctly alongside boxes in the room expand area, including the 📋 metadata button on each placed item
+- **Credit card CRUD accessible**: Settings panel navigation fully fixed. Credit cards can be added, edited, and deleted from Settings → Credit Cards
 - **DB migration 10**: converts item_metadata from item_id-based to placement_type/placement_id-based schema
-- Settings panel navigation fixes from 2.8.2 (first-click, overlay, sidebar z-index)
 
 ## 2.8.2
-- Fixed Settings panel first-click going to Boxes: 'settings' was missing from the applyNav panels list, so the hashchange event triggered by showPanel('settings') resolved to the 'boxes' fallback
-- Fixed Settings buttons/inputs not clickable: added pointer-events:auto and z-index:1 to .panel.active, preventing any invisible overlapping element from intercepting clicks
-- Fixed re-entrant showPanel calls: setting location.hash inside showPanel fired hashchange which called applyNav → showPanel again. Added guard flag and temporary hashchange listener removal while the hash is being set
-- loadCreditCardsSettings now wrapped in try/catch so a failed API call can't break the settings UI
+- **Fixed Settings first-click going to Boxes**: 'settings' was missing from the applyNav panels list, so the hashchange event triggered by showPanel('settings') fell back to 'boxes'
+- **Fixed Settings inputs not clickable**: added pointer-events:auto and position:relative to .panel.active
+- **Fixed re-entrant showPanel**: setting location.hash fired hashchange → applyNav → showPanel again. Added guard flag and temporary listener removal
+- loadCreditCardsSettings wrapped in try/catch so a failed API call cannot break the Settings UI
 
 ## 2.8.1
-- **Fixed metadata button not opening**: the 📋 button used addEventListener which was stripped when refreshBoxItemsInPlace used innerHTML swap to update the item list. Switched all buttons to dataset.action delegated events and fixed the DOM swap to use direct node moves instead
-- **Fixed 📋 missing on first load**: the button was only added in refreshBoxItemsInPlace but not in openBoxDetail's initial render
-- **Metadata moved into item modal**: clicking 📋 now opens the standard Add/Edit Item modal with an expandable 'Asset Details' section at the bottom (collapsed by default). Saves name/category/UPC and metadata in one step. Section auto-expands when editing an item that already has metadata
+- **Fixed 📋 button not opening**: button used addEventListener which was stripped when refreshBoxItemsInPlace serialised the item list to innerHTML. Switched to dataset.action delegated events and fixed the DOM swap to use direct node moves
+- **Fixed 📋 missing on first load**: button was only added in refreshBoxItemsInPlace, not in the initial openBoxDetail render
 
 ## 2.8.0
-- **Fixed Settings page**: was rendering under other panels due to unclosed mainContent div; reset modals were inside the content area rather than outside it. Settings now opens correctly and is fully interactive
-- **Fixed Settings missing from mobile tabbar**: ⚙️ Settings tab now appears in the bottom navigation on iPhone/mobile
-- **Warranty redesigned**: warranty is now entered as a duration from purchase date (e.g. '2 years', '30 days', '18 months') rather than a raw expiry date. The expiry is calculated automatically from purchase date + duration
-- **Credit card warranty extension types**: two modes: (1) Add a fixed duration to the manufacturer warranty (e.g. +1 year); (2) Double the manufacturer warranty, with an optional total cap in months (e.g. Amex doubles up to 2 years total = cap 24 months). A live preview shows both manufacturer expiry and effective expiry as you fill in the form
-- **DB migration 9**: updates credit_cards and item_metadata tables for new warranty model; migrates existing data automatically
+- **Fixed Settings page rendering**: unclosed mainContent div caused the panel to render outside the content area and behind everything. Now opens correctly and is fully interactive
+- **Fixed Settings missing from mobile tabbar**: ⚙️ Settings tab now appears in the bottom navigation on iPhone
+- **Warranty redesigned**: entered as a duration from purchase date (e.g. '2 years', '30 days', '18 months') rather than a raw expiry date. Expiry is calculated automatically
+- **Credit card warranty extension types**: (1) Add a fixed duration to the manufacturer warranty; (2) Double the manufacturer warranty with an optional total cap in months. Live preview shows manufacturer expiry and effective expiry as you fill in the form
+- **DB migration 9**: updates credit_cards and item_metadata tables for the new warranty model; migrates existing data automatically
 
 ## 2.7.0
-- **Room placements**: items can now be placed directly in a room without being in a box. Each room on the Rooms page shows an 'Items in Room' section when expanded, with a '+ Place Item in Room' button. Useful for furniture, appliances, wall-mounted items, and anything that isn't getting packed
-- **Asset metadata**: every item now has a 📋 button in box detail (and room placements). Opens an Asset Details modal with: Serial Number, Model Number, Purchase Date, Purchase Price, Store/Vendor, Manufacturer Warranty Expiry, and Notes
-- **Credit card warranty tracking**: add your credit cards in Settings with their warranty extension period (in months). When a card is linked to an item's purchase, the effective warranty end date is calculated and displayed automatically (e.g. 1-year manufacturer + 1-year Visa = 2027-06-15)
+- **Room placements**: items can now be placed directly in a room without being in a box. Each room on the Rooms page shows an 'Items in Room' section when expanded. Useful for furniture, appliances, wall-mounted TVs, and anything that isn't getting packed
+- **Asset metadata**: every item in a box or room now has a 📋 button opening an Asset Details modal with serial number, model number, purchase date, price, store/vendor, manufacturer warranty, credit card, and notes
+- **Credit card warranty tracking**: add your credit cards in Settings with their warranty extension period. The effective warranty end date is calculated automatically when a card is linked to an item's purchase
 - **Schema migrations 6/7/8**: credit_cards, item_metadata, and room_items tables added automatically on upgrade
 
 ## 2.6.0
-- **Settings: Export / Backup** — download a full JSON backup of all rooms, boxes, items, and categories. Optionally select specific boxes to export. The backup file is importable back into BoxTrack to restore your inventory
-- **Settings: Reset All Data** — two-step confirmation: first a warning dialog, then a text field requiring you to type 'I want to delete all data' before the delete button becomes active. Clears all boxes, rooms, items, categories, and photos
-- **Import extended** — import now also handles rooms and full boxes with their contents (from a backup). Item deduplication is by name (case-insensitive); boxes always get fresh box numbers
+- **Export / Backup**: download a full JSON backup of all rooms, boxes, items, and categories. Optionally select specific boxes. The file can be re-imported to restore your inventory
+- **Reset All Data**: two-step confirmation — first a warning dialog, then a text field requiring you to type 'I want to delete all data' before the delete button activates. Clears all boxes, rooms, items, categories, and photos
+- **Import extended**: import now handles rooms and full boxes with contents (from a backup). Item deduplication is by name (case-insensitive); boxes always get fresh box numbers
 
 ## 2.5.0
-- **Settings page**: new ⚙️ tab in the navigation with configuration functions
-- **JSON import**: upload any JSON file with 'categories' and 'items' arrays to bulk-load your inventory. Preview shows validation results before committing. Duplicate items (matched by name) are skipped by default
-- **Household starter pack**: 1,000 pre-made items across 30 categories (Kitchen, Bedroom, Bathroom, Tools, Garden, Electronics, Clothing, Toys, Baby, Pets, and more). Download from the Settings page and import with one click to pre-populate your inventory before you start packing
+- **Settings page**: new ⚙️ tab in the navigation
+- **JSON import**: upload any JSON file with 'categories' and 'items' arrays to bulk-load your inventory. Preview shows validation results before committing. Duplicate items are skipped by default
+- **Household starter pack**: 1,000 pre-made items across 30 categories. Download from Settings → Import and import with one click to pre-populate your inventory before you start packing
 
 ## 2.4.3
 - Fixed missing imports across refactored modules: request in db.py, pymysql in rooms.py and categories.py, PIL.Image in vision.py. Removed leftover __main__ block from routes/frontend.py
 
 ## 2.4.2
-- Fixed NameError on startup: routes/vision.py had leftover inline env var reads (HA_TOKEN, VISION_BACKEND, etc.) from the old monolithic server.py. These are now imported from config.py
+- Fixed NameError on startup: routes/vision.py had leftover inline env var reads from the old monolithic server.py — now imported from config.py
 
 ## 2.4.1
 - Fixed startup error: db.py referenced HA_TOKEN and HA_API_URL without importing them from config.py
 
 ## 2.4.0
-- **Backend refactored**: server.py split from 1603 lines into focused modules:
-  - `server.py`          53 lines  — Flask app + blueprint registration (entry point)
-  - `config.py`          28 lines  — all env var configuration
-  - `db.py`             360 lines  — DB connection, init, migrations, shared helpers
-  - `sse.py`             66 lines  — Server-Sent Events broadcaster
-  - `routes/boxes.py`   313 lines  — box CRUD + box_items CRUD
-  - `routes/rooms.py`   131 lines  — room CRUD + HA area sync
-  - `routes/items.py`   173 lines  — item CRUD + search + find-by-name
-  - `routes/categories.py` 141 lines — category CRUD
-  - `routes/images.py`   98 lines  — image upload / serve / delete
-  - `routes/vision.py`  365 lines  — AI identification + UPC lookup
-  - `routes/frontend.py`  27 lines  — index page route
+- **Backend refactored**: server.py split from 1,603 lines into focused modules — server.py (entry point), config.py (env vars), db.py (DB + migrations + helpers), sse.py (SSE broadcaster), and route blueprints for boxes, rooms, items, categories, images, vision, and frontend
 
 ## 2.3.0
-- **Frontend refactored**: index.html split from 5200 lines into separate files for maintainability:
-  - `static/css/main.css` — all styles (839 lines)
-  - `static/js/state.js` — shared application state
-  - `static/js/api.js` — fetch wrapper, esc(), toast()
-  - `static/js/boxes.js` — box list, box detail, item rows, qty controls (1017 lines)
-  - `static/js/rooms.js` — rooms page, expand/collapse, item search (666 lines)
-  - `static/js/items.js` — items page, filters, expand rows (301 lines)
-  - `static/js/categories.js` — categories page and autocomplete (233 lines)
-  - `static/js/atb.js` — Add-to-Box modal: by name, image, barcode, UPC lookup (978 lines)
-  - `static/js/images.js` — gallery, photo upload, overlay (48 lines)
-  - `static/js/labels.js` — print modal, label preview, QR (178 lines)
-  - `static/js/nav.js` — routing, SSE live-sync, theme, init (243 lines)
-  - `templates/index.html` — HTML structure only (664 lines)
+- **Frontend refactored**: index.html split from 5,200 lines into separate CSS and JS files — main.css, state.js, api.js, boxes.js, rooms.js, items.js, categories.js, atb.js, images.js, labels.js, nav.js
 
 ## 2.2.7
-- Box detail page no longer scrolls to top or re-renders the header when items are added, removed, moved, or quantities changed. A new refreshBoxItemsInPlace() function replaces only the item list and count, leaving scroll position and the box header untouched
-- SSE live-sync on box detail also uses the in-place refresh
+- Box detail no longer scrolls to top or re-renders the header when items are added, removed, moved, or quantities changed. refreshBoxItemsInPlace() replaces only the item list and count. SSE live-sync on box detail also uses in-place refresh
 
 ## 2.2.6
-- Fixed unhandled promise rejection errors (3 / [object Object]) when adding items — all add flows now wrapped in try/catch with toast error messages
-- Boxes page no longer fully re-renders on live update — existing cards are updated in-place (thumbnail, title, meta) without wiping the page. New boxes are appended, removed boxes are cleaned up
+- Fixed unhandled promise rejection errors when adding items — all add flows now wrapped in try/catch with toast error messages
+- Boxes page no longer fully re-renders on live update — existing cards updated in-place without wiping the page
 
 ## 2.2.5
-- Quick-add from header: box search now shows a "+ Create box" option when typing. Clicking it reveals an inline panel to set a label and optional room, then creates the box and auto-selects it so you can immediately add the item to it
+- Quick-add box search shows a '+ Create box' option when typing. Creates the box and auto-selects it so you can immediately add an item
 
 ## 2.2.3
-- Boxes page: live-updates when boxes or items change without reloading rooms
-- Items page: live-updates in-place, preserving which item row is currently expanded
-- Categories page: live-updates in-place, preserving which category is currently expanded
-- Box detail page: already updated in-place (unchanged)
+- Boxes, Items, and Categories pages live-update in-place, preserving expanded rows
 
 ## 2.2.2
-- Fixed live sync not working: gunicorn was running 2 worker processes, each with their own in-memory SSE client registry. Mutations in worker A had no way to notify clients connected to worker B. Switched to 1 worker + 8 threads (all share the same process memory, so SSE broadcasts reach all connected clients)
-- Added SSE connection and push logging for easier diagnostics in HA logs
+- Fixed live sync not working: gunicorn was running 2 worker processes with separate SSE registries. Switched to 1 worker + 8 threads so all SSE broadcasts reach all connected clients
 
 ## 2.2.0
-- Rooms page now updates in-place when items are added or quantities change. Open rooms and boxes stay expanded; only item rows and counts are refreshed. A full reload only happens when room structure changes (add/rename/delete room)
+- Rooms page updates in-place when items change. Open rooms and boxes stay expanded; only item rows and counts are refreshed
 
 ## 2.1.8
-- Room item search: non-matching boxes within a matching room are now faded to 45% opacity (same treatment as non-matching rooms), in addition to being collapsed
+- Room item search: non-matching boxes within a matching room now faded to 45% opacity
 
 ## 2.1.7
-- Room item search: when the query matches nothing, highlights are cleared but rooms and boxes stay open at their current expand state
+- Room item search: when query matches nothing, highlights are cleared but rooms and boxes stay open at their current state
 
 ## 2.1.6
-- Room item search: highlights are now cleared when a box collapses (not left behind in hidden boxes)
-- Room item search: if the refined query matches nothing at all, the current view is left unchanged instead of collapsing everything at once
+- Room item search: highlights cleared when a box collapses; if refined query matches nothing the current view is left unchanged
 
 ## 2.1.5
-- Rooms page item search: non-matching rooms are now collapsed and faded (opacity 45%) instead of hidden. All rooms remain visible and draggable during a search
+- Rooms page item search: non-matching rooms collapsed and faded (45% opacity) instead of hidden
 
 ## 2.1.4
-- Fixed navigation state not persisting through HA ingress page loads. HA strips URL fragments before serving the page, so navigation is now saved to sessionStorage as a fallback. On reload, the app checks: QR code param → URL hash → sessionStorage, and restores the correct panel or box view
+- Fixed navigation state not persisting through HA ingress page loads. Navigation now saved to sessionStorage as fallback — on reload the app checks: QR param → URL hash → sessionStorage
 
 ## 2.1.3
-- Fixed hash routing: clicking Rooms/Items/Boxes/Categories now updates the URL bar correctly
-- Fixed refreshing on any panel now returns to that panel instead of the home screen
-- Used hashchange event (not popstate) so tab clicks are captured correctly
-- Fixed brace balance error from 2.1.2 that could cause parse failures
-
-## 2.1.2
-- Fixed syntax error (stray closing brace) introduced in 2.1.1 that prevented the page from loading
+- Fixed hash routing: tab clicks update the URL bar correctly. Refreshing returns to the correct panel or box
 
 ## 2.1.1
-- Fixed URL hash not updating on navigation (now uses location.hash directly, compatible with HA ingress subpaths)
-- Fixed room item search injecting extra elements — matching boxes now expand in-place with item names highlighted inline
-- Fixed room item search destroying room list DOM when no results found — rooms now hide/show with display:none without losing their DOM state
-- Fixed SSE performance issue: change events are now debounced (400ms) and only trigger a refresh of the current panel rather than cascading loadRooms() on every mutation
+- Fixed URL hash not updating on navigation
+- Fixed room item search injecting extra elements and destroying DOM on no results
+- Fixed SSE performance: change events debounced at 400ms, only refresh the current panel
 
 ## 2.1.0
-- **URL-based navigation**: navigating between panels and boxes now updates the URL hash (`#boxes`, `#rooms`, `#items`, `#box/42`). Refreshing the page returns you to exactly where you were
-- **Live multi-user sync**: all connected browsers update automatically when any data changes. Multiple people can pack boxes simultaneously and see each other's changes in real time — no manual refresh needed
-- Server-Sent Events (SSE) with automatic reconnection and HA ingress keepalive
+- **URL-based navigation**: navigating between panels and boxes updates the URL hash. Refreshing returns to exactly where you were
+- **Live multi-user sync**: all connected browsers update automatically when any data changes. Multiple people can pack boxes simultaneously
 
 ## 2.0.0
-- **Multiple rooms can now be expanded simultaneously** on the Rooms page
-- **Expand All / Collapse All** buttons added to the Rooms page header
-- **Find Item search**: live search across all rooms — as you type, matching rooms expand automatically and the matching portion of each item name is highlighted in amber. Rooms with no matches collapse out of the way
+- Multiple rooms can be expanded simultaneously on the Rooms page
+- Expand All / Collapse All buttons on the Rooms page
+- Find Item search: live search across all rooms with automatic expand and amber highlights
 
 ## 1.9.8
-- **Robust AI response parsing**: vision identification no longer errors on malformed JSON. Handles markdown-fenced responses, bullet/numbered lists, prose responses, and arrays with missing commas
+- Robust AI response parsing: handles markdown-fenced responses, bullet lists, prose, and arrays with missing commas
 
 ## 1.9.7
-- **Box card image collages**: if a box has no photo but its items do, the box card shows a collage of up to 9 item photos in a CSS grid. Applies to both grid and list views
-- Collage layouts: 1 (full bleed), 2 (columns), 3 (large left + stacked right), 4 (2×2), 5–9 (3-column grid)
+- Box card image collages: if a box has no photo but items do, the card shows a collage of up to 9 item photos
 
 ## 1.9.6
-- **Partial quantity moves**: when moving an item between boxes with qty > 1, a stepper appears defaulting to the full quantity. Move a subset and the remainder stays in the source box
-- Qty = 1 skips the stepper entirely — one tap to confirm
+- Partial quantity moves: move a subset of items between boxes with a qty stepper
 
 ## 1.9.5
-- **Single "Add to Box" button**: removed the duplicate button inside the barcode tab. The modal footer button now dispatches to the correct handler based on the active tab
-- **By Image tab now uses result cards** (same pattern as By Barcode) with merge detection
+- Single 'Add to Box' button dispatches to the correct handler based on active tab
+- By Image tab uses result cards with merge detection
 
 ## 1.9.4
-- **Barcode merge detection**: if a scanned item matches an existing inventory item by name but without a barcode, offers to merge (saves the UPC to the existing item) or keep separate
-- Merge check also applies to the "Not Right" manual name entry flow
+- Barcode merge detection: if a scanned item matches an existing item by name, offers to merge (saves UPC to existing) or keep separate
 
 ## 1.9.3
-- **Restored missing barcode decode function**: `decodeBarcode()` was accidentally dropped in 1.9.2, causing all scans to fail immediately. Restored with correct ZXing API usage
+- Restored missing decodeBarcode() function that was accidentally dropped in 1.9.2
 
 ## 1.9.2
-- **Direct "Add to Box" from barcode results**: after a successful scan, tap "Add to Box" immediately — no need to switch to the By Name tab
-- **UPC saved locally**: scanned barcodes are stored on the item record. Future scans check the local database first
-- **Multiple barcode results**: all matches shown as selectable cards labelled ✓ Saved, 🌐 Online, or 🤖 AI
-- **"Not Right…" flow**: enter the correct product name to create a new item with the scanned UPC attached
-- **UPC field on item add/edit modal**: view and edit barcodes for any item
-- **Header button dropdown**: ▾ arrow next to "+ Item" opens a menu for By Name, By Image, or By Barcode
+- Direct 'Add to Box' from barcode results. UPC saved to item record. Multiple results shown as selectable cards. 'Not Right…' flow to correct the name
 
 ## 1.9.1
-- **Fixed image 404 errors under HA ingress**: image URLs are now constructed with the ingress path prefix on the server side, so `img.src` attributes always resolve correctly regardless of access method
+- Fixed image 404 errors under HA ingress: image URLs constructed with ingress path prefix server-side
 
 ## 1.9.0
-- **HA ingress support**: the app now works correctly when accessed through the HA sidebar via ingress. All API calls use the injected ingress path prefix
-- **Fixed ZXing CDN**: switched from broken cdnjs path to correct jsDelivr UMD build
-- QR code URLs also include the ingress prefix so scanning a label opens the app correctly
+- HA ingress support: app works correctly when accessed via the HA sidebar. All API calls use the injected ingress path prefix
 
 ## 1.8.3
-- **Fast barcode lookup**: ZXing-js decodes barcodes entirely in the browser (no AI, no network). Decoded UPC is looked up against Open Food Facts and UPCitemdb
-- Three-stage fallback: browser decode → database lookup → AI identification
-- Scanned UPC shown on screen for transparency
-- New `GET /api/upc-lookup` endpoint proxies external lookups (avoids CORS)
-
-## 1.8.2
-- **Gunicorn timeout increased to 180s** with gthread workers to prevent 500 errors during slow Ollama inference
-
-## 1.8.1
-- **Ollama model validation**: checks `/api/tags` before attempting identification. Shows which models are installed if the configured model is missing, with instructions to run `ollama pull`
-- Friendly error instead of raw 404 when model is not installed
+- Fast barcode lookup: ZXing-js decodes barcodes in the browser. Decoded UPC looked up against Open Food Facts and UPCitemdb
 
 ## 1.8.0
-- **Move items between boxes**: ⇄ button on every item row in box detail and in the items panel expand rows. Detects and merges if the item already exists in the destination box
-- **Add Item modal tabs**: By Name, By Image (AI), By Barcode — three distinct workflows in one modal
-- **Drag-and-drop fix**: removed `pointer-events: none` from dragging class which was preventing `dragend` from firing and breaking subsequent drags
-
-## 1.7.5
-- **All autocomplete dropdowns use fixed positioning**: category, item search, and box search dropdowns now escape modal overflow clipping via `getBoundingClientRect`
-
-## 1.7.4
-- **Restored category field visibility logic**: category field was missing entirely; now shows only when creating a new item (not when selecting existing)
-- **Portrait label layout fixed**: portrait labels (e.g. 40×60mm) now use a top strip for QR + box number, with full label width below for title and description text
-
-## 1.7.3
-- Fixed category field still showing by default after 1.7.2 fix
+- Move items between boxes with merge detection
+- Add Item modal tabs: By Name, By Image (AI), By Barcode
 
 ## 1.7.2
-- **Duplicate item detection**: adding an item already in a box (same item + notes) increments the existing quantity instead of creating a duplicate entry
-- **Qty scrollable dropdown**: qty picker replaced with a scrollable column showing 6 rows, centered on current value. Supports quantities above 99
-- **Qty = 0 prompts delete**: decrementing to zero or saving with qty 0 prompts to remove the item from the box
-- **Category field hidden by default**: only appears when creating a new item (not when selecting an existing one)
-- **Drag-and-drop highlight improved**: entire room row lights up with amber outline and tint when a box is dragged over it
-
-## 1.7.1
-- **Label QR size reduced**: QR column capped at 30% of short edge (max 20mm). Text gets proportionally more space
-- Always uses left-column layout; orientation toggle now only affects physical print dimensions
+- Duplicate item detection: adding an existing item increments quantity instead of creating a duplicate
+- Qty scrollable dropdown supporting quantities above 99
+- Qty = 0 prompts delete
 
 ## 1.7.0
-- **Rooms page split into two sections**: rooms with boxes at top, empty rooms below under "Empty Rooms" heading
-- **+ Box button on every room**: opens the New Box modal with that room pre-selected
-- **Drag and drop boxes between rooms**: drag any box row onto any room header or expanded area to move it. Drop target highlighted while dragging
-- **Blur-to-close on all autocomplete inputs**: clicking outside a dropdown now always closes it
+- Rooms page split into occupied and empty sections
+- + Box button on every room row
+- Drag and drop boxes between rooms
 
 ## 1.6.5
-- Fixed overlapping dropdowns in the Add Item modal: opening one dropdown now closes all others first
+- Fixed overlapping dropdowns in the Add Item modal
 
 ## 1.6.4
-- **Initial dropdown on focus**: tapping the item name or box search field shows the top 5 suggestions immediately
-- **Recency-sorted suggestions**: recently selected items and boxes appear first
-- **"Box 2" search works**: box search strips leading "box " prefix, so "Box 2", "BOX 2", "box2" all find Box #2
-- **Centred + Item button** in the topbar
-
-## 1.6.3
-- Improved horizontal label layout: QR column is narrower, text section gets more space. Font sizes scale to available text area width
+- Initial dropdown on focus showing top 5 suggestions. Recency-sorted suggestions
 
 ## 1.6.2
-- **HA Areas sync fixed**: switched from non-existent REST endpoint to `POST /api/template` with Jinja2. Uses `tojson` filter for safe escaping of area names
-- **Quick-add "+ Item" in header**: opens the Add Item modal from any screen. Remembers the last-used box across calls
-- Box selector in quick-add modal with searchable autocomplete
-
-## 1.6.1
-- Rooms page: each box row split into expand zone (left) and → View button (right) so tapping expands contents and → navigates
-- Multiple boxes in a room can be expanded simultaneously
-- ⊞ Expand all / ⊟ Collapse all per room
-- Room collapse resets all box panels inside it
+- HA Areas sync fixed. Quick-add '+ Item' in header with box autocomplete
 
 ## 1.6.0
-- **HA Areas integration**: rooms are now synced from Home Assistant Areas automatically on startup and via the ⟳ Sync HA button. Name changes in HA propagate on next sync
-- HA-managed areas show a blue "HA Area" badge and cannot be renamed or deleted from the app
-- Areas removed from HA show an amber "HA (removed)" badge and become editable again
-- **Migration 4**: adds `ha_area_id` and `ha_synced` columns to rooms table
-- Rooms page: clicking a room with boxes expands to show box list. Clicking a box expands to show item list. Box label navigates to box detail page
+- HA Areas integration: rooms synced from Home Assistant Areas automatically on startup and via ⟳ Sync HA button
 
 ## 1.5.1
-- **Item thumbnails in box detail**: each item row shows a 48×48 photo thumbnail. Tap existing photo to view full-size with Replace and Delete options. Tap camera icon to add a photo
+- Item thumbnails in box detail: 48×48 photo per item row
 
 ## 1.5.0
-- **Label orientation toggle**: ▯ portrait / ▭ landscape toggle in the print modal
-- **Light/dark theme toggle**: 🌙/☀️ button in topbar. Respects system dark mode preference; manual toggle saved to localStorage
-- **Clickable box entries in item expand rows**: clicking a box in the items panel expand navigates to that box's detail page
+- Label orientation toggle (portrait / landscape)
+- Light/dark theme toggle respecting system preference
 
 ## 1.4.0 and earlier
 - Initial release with box tracking, room management, QR code label printing, item management, categories, image upload, and AI item identification
