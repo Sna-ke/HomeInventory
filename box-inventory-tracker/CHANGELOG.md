@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.9.3
+- **Fixed Issue Adding Items to Rooms without boxes**: can now add items to rooms without boxes.
+
 ## 2.9.1
 - **Fixed Settings panel being rendered outside mainContent**: modal-box, modal-room, modal-item were inside the mainContent div which pushed panel-settings outside it; all three modals moved outside mainContent
 - **Fixed sidebar covering Settings**: #mainContent z-index raised to 60 (above sidebar's 50) so content correctly renders above the sidebar
