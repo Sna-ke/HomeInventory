@@ -14,6 +14,45 @@ async function openPrintModal(boxId) {
   updateLabelPreview();
 }
 
+// ── SVG QR code generator — vector, sharp at any size or DPI ──────────────
+function makeSVGQR(boxNumber, sizePx) {
+  const url = `${location.origin}${API_BASE}/?box=${boxNumber}`;
+  let svgStr;
+  try {
+    // qrcode-svg library (loaded from CDN)
+    svgStr = new QRCode({
+      content: url,
+      container: 'svg-ns',   // pure SVG namespace
+      join: true,            // merge modules into single path — fewer DOM nodes
+      ecl: 'M',              // Error correction Medium — good balance of density vs resilience
+      width: sizePx,
+      height: sizePx,
+      color: '#000000',
+      background: '#ffffff',
+      padding: 1,            // quiet zone in modules
+    }).svg();
+  } catch(e) {
+    // Fallback if library fails — empty placeholder
+    console.warn('QR generation failed:', e);
+    svgStr = `<svg width="${sizePx}" height="${sizePx}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${sizePx}" height="${sizePx}" fill="#eee"/>
+      <text x="50%" y="50%" font-size="8" text-anchor="middle" fill="#999">QR</text>
+    </svg>`;
+  }
+  // Insert SVG directly into a wrapper div
+  const wrap = document.createElement('div');
+  wrap.style.cssText = `width:${sizePx}px;height:${sizePx}px;flex-shrink:0;line-height:0;`;
+  wrap.innerHTML = svgStr;
+  // Ensure the SVG element itself fills the wrapper exactly
+  const svgEl = wrap.querySelector('svg');
+  if (svgEl) {
+    svgEl.setAttribute('width', sizePx);
+    svgEl.setAttribute('height', sizePx);
+    svgEl.style.cssText = `display:block;width:${sizePx}px;height:${sizePx}px;`;
+  }
+  return wrap;
+}
+
 function updateLabelPreview() {
   if (!currentPrintBox) return;
   const box = currentPrintBox;
@@ -37,10 +76,9 @@ function updateLabelPreview() {
   const PAD = 4; // px inner padding
 
   // ── QR size ───────────────────────────────────────────────────────────────
-  // Cap at 30% of the short edge (never more than 20mm) so text always wins.
+  // QR needs to be large enough to scan — at least 40% of the short edge, min 18mm
   const shortMM = Math.min(wMM, hMM);
-  // QR needs to be large enough for a phone to scan: at least 25% of short edge, minimum 15mm
-  const qrMM    = Math.max(15, Math.min(Math.round(shortMM * 0.38), 30));
+  const qrMM    = Math.max(18, Math.min(Math.round(shortMM * 0.42), 32));
   const qrPx    = Math.round(qrMM * MM_TO_PX);
   const numSize = Math.max(7, Math.round(qrPx * 0.24));
 
@@ -68,12 +106,7 @@ function updateLabelPreview() {
       display:flex;flex-direction:column;align-items:center;justify-content:center;
       padding:${PAD}px;border-right:1px solid #ccc;background:#fff;`;
 
-    const qrWrap = document.createElement('div');
-    qrWrap.id = 'qr-container';
-    new QRCode(qrWrap, {
-      text: `${location.origin}${API_BASE}/?box=${box.box_number}`,
-      width: qrPx, height: qrPx, correctLevel: QRCode.CorrectLevel.L,
-    });
+    const qrWrap = makeSVGQR(box.box_number, qrPx);
     const numEl = document.createElement('div');
     numEl.style.cssText = `font-size:${numSize}px;margin-top:2px;text-align:center;
       font-family:'Barlow Condensed',sans-serif;font-weight:900;color:#000;line-height:1;`;
@@ -118,12 +151,7 @@ function updateLabelPreview() {
       display:flex;flex-direction:row;align-items:center;gap:${PAD}px;
       padding:${PAD}px;border-bottom:1px solid #ccc;background:#fff;`;
 
-    const qrWrap = document.createElement('div');
-    qrWrap.id = 'qr-container';
-    new QRCode(qrWrap, {
-      text: `${location.origin}${API_BASE}/?box=${box.box_number}`,
-      width: qrPx, height: qrPx, correctLevel: QRCode.CorrectLevel.L,
-    });
+    const qrWrap = makeSVGQR(box.box_number, qrPx);
 
     const numEl = document.createElement('div');
     // Box number gets remaining width in the top strip
@@ -184,39 +212,53 @@ function printLabel() {
   if (!target) return;
   const wMM = target.dataset.printW || 40;
   const hMM = target.dataset.printH || 60;
+
+  // Clone the label, strip px sizing — the print window uses mm
+  const clone = target.cloneNode(true);
+  clone.style.width  = `${wMM}mm`;
+  clone.style.height = `${hMM}mm`;
+  // Ensure any inline px widths/heights on child divs also use mm
+  // (SVG elements are already vector and will scale correctly)
+
   const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>BoxTrack Label</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: ${wMM}mm; height: ${hMM}mm; overflow: hidden; background: #fff; }
+    html, body {
+      width: ${wMM}mm; height: ${hMM}mm;
+      overflow: hidden; background: #fff;
+    }
     @page { size: ${wMM}mm ${hMM}mm; margin: 0; }
-    @media print { html, body { width: ${wMM}mm; height: ${hMM}mm; } }
-    body { display: flex; align-items: stretch; justify-content: stretch; }
-    body > * { flex: 1; }
+    body { display: flex; align-items: stretch; }
+    .label-preview {
+      width: ${wMM}mm !important;
+      height: ${hMM}mm !important;
+    }
+    /* Ensure SVG QR fills its container exactly */
+    .label-preview svg { display: block; }
+    /* Text uses Barlow Condensed like the preview */
+    div { font-family: 'Barlow Condensed', sans-serif; }
   </style>
 </head>
 <body>
-${target.outerHTML}
+${clone.outerHTML}
 </body>
 </html>`;
-  // Remove the preview scale transform for print window
-  const clean = html.replace(/width:\d+px;height:\d+px/, `width:${wMM}mm;height:${hMM}mm`);
 
-  const win = window.open('', '_blank', 'width=400,height=500');
+  const win = window.open('', '_blank', 'width=500,height=600');
   if (!win) {
-    // Popup blocked — fall back to window.print()
+    // Popup blocked — try window.print() directly
     window.print();
     return;
   }
-  win.document.write(clean);
+  win.document.write(html);
   win.document.close();
   win.focus();
-  // Delay to allow fonts to load
-  setTimeout(() => { win.print(); }, 600);
+  // Wait for fonts before printing
+  setTimeout(() => { win.print(); }, 800);
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.9.15
+- **QR code now renders as pure SVG instead of canvas**: replaced QRCode.js (canvas-based, blurry when small) with qrcode-svg (vector SVG, infinitely sharp at any size or print DPI). The QR is now crisp regardless of label size or screen resolution
+- **QR minimum size increased**: raised from 15mm to 18mm minimum, 42% of the label short edge, capped at 32mm — gives phones more pixels to decode
+- **Print window now correctly uses mm dimensions**: the popup print window forces label dimensions in mm via CSS so the physical print size matches the selected label exactly, and the SVG QR scales correctly to fill its allocated space
+
 ## 2.9.14
 - **New category: Outdoor & Winter Clothing** in household_items.json — covers weather-specific and gender-neutral clothing that doesn't belong in Men's/Women's/Kids' buckets: outerwear (coats, rain jackets, ski jackets/pants, fleece, down, softshell, windbreakers), base layers (thermals, merino wool), gloves (winter, work, garden, touchscreen, mittens), hats (toque, beanie, sun, balaclava), scarves, neck gaiters, Wellington/rain/muck boots, waterproof gaiters, snow pants, rain ponchos, hi-vis vests, UV shirts, insulated vests, and a full range of kids' versions. 52 items total
 - Moved 13 previously misplaced items into the new category: Gloves – winter was in Clothing – Men's; winter coats/rain jackets were duplicated across Men's/Women's/Kids' instead of being unisex; scarves and winter toques were in Shoes & Accessories; winter boots were in Shoes & Accessories; thermals were split across Men's and Women's
