@@ -29,7 +29,8 @@
     "Cables & Accessories",
     "Medical & First Aid",
     "Cleaning Supplies",
-    "Miscellaneous"
+    "Miscellaneous",
+    "Outdoor & Winter Clothing"
   ],
   "items": [
     {
@@ -1130,11 +1131,11 @@
     },
     {
       "name": "Winter coat",
-      "category": "Clothing \u2013 Men's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Rain jacket",
-      "category": "Clothing \u2013 Men's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Casual blazer",
@@ -1210,11 +1211,11 @@
     },
     {
       "name": "Winter coat \u2013 women's",
-      "category": "Clothing \u2013 Women's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Rain jacket \u2013 women's",
-      "category": "Clothing \u2013 Women's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Blazer \u2013 women's",
@@ -1290,11 +1291,11 @@
     },
     {
       "name": "Kids' winter coat",
-      "category": "Clothing \u2013 Kids'"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Kids' rain jacket",
-      "category": "Clothing \u2013 Kids'"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Kids' underwear & socks",
@@ -1318,7 +1319,7 @@
     },
     {
       "name": "Boots \u2013 winter",
-      "category": "Shoes & Accessories"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Boots \u2013 ankle",
@@ -1354,7 +1355,7 @@
     },
     {
       "name": "Hats \u2013 winter toque",
-      "category": "Shoes & Accessories"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Hats \u2013 baseball cap",
@@ -1362,11 +1363,11 @@
     },
     {
       "name": "Gloves \u2013 winter",
-      "category": "Clothing \u2013 Men's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Scarf \u2013 winter",
-      "category": "Shoes & Accessories"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Backpack \u2013 everyday",
@@ -3194,7 +3195,7 @@
     },
     {
       "name": "Thermal underwear \u2013 men's",
-      "category": "Clothing \u2013 Men's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Dungarees / overalls",
@@ -3206,11 +3207,11 @@
     },
     {
       "name": "Thermal underwear \u2013 women's",
-      "category": "Clothing \u2013 Women's"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Kids' thermals",
-      "category": "Clothing \u2013 Kids'"
+      "category": "Outdoor & Winter Clothing"
     },
     {
       "name": "Kids' sports uniform",
@@ -4031,6 +4032,162 @@
     {
       "name": "Baby food maker",
       "category": "Baby & Nursery"
+    },
+    {
+      "name": "Ski jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Ski pants",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Fleece jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Down jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Softshell jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Windbreaker",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Hiking jacket \u2013 waterproof",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Snow pants / snow bib",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Waterproof overpants",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Gloves \u2013 work",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Gloves \u2013 garden",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Gloves \u2013 touchscreen",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Mittens",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Hat \u2013 sun / wide brim",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Hat \u2013 beanie / knit",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Balaclava",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Neck gaiter",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Scarf \u2013 wool",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Scarf \u2013 lightweight",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Wellington / rain boots",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Muck boots / farm boots",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Snow boots \u2013 kids'",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Waterproof gaiters",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Reflective running vest",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "High-visibility vest",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Rain poncho",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "UV-protective shirt",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Merino wool base layer",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Insulated vest / gilet",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' splash suit",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' ski jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' ski pants",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' rain boots / wellies",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' mittens",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' hat \u2013 winter",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' balaclava",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Kids' fleece jacket",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Life jacket \u2013 kids'",
+      "category": "Outdoor & Winter Clothing"
+    },
+    {
+      "name": "Sun hat \u2013 kids'",
+      "category": "Outdoor & Winter Clothing"
     }
   ]
 }

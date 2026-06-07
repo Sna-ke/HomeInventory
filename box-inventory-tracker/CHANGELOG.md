@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.9.14
+- **New category: Outdoor & Winter Clothing** in household_items.json — covers weather-specific and gender-neutral clothing that doesn't belong in Men's/Women's/Kids' buckets: outerwear (coats, rain jackets, ski jackets/pants, fleece, down, softshell, windbreakers), base layers (thermals, merino wool), gloves (winter, work, garden, touchscreen, mittens), hats (toque, beanie, sun, balaclava), scarves, neck gaiters, Wellington/rain/muck boots, waterproof gaiters, snow pants, rain ponchos, hi-vis vests, UV shirts, insulated vests, and a full range of kids' versions. 52 items total
+- Moved 13 previously misplaced items into the new category: Gloves – winter was in Clothing – Men's; winter coats/rain jackets were duplicated across Men's/Women's/Kids' instead of being unisex; scarves and winter toques were in Shoes & Accessories; winter boots were in Shoes & Accessories; thermals were split across Men's and Women's
+
 ## 2.9.13
 - **Fixed: photo added to one item appearing on both when two items share the same type** — images are now stored per box_item placement (entity_type='box_item', entity_id=box_item_id) rather than per item type (entity_type='item'). Two 'Blanket' entries in the same or different boxes each have their own independent photos
 - **Fixed: Asset Details Save Failed: Not Found** — the metadata delegated handler was reading btn.dataset.itemId but the button stored btn.dataset.boxItemId. Now correctly passes the box_item_id and placement type 'box_item' to the metadata API
