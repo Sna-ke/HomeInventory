@@ -120,9 +120,7 @@ async function loadRooms() {
       await moveBoxToRoom(boxId, r.id);
     });
 
-    if (r.box_count > 0) {
-      hdr.addEventListener('click', () => toggleRoomExpand(r.id, hdr, chevron, expand));
-    }
+    hdr.addEventListener('click', () => toggleRoomExpand(r.id, hdr, chevron, expand));
 
     wrap.appendChild(hdr);
     wrap.appendChild(expand);
