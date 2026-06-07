@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.9.13
+- **Fixed: photo added to one item appearing on both when two items share the same type** — images are now stored per box_item placement (entity_type='box_item', entity_id=box_item_id) rather than per item type (entity_type='item'). Two 'Blanket' entries in the same or different boxes each have their own independent photos
+- **Fixed: Asset Details Save Failed: Not Found** — the metadata delegated handler was reading btn.dataset.itemId but the button stored btn.dataset.boxItemId. Now correctly passes the box_item_id and placement type 'box_item' to the metadata API
+- **Fixed: Print button not working on iPhone** — window.print() inside a modal is unreliable on iOS Safari. The Print button now opens a clean new window/tab containing just the label at the correct physical size, then calls print() on that window with a short delay for font loading
+- **Fixed: QR code too small to scan** — minimum size raised to 15mm and percentage increased from 30% to 38% of the label short edge, capped at 30mm. Should now be scannable by most phones
+- **Fixed: item name/category/quantity overlapping on mobile** — item rows now use flex-column layout for the info section, name gets ellipsis truncation, chips wrap on a second line, and on very narrow screens action buttons reflow to a second row
+
 ## 2.9.12
 - **Fix / Merge Categories in Settings**: new section lets you move all items from one category into another with autocomplete on both fields. Source category is deleted automatically if left empty after the move. Use this to fix typos, merge duplicates, or consolidate after importing a new JSON file
 - **Import: Update Category option**: new checkbox on the Import screen — 'Update category of existing items to match file'. When checked, items that already exist will have their category updated to whatever the JSON says, without creating duplicates. This is how to fix category assignments on data already in the system

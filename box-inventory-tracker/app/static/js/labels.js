@@ -39,7 +39,8 @@ function updateLabelPreview() {
   // ── QR size ───────────────────────────────────────────────────────────────
   // Cap at 30% of the short edge (never more than 20mm) so text always wins.
   const shortMM = Math.min(wMM, hMM);
-  const qrMM    = Math.min(Math.round(shortMM * 0.30), 20);
+  // QR needs to be large enough for a phone to scan: at least 25% of short edge, minimum 15mm
+  const qrMM    = Math.max(15, Math.min(Math.round(shortMM * 0.38), 30));
   const qrPx    = Math.round(qrMM * MM_TO_PX);
   const numSize = Math.max(7, Math.round(qrPx * 0.24));
 
@@ -175,4 +176,47 @@ function setLabelOrientation(orient) {
   document.getElementById('orient-portrait-btn').classList.toggle('active', orient === 'portrait');
   document.getElementById('orient-landscape-btn').classList.toggle('active', orient === 'landscape');
   updateLabelPreview();
+}
+
+// ── Print helper — works on iOS Safari ────────────────────────────────────
+function printLabel() {
+  const target = document.getElementById('print-target');
+  if (!target) return;
+  const wMM = target.dataset.printW || 40;
+  const hMM = target.dataset.printH || 60;
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BoxTrack Label</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: ${wMM}mm; height: ${hMM}mm; overflow: hidden; background: #fff; }
+    @page { size: ${wMM}mm ${hMM}mm; margin: 0; }
+    @media print { html, body { width: ${wMM}mm; height: ${hMM}mm; } }
+    body { display: flex; align-items: stretch; justify-content: stretch; }
+    body > * { flex: 1; }
+  </style>
+</head>
+<body>
+${target.outerHTML}
+</body>
+</html>`;
+  // Remove the preview scale transform for print window
+  const clean = html.replace(/width:\d+px;height:\d+px/, `width:${wMM}mm;height:${hMM}mm`);
+
+  const win = window.open('', '_blank', 'width=400,height=500');
+  if (!win) {
+    // Popup blocked — fall back to window.print()
+    window.print();
+    return;
+  }
+  win.document.write(clean);
+  win.document.close();
+  win.focus();
+  // Delay to allow fonts to load
+  setTimeout(() => { win.print(); }, 600);
 }

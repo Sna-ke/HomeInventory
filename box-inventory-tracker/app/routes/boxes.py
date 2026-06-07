@@ -46,12 +46,12 @@ def get_boxes():
                 box["collage_urls"] = None
             else:
                 box["thumb_url"] = None
-                # Fallback: up to 9 item photos from items in this box
+                # Fallback: up to 9 box_item photos from items in this box
                 cur2.execute("""
-                    SELECT DISTINCT img.id
+                    SELECT img.id
                     FROM images img
-                    JOIN box_items bi ON bi.item_id = img.entity_id
-                    WHERE img.entity_type = 'item' AND bi.box_id = %s
+                    JOIN box_items bi ON bi.id = img.entity_id
+                    WHERE img.entity_type = 'box_item' AND bi.box_id = %s
                     ORDER BY img.created_at
                     LIMIT 9
                 """, (box["id"],))
@@ -83,7 +83,7 @@ def get_box(box_id):
                        c.id as category_id, c.name as category,
                        (SELECT img.id
                         FROM images img
-                        WHERE img.entity_type = 'item' AND img.entity_id = i.id
+                        WHERE img.entity_type = 'box_item' AND img.entity_id = bi.id
                         ORDER BY img.created_at LIMIT 1) as thumb_id
                 FROM box_items bi
                 JOIN items i ON i.id = bi.item_id

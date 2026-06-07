@@ -236,6 +236,7 @@ async function openBoxDetail(id) {
       const thumb = document.createElement('div');
       thumb.className = 'item-row-thumb';
       thumb.dataset.itemId = i.item_id;
+      thumb.dataset.boxItemId = i.box_item_id;
       if (i.thumb_url) {
         const img = document.createElement('img');
         img.src = i.thumb_url;
@@ -426,6 +427,7 @@ async function refreshBoxItemsInPlace(id) {
         const thumb = document.createElement('div');
         thumb.className = 'item-row-thumb';
         thumb.dataset.itemId = i.item_id;
+        thumb.dataset.boxItemId = i.box_item_id;
         if (i.thumb_url) {
           const img = document.createElement('img');
           img.src = i.thumb_url; img.loading = 'lazy'; img.alt = i.name;
@@ -644,7 +646,7 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
     openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId, btn.dataset.qty);
 
   } else if (action === 'open-metadata') {
-    openMetadataModal(parseInt(btn.dataset.itemId), btn.dataset.name);
+    openMetadataModal('box_item', parseInt(btn.dataset.boxItemId), btn.dataset.name);
 
   } else if (action === 'upload-box-photo') {
     const boxId = parseInt(btn.dataset.boxId);
@@ -652,15 +654,15 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
 
   } else if (action === 'item-thumb-view') {
     // Tap existing photo — show full image with option to delete/replace
-    showItemPhotoOverlay(btn.dataset.url, parseInt(btn.dataset.itemId));
+    showItemPhotoOverlay(btn.dataset.url, parseInt(btn.dataset.boxItemId));
 
   } else if (action === 'item-thumb-upload') {
-    // Tap camera icon — upload a new photo for this item
-    triggerImageUpload('item', parseInt(btn.dataset.itemId), () => refreshBoxItemsInPlace(currentBoxId));
+    // Tap camera icon — upload a new photo for this box_item placement
+    triggerImageUpload('box_item', parseInt(btn.dataset.boxItemId), () => refreshBoxItemsInPlace(currentBoxId));
   }
 });
 
-function showItemPhotoOverlay(url, itemId) {
+function showItemPhotoOverlay(url, boxItemId) {
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position:'fixed', inset:'0', background:'rgba(0,0,0,.92)',
@@ -687,7 +689,7 @@ function showItemPhotoOverlay(url, itemId) {
   replaceBtn.textContent = '🔄 Replace';
   replaceBtn.addEventListener('click', () => {
     overlay.remove();
-    triggerImageUpload('item', itemId, () => refreshBoxItemsInPlace(currentBoxId));
+    triggerImageUpload('box_item', boxItemId, () => refreshBoxItemsInPlace(currentBoxId));
   });
 
   const deleteBtn = document.createElement('button');
