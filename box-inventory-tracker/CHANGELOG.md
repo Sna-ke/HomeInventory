@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.5
+- **Named locations within rooms**: room_items now has an optional 'location' field (e.g. 'Top shelf', 'Freezer', 'Shelf B'). Items in a room are grouped by location when you expand the room. Locations can be set when placing an item directly from the unified Add Item modal
+- **Unified Add Item modal**: the separate 'Place Item in Room' modal has been removed. The same Add Item modal (three tabs: By Name, By Image, By Barcode) now handles both boxes and rooms. The destination field shows both boxes and rooms in grouped autocomplete — type a room name to select a room, or a box number/label to select a box
+- **Quick-add destination includes rooms**: the + menu at the top now lets you type a room name as the destination, not just boxes
+- **DB migration 11**: room_items.location column added
+
 ## 2.9.4
 - **Added more potential items**: Added a second set of item JSONs.
 

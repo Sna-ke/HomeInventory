@@ -268,7 +268,7 @@ def get_room_items(room_id):
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT ri.id as room_item_id, ri.quantity, ri.notes,
+                SELECT ri.id as room_item_id, ri.quantity, ri.notes, ri.location,
                        i.id as item_id, i.name, i.upc,
                        c.id as category_id, c.name as category,
                        (SELECT img.id FROM images img
@@ -295,6 +295,7 @@ def add_room_item(room_id):
     item_id  = data.get("item_id")
     quantity = int(data.get("quantity") or 1)
     notes    = (data.get("notes") or "").strip() or None
+    location = (data.get("location") or "").strip() or None
     if not item_id:
         return jsonify({"error": "item_id is required"}), 400
     conn = get_db()
@@ -302,8 +303,9 @@ def add_room_item(room_id):
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT id,quantity FROM room_items WHERE room_id=%s AND item_id=%s "
+                "AND (location=%s OR (location IS NULL AND %s IS NULL)) "
                 "AND (notes=%s OR (notes IS NULL AND %s IS NULL))",
-                (room_id, item_id, notes, notes)
+                (room_id, item_id, location, location, notes, notes)
             )
             existing = cur.fetchone()
             if existing:
@@ -314,8 +316,8 @@ def add_room_item(room_id):
                 return jsonify({"ok": True, "id": existing["id"], "incremented": True, "quantity": new_qty}), 200
             else:
                 cur.execute(
-                    "INSERT INTO room_items (room_id,item_id,quantity,notes) VALUES (%s,%s,%s,%s)",
-                    (room_id, item_id, quantity, notes)
+                    "INSERT INTO room_items (room_id,item_id,quantity,notes,location) VALUES (%s,%s,%s,%s,%s)",
+                    (room_id, item_id, quantity, notes, location)
                 )
                 conn.commit()
                 sse_push("rooms")
@@ -329,11 +331,12 @@ def update_room_item(room_item_id):
     data = request.json or {}
     quantity = int(data.get("quantity") or 1)
     notes    = (data.get("notes") or "").strip() or None
+    location = (data.get("location") or "").strip() or None
     conn = get_db()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE room_items SET quantity=%s,notes=%s WHERE id=%s",
-                        (quantity, notes, room_item_id))
+            cur.execute("UPDATE room_items SET quantity=%s,notes=%s,location=%s WHERE id=%s",
+                        (quantity, notes, location, room_item_id))
             conn.commit()
             sse_push("rooms")
             return jsonify({"ok": True})

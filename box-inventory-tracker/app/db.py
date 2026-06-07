@@ -153,6 +153,7 @@ def init_db():
                         item_id INT NOT NULL,
                         quantity INT NOT NULL DEFAULT 1,
                         notes TEXT,
+                        location VARCHAR(255),
                         FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE,
                         FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
                     )
@@ -362,6 +363,15 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 11: room_items.location column (v2.9.4)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='room_items' AND COLUMN_NAME='location'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding location to room_items")
+                cur.execute("ALTER TABLE room_items ADD COLUMN location VARCHAR(255) AFTER notes")
 
             # Migration 10: item_metadata → placement model (v2.9.0)
             cur.execute("""

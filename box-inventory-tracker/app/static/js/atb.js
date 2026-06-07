@@ -147,7 +147,7 @@ async function finishImageAdd(item_id, name, createNew) {
   toast(result.incremented ? `Qty updated to ${result.quantity}` : `${name} added`);
   trackRecentItem(item_id);
   trackRecentBox(addToBoxId);
-  const boxField = document.getElementById('atb-box-field');
+  const boxField = document.getElementById('atb-dest-field');
   if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
 }
 
@@ -202,7 +202,7 @@ function openAddToBoxModal(boxId) {
   // Called from box detail page — box is known, hide box selector
   addToBoxId = boxId;
   lastUsedBoxId = boxId;
-  document.getElementById('atb-box-field').style.display = 'none';
+  document.getElementById('atb-dest-field').style.display = 'none';
   resetATBModal();
 }
 
@@ -235,15 +235,15 @@ function openQuickAddWithTab(tab) {
 }
 
 function openQuickAddItem() {
-  // Called from topbar — box unknown, show box selector
-  addToBoxId = lastUsedBoxId; // pre-fill with last used box if available
-  document.getElementById('atb-box-field').style.display = 'block';
-  // Pre-fill box selector if we have a last-used box
+  // Called from topbar — destination unknown, show unified selector
+  addToBoxId = lastUsedBoxId;
+  addToRoomId = null;
+  document.getElementById('atb-dest-field').style.display = 'block';
   if (lastUsedBoxId) {
     const box = (window._lastBoxes || []).find(b => b.id === lastUsedBoxId);
-    if (box) setATBBox(box.id, `BOX ${box.box_number}${box.label ? ' · ' + box.label : ''}`);
+    if (box) setATBDest('box', box.id, `BOX ${box.box_number}${box.label ? ' · ' + box.label : ''}`);
   } else {
-    clearATBBox();
+    clearATBDest();
   }
   resetATBModal();
 }
@@ -255,6 +255,8 @@ function resetATBModal() {
   document.getElementById('atb-category').value = '';
   document.getElementById('atb-qty').value = '1';
   document.getElementById('atb-notes').value = '';
+  const locEl = document.getElementById('atb-room-location');
+  if (locEl) locEl.value = '';
   document.getElementById('atb-photo-preview').innerHTML = '';
   document.getElementById('atb-photo-input').value = '';
   document.getElementById('atb-identify-input').value = '';
@@ -267,24 +269,34 @@ function resetATBModal() {
   openModal('modal-atb');
 }
 
-function setATBBox(id, label) {
-  addToBoxId = id;
-  lastUsedBoxId = id;
-  trackRecentBox(id);
-  document.getElementById('atb-box-selected-name').textContent = label;
+function setATBDest(type, id, label) {
+  addToBoxId  = type === 'box'  ? id : null;
+  addToRoomId = type === 'room' ? id : null;
+  if (type === 'box') { lastUsedBoxId = id; trackRecentBox(id); }
+  const prefix = type === 'room' ? '🏠 ' : '📦 ';
+  document.getElementById('atb-box-selected-name').textContent = prefix + label;
   document.getElementById('atb-box-selected-badge').style.display = 'flex';
   document.getElementById('atb-box-search').style.display = 'none';
   document.getElementById('atb-box-suggestions').classList.remove('open');
+  document.getElementById('atb-room-location-field').style.display =
+    type === 'room' ? 'block' : 'none';
+  const btn = document.getElementById('atb-confirm-btn');
+  if (btn) btn.textContent = type === 'room' ? 'Place in Room' : 'Add to Box';
 }
+function setATBBox(id, label) { setATBDest('box', id, label); }
 
-function clearATBBox() {
-  addToBoxId = null;
+function clearATBDest() {
+  addToBoxId = null; addToRoomId = null;
   document.getElementById('atb-box-search').value = '';
   document.getElementById('atb-box-search').style.display = '';
   document.getElementById('atb-box-selected-badge').style.display = 'none';
   document.getElementById('atb-create-box-panel').style.display = 'none';
+  document.getElementById('atb-room-location-field').style.display = 'none';
+  const btn = document.getElementById('atb-confirm-btn');
+  if (btn) btn.textContent = 'Add';
   document.getElementById('atb-box-search').focus();
 }
+function clearATBBox() { clearATBDest(); }
 
 // ── Recency tracking ──────────────────────────────────────────────────────
 // Stored as arrays of IDs, most recent first, capped at 20 entries.
@@ -404,6 +416,106 @@ async function searchBoxesAC(q) {
   const sorted = sortByRecency(filtered, recentBoxIds, 'id');
   // Pass the typed text as createLabel so user can create a new box
   renderBoxSuggestions(sorted.slice(0, 10), list, q.trim() || null);
+}
+
+// ── Unified destination search (boxes + rooms) ────────────────────────────
+
+async function showInitialDestSuggestions() {
+  if (document.getElementById('atb-box-selected-badge').style.display === 'flex') return;
+  closeAllATBDropdowns();
+  const list = document.getElementById('atb-box-suggestions');
+  const [boxes, roomList] = await Promise.all([getBoxesCached(), getRoomsCached()]);
+  renderDestSuggestions(sortByRecency(boxes, recentBoxIds, 'id').slice(0, 4), roomList.slice(0, 3), list);
+}
+
+async function searchDestAC(q) {
+  const list = document.getElementById('atb-box-suggestions');
+  if (!q.trim()) { showInitialDestSuggestions(); return; }
+  const [boxes, roomList] = await Promise.all([getBoxesCached(), getRoomsCached()]);
+  const lq = q.toLowerCase();
+  const stripped = q.replace(/^box\s*/i, '').trim();
+  const filteredBoxes = boxes.filter(b =>
+    String(b.box_number) === stripped || String(b.box_number).startsWith(stripped) ||
+    (b.label || '').toLowerCase().includes(lq) ||
+    (b.room_name || '').toLowerCase().includes(lq) ||
+    (`box ${b.box_number}`).includes(lq)
+  );
+  const filteredRooms = roomList.filter(r => r.name.toLowerCase().includes(lq));
+  renderDestSuggestions(
+    sortByRecency(filteredBoxes, recentBoxIds, 'id').slice(0, 6),
+    filteredRooms.slice(0, 4),
+    list,
+    q.trim()
+  );
+}
+
+async function getRoomsCached() {
+  if (window._lastRooms && window._lastRooms.length) return window._lastRooms;
+  window._lastRooms = await api('/api/rooms');
+  return window._lastRooms;
+}
+
+function renderDestSuggestions(boxes, roomList, list, createLabel) {
+  list.innerHTML = '';
+  let hasItems = false;
+
+  if (roomList.length) {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;' +
+      'color:var(--muted);padding:6px 12px 3px;';
+    hdr.textContent = 'Rooms';
+    list.appendChild(hdr);
+    roomList.forEach(r => {
+      const opt = document.createElement('div');
+      opt.className = 'ac-item';
+      opt.innerHTML = `<span>🏠 ${esc(r.name)}</span><small style="color:var(--muted)">${r.box_count || 0} box${r.box_count !== 1 ? 'es' : ''}</small>`;
+      opt.addEventListener('mousedown', e => { e.preventDefault(); setATBDest('room', r.id, r.name); });
+      list.appendChild(opt);
+      hasItems = true;
+    });
+  }
+
+  if (boxes.length) {
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;' +
+      'color:var(--muted);padding:6px 12px 3px;';
+    hdr.textContent = 'Boxes';
+    list.appendChild(hdr);
+    boxes.forEach(b => {
+      const opt = document.createElement('div');
+      opt.className = 'ac-item';
+      const lbl = b.label ? ` · ${b.label}` : '';
+      const room = b.room_name ? ` (${b.room_name})` : '';
+      opt.innerHTML = `<span>📦 BOX ${b.box_number}${esc(lbl)}</span><small style="color:var(--muted)">${esc(room)}</small>`;
+      opt.addEventListener('mousedown', e => {
+        e.preventDefault();
+        setATBDest('box', b.id, `BOX ${b.box_number}${lbl}`);
+      });
+      list.appendChild(opt);
+      hasItems = true;
+    });
+  }
+
+  if (createLabel) {
+    const opt = document.createElement('div');
+    opt.className = 'ac-item ac-create';
+    opt.innerHTML = `<span>＋ Create box "${esc(createLabel)}"</span>`;
+    opt.addEventListener('mousedown', e => {
+      e.preventDefault();
+      document.getElementById('atb-box-suggestions').classList.remove('open');
+      document.getElementById('atb-new-box-label').value = createLabel;
+      document.getElementById('atb-create-box-panel').style.display = 'block';
+    });
+    list.appendChild(opt);
+    hasItems = true;
+  }
+
+  if (hasItems) {
+    positionDropdownFixed(list);
+    list.classList.add('open');
+  } else {
+    list.classList.remove('open');
+  }
 }
 
 // Delegated listener for box search suggestions
@@ -604,7 +716,9 @@ async function uploadPendingPhotos(itemId) {
 }
 
 async function confirmAddToBox() {
-  if (!addToBoxId) { toast('Select a box first', true); return; }
+  if (!addToBoxId && !addToRoomId) { toast('Select a box or room first', true); return; }
+  // Route to room placement if destination is a room
+  if (addToRoomId) { await confirmAddToRoom(); return; }
 
   const activeTab = document.querySelector('.atb-tab.active')?.dataset?.tab || 'name';
 
@@ -646,11 +760,53 @@ async function confirmAddToBox() {
     const photoMsg = photoCount > 0 ? ` with ${photoCount} photo${photoCount>1?'s':''}` : '';
     toast(result.incremented ? `Quantity updated to ${result.quantity}${photoMsg}` : `Item added${photoMsg}`);
 
-    const boxField = document.getElementById('atb-box-field');
+    const boxField = document.getElementById('atb-dest-field');
     if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
   } catch(e) {
     toast(`Error: ${e.message || e}`, true);
     console.error('confirmAddToBox error:', e);
+  }
+}
+
+// ── Room placement via unified modal ─────────────────────────────────────
+async function confirmAddToRoom() {
+  const item_id = document.getElementById('atb-item-id').value;
+  const search  = document.getElementById('atb-search').value.trim();
+  const qty     = parseInt(document.getElementById('atb-qty').value) || 1;
+  const notes   = document.getElementById('atb-notes').value.trim() || null;
+  const location = document.getElementById('atb-room-location').value.trim() || null;
+
+  if (!item_id && !search) { toast('Enter an item name', true); return; }
+
+  let resolvedId = item_id;
+  if (!resolvedId && search) {
+    try {
+      const newItem = await api('/api/items', { method: 'POST', body: JSON.stringify({ name: search }) });
+      resolvedId = newItem.id;
+    } catch(e) { toast(`Could not create item: ${e.message}`, true); return; }
+  }
+
+  try {
+    const result = await api(`/api/rooms/${addToRoomId}/items`, {
+      method: 'POST',
+      body: JSON.stringify({ item_id: resolvedId, quantity: qty, notes, location })
+    });
+    // Save asset metadata if filled in
+    if (result.id) await saveATBMetaForBoxItem(result.id, 'room_item');
+    closeModal('modal-atb');
+    toast('Item placed in room');
+    // Refresh room placements — try container stored by + button, else find in DOM
+    const storedContainer = window._lastRoomPlacingContainer;
+    const storedId = window._lastRoomPlacingId;
+    const targetId = storedId === addToRoomId ? storedId : addToRoomId;
+    const body = storedContainer && storedId === addToRoomId
+      ? storedContainer
+      : document.querySelector(`#room-expand-${targetId} .room-placements-body`);
+    if (body) loadRoomPlacements(targetId, body);
+    window._lastRoomPlacingContainer = null;
+    window._lastRoomPlacingId = null;
+  } catch(e) {
+    toast(`Error: ${e.message}`, true);
   }
 }
 
@@ -858,7 +1014,7 @@ async function finishBarcodeAdd(item_id, name, createNew) {
     trackRecentItem(item_id);
     trackRecentBox(addToBoxId);
 
-    const boxField = document.getElementById('atb-box-field');
+    const boxField = document.getElementById('atb-dest-field');
     if (boxField.style.display === 'none') refreshBoxItemsInPlace(addToBoxId);
   } catch(e) {
     toast(`Error: ${e.message || e}`, true);
@@ -1039,7 +1195,7 @@ function updateATBMetaWarrantyPreview() {
     : `<span style="color:${color};font-weight:700;">Expires: ${mfrStr}</span>`;
 }
 
-async function saveATBMetaForBoxItem(boxItemId) {
+async function saveATBMetaForBoxItem(boxItemId, placementType = 'box_item') {
   // Called after a box_item is created; saves meta if any field is filled
   const hasAny = ['atb-meta-serial','atb-meta-model','atb-meta-purchase-date',
     'atb-meta-price','atb-meta-store','atb-meta-warranty-value','atb-meta-notes']
@@ -1057,8 +1213,9 @@ async function saveATBMetaForBoxItem(boxItemId) {
     credit_card_id:  get('atb-meta-card-select') ? parseInt(get('atb-meta-card-select')) : null,
     notes:           get('atb-meta-notes'),
   };
+  const baseUrl = placementType === 'room_item' ? 'room-items' : 'box-items';
   try {
-    await api(`/api/box-items/${boxItemId}/metadata`, { method: 'PUT', body: JSON.stringify(payload) });
+    await api(`/api/${baseUrl}/${boxItemId}/metadata`, { method: 'PUT', body: JSON.stringify(payload) });
   } catch(e) {
     console.warn('Failed to save ATB metadata:', e.message);
   }

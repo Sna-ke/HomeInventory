@@ -506,37 +506,7 @@
 </div>
 
 <!-- ── Room Placement modal ──────────────────────────────────────────────── -->
-<div id="modal-room-placement" class="modal-backdrop">
-  <div class="modal" style="max-width:420px;">
-    <h3>Place Item in Room</h3>
-    <div class="field">
-      <label>Item</label>
-      <div class="ac-wrap">
-        <input type="text" id="rp-search" placeholder="Search or type item name…"
-          oninput="searchRPItems(this.value)"
-          onblur="setTimeout(()=>document.getElementById('rp-suggestions').classList.remove('open'),150)"
-          autocomplete="off">
-        <div id="rp-suggestions" class="ac-list"></div>
-        <input type="hidden" id="rp-item-id">
-      </div>
-    </div>
-    <div style="display:flex;gap:12px;">
-      <div class="field" style="flex:1;">
-        <label>Quantity</label>
-        <input type="number" id="rp-qty" value="1" min="1"
-          style="font-family:var(--mono);text-align:center;font-size:18px;font-weight:700;">
-      </div>
-      <div class="field" style="flex:2;">
-        <label>Notes <span style="color:var(--muted);font-size:11px;">(optional)</span></label>
-        <input type="text" id="rp-notes" placeholder="e.g. Near window">
-      </div>
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-room-placement')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="confirmRoomPlacement()">Place</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- Add item to box modal -->
 <!-- Move Item modal -->
@@ -598,15 +568,15 @@
 
 <div id="modal-atb" class="modal-backdrop">
   <div class="modal">
-    <h3>Add Item to Box</h3>
+    <h3>Add Item</h3>
 
-    <!-- Box selector (quick-add mode only) -->
-    <div id="atb-box-field" class="field" style="display:none;">
-      <label>Box</label>
+    <!-- Destination selector (quick-add mode only) — box or room -->
+    <div id="atb-dest-field" class="field" style="display:none;">
+      <label>Add to</label>
       <div class="ac-wrap">
-        <input type="text" id="atb-box-search" placeholder="Search box number or label…"
-          oninput="searchBoxesAC(this.value)"
-          onfocus="showInitialBoxSuggestions()"
+        <input type="text" id="atb-box-search" placeholder="Search box or room…"
+          oninput="searchDestAC(this.value)"
+          onfocus="showInitialDestSuggestions()"
           onblur="setTimeout(()=>document.getElementById('atb-box-suggestions').classList.remove('open'),150)"
           autocomplete="off">
         <div id="atb-box-suggestions" class="ac-list"></div>
@@ -615,10 +585,10 @@
                  border:1px solid var(--accent);font-family:var(--mono);font-size:12px;
                  color:var(--accent);align-items:center;gap:8px;">
           <span id="atb-box-selected-name"></span>
-          <button onclick="clearATBBox()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
+          <button onclick="clearATBDest()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;margin-left:auto;">✕ change</button>
         </div>
 
-        <!-- Inline create-box panel — shown when user picks "+ Create box" -->
+        <!-- Inline create-box panel -->
         <div id="atb-create-box-panel" style="display:none;margin-top:8px;
           background:var(--surface2);border:1px solid var(--accent);padding:10px 12px;">
           <div style="font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
@@ -644,6 +614,15 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Room location field — shown only when destination is a room -->
+    <div id="atb-room-location-field" class="field" style="display:none;">
+      <label>Location within room <span style="color:var(--muted);font-size:11px;">(optional)</span></label>
+      <input type="text" id="atb-room-location"
+        placeholder="e.g. Top shelf, Freezer, Shelf B…"
+        style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+               font-family:var(--sans);font-size:15px;padding:8px 10px;width:100%;outline:none;">
     </div>
 
     <!-- Tabs: By Name | By Image | By Barcode -->
@@ -864,7 +843,7 @@
 
     <div class="modal-actions">
       <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-atb')">Cancel</button>
-      <button class="btn btn-primary btn-sm" onclick="confirmAddToBox()">Add to Box</button>
+      <button class="btn btn-primary btn-sm" id="atb-confirm-btn" onclick="confirmAddToBox()">Add</button>
     </div>
   </div>
 </div>

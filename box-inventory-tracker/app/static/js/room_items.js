@@ -18,7 +18,23 @@ function renderRoomPlacements(roomId, items, container) {
     container.innerHTML = '<div style="color:var(--muted);font-size:12px;font-style:italic;' +
       'padding:6px 0;">No items placed directly in this room.</div>';
   } else {
+    // Group by location
+    const groups = {};
     items.forEach(item => {
+      const loc = item.location || '';
+      if (!groups[loc]) groups[loc] = [];
+      groups[loc].push(item);
+    });
+
+    Object.keys(groups).sort().forEach(loc => {
+      if (loc) {
+        const locHdr = document.createElement('div');
+        locHdr.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:1px;' +
+          'text-transform:uppercase;color:var(--accent);margin:6px 0 3px;';
+        locHdr.textContent = loc;
+        container.appendChild(locHdr);
+      }
+    groups[loc].forEach(item => {
       const row = document.createElement('div');
       row.className = 'room-placed-item-row';
       row.dataset.roomItemId = item.room_item_id;
@@ -76,7 +92,8 @@ function renderRoomPlacements(roomId, items, container) {
       row.appendChild(thumb); row.appendChild(info);
       row.appendChild(qtySpan); row.appendChild(metaBtn); row.appendChild(delBtn);
       container.appendChild(row);
-    });
+    }); // end items in group
+    }); // end groups
   }
 
   // Add-item button at the bottom
@@ -84,28 +101,27 @@ function renderRoomPlacements(roomId, items, container) {
   addBtn.className = 'btn btn-secondary btn-sm';
   addBtn.style.marginTop = '8px';
   addBtn.textContent = '+ Place Item in Room';
-  addBtn.addEventListener('click', () => openRoomPlacementModal(roomId, container));
+  addBtn.addEventListener('click', () => {
+    // Use unified ATB modal, pre-set destination to this room
+    addToBoxId = null; addToRoomId = roomId;
+    document.getElementById('atb-dest-field').style.display = 'none'; // dest already known
+    document.getElementById('atb-room-location-field').style.display = 'block';
+    document.getElementById('atb-room-location').value = '';
+    const btn = document.getElementById('atb-confirm-btn');
+    if (btn) btn.textContent = 'Place in Room';
+    // Store container for post-add refresh
+    window._lastRoomPlacingContainer = container;
+    window._lastRoomPlacingId = roomId;
+    resetATBModal();
+    document.getElementById('atb-dest-field').style.display = 'none';
+    document.getElementById('atb-room-location-field').style.display = 'block';
+    openModal('modal-atb');
+    setTimeout(() => document.getElementById('atb-search').focus(), 100);
+  });
   container.appendChild(addBtn);
 }
 
-// ── Room placement modal ───────────────────────────────────────────────────
-let _placingRoomId = null;
-let _placingContainer = null;
-
-function openRoomPlacementModal(roomId, container) {
-  _placingRoomId = roomId;
-  _placingContainer = container;
-
-  document.getElementById('rp-search').value = '';
-  document.getElementById('rp-item-id').value = '';
-  document.getElementById('rp-qty').value = 1;
-  document.getElementById('rp-notes').value = '';
-  document.getElementById('rp-suggestions').innerHTML = '';
-  document.getElementById('rp-suggestions').classList.remove('open');
-
-  openModal('modal-room-placement');
-  document.getElementById('rp-search').focus();
-}
+// Room placement now uses the unified ATB modal
 
 function searchRPItems(q) {
   const list = document.getElementById('rp-suggestions');
