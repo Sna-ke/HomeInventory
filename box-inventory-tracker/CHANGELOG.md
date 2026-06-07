@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.9.6
+## 2.9.7
 - **Fix Rooms Being Empty With Items in them**: if an item had no boxes but items, it was considered empty.  This is fixed.
 
 ## 2.9.6
