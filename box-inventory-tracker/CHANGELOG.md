@@ -1,5 +1,12 @@
 # Changelog
 
+## 2.9.9
+- **Global search rebuilt**: the header search box now searches across everything — item names, categories, box labels/descriptions, room names, serial numbers, model numbers, placement notes, and asset notes
+- **Prioritised results**: results grouped into sections by match type — (1) Item name match, (2) Category match, (3) Details match (serial/model/notes), (4) Box label match, (5) Room name match
+- **Location breadcrumb on every result**: each result shows its full path — 🏠 Room  ›  📦 BOX 3 · Kitchen  ›  📌 Top shelf — so you know exactly where to find it without clicking
+- **Match highlighting**: the matching portion of item names is highlighted in the results
+- **Click to navigate**: clicking a result opens the box detail or scrolls to and expands the room, then clears the search box
+
 ## 2.9.8
 - **Item starter packs cleaned up**: removed all "set of N" quantity descriptors from both the household starter pack and the storage locker pack (e.g. "Bath towels – set of 6" → "Bath towels"). 121 items updated across both files
 

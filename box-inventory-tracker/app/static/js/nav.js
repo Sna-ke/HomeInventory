@@ -32,6 +32,11 @@ function showPanel(name, writeHash = true) {
     else if (name === 'categories') loadCategories();
     else if (name === 'settings') loadCreditCardsSettings();
 
+    // Clear search box when navigating away from search results
+    if (name !== 'search') {
+      const gs = document.getElementById('globalSearch');
+      if (gs && gs.value) gs.value = '';
+    }
     // Show FAB only on Boxes panel
     const fab = document.getElementById('boxes-fab');
     if (fab) fab.style.display = (name === 'boxes') ? 'flex' : 'none';
@@ -55,30 +60,169 @@ function handleSearch(q) {
 }
 
 async function doSearch(q) {
-  const results = await api(`/api/search?q=${encodeURIComponent(q)}`);
+  const div = document.getElementById('search-results');
+  div.innerHTML = '<div style="color:var(--muted);font-family:var(--mono);font-size:12px;padding:8px;">Searching…</div>';
+
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tabbar button, .sidebar button').forEach(b => b.classList.remove('active'));
   document.getElementById('panel-search').classList.add('active');
   document.getElementById('mainContent').scrollTop = 0;
 
-  const div = document.getElementById('search-results');
-  if (!results.length) { div.innerHTML = '<div class="empty">No results.</div>'; return; }
+  const results = await api(`/api/search?q=${encodeURIComponent(q)}`);
 
-  const byBox = {};
-  results.forEach(r => {
-    if (!byBox[r.box_id]) byBox[r.box_id] = { ...r, matches:[] };
-    byBox[r.box_id].matches.push(r);
+  if (!results.length) {
+    div.innerHTML = `<div class="empty">No results for "${esc(q)}".</div>`;
+    return;
+  }
+
+  // Group by priority bucket, then by location within each bucket
+  const buckets = { 1: [], 2: [], 3: [], 4: [], 5: [] };
+  results.forEach(r => (buckets[r.priority] || buckets[5]).push(r));
+
+  const bucketMeta = {
+    1: { label: 'Item name',   icon: '📦' },
+    2: { label: 'Category',    icon: '🏷️' },
+    3: { label: 'Details',     icon: '🔍' },
+    4: { label: 'Box',         icon: '📦' },
+    5: { label: 'Room',        icon: '🏠' },
+  };
+
+  div.innerHTML = '';
+
+  [1, 2, 3, 4, 5].forEach(pri => {
+    const rows = buckets[pri];
+    if (!rows.length) return;
+
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-bottom:20px;';
+
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:11px;font-weight:700;letter-spacing:1.5px;' +
+      'text-transform:uppercase;color:var(--muted);margin-bottom:8px;';
+    hdr.textContent = bucketMeta[pri].label + ' match' + (rows.length > 1 ? 'es' : '');
+    section.appendChild(hdr);
+
+    rows.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'result-row';
+      card.style.cssText = 'cursor:pointer;';
+
+      // Location breadcrumb
+      const loc = document.createElement('div');
+      loc.className = 'result-box';
+      const locParts = [];
+      if (r.room_name) locParts.push('🏠 ' + r.room_name);
+      if (r.box_id)    locParts.push('📦 BOX ' + r.box_number + (r.box_label ? ' · ' + r.box_label : ''));
+      if (r.shelf_location) locParts.push('📌 ' + r.shelf_location);
+      loc.textContent = locParts.join('  ›  ') || '(no location)';
+      card.appendChild(loc);
+
+      // Main content row
+      const body = document.createElement('div');
+      body.style.cssText = 'display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;';
+
+      if (r.item_name) {
+        // Highlight the matching portion
+        const nameEl = document.createElement('div');
+        nameEl.className = 'result-label';
+        nameEl.style.flex = '1';
+        const lq = q.toLowerCase();
+        const ln = r.item_name.toLowerCase();
+        const idx = ln.indexOf(lq);
+        if (idx >= 0) {
+          nameEl.innerHTML =
+            esc(r.item_name.slice(0, idx)) +
+            '<mark style="background:var(--accent);color:#000;padding:0 1px;">' +
+            esc(r.item_name.slice(idx, idx + q.length)) +
+            '</mark>' +
+            esc(r.item_name.slice(idx + q.length));
+        } else {
+          nameEl.textContent = r.item_name;
+        }
+        body.appendChild(nameEl);
+      } else if (r.result_type === 'box') {
+        const nameEl = document.createElement('div');
+        nameEl.className = 'result-label';
+        nameEl.textContent = r.box_label || 'BOX ' + r.box_number;
+        body.appendChild(nameEl);
+      } else if (r.result_type === 'room') {
+        const nameEl = document.createElement('div');
+        nameEl.className = 'result-label';
+        nameEl.textContent = r.room_name;
+        body.appendChild(nameEl);
+      }
+
+      // Meta chips
+      const chips = document.createElement('div');
+      chips.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;align-items:center;';
+      if (r.category) {
+        const cat = document.createElement('span');
+        cat.className = 'chip cat';
+        cat.textContent = r.category;
+        chips.appendChild(cat);
+      }
+      if (r.quantity > 1) {
+        const qty = document.createElement('span');
+        qty.className = 'chip';
+        qty.textContent = '×' + r.quantity;
+        chips.appendChild(qty);
+      }
+      if (r.serial_number) {
+        const sn = document.createElement('span');
+        sn.className = 'chip';
+        sn.style.fontFamily = 'var(--mono)';
+        sn.textContent = 'S/N: ' + r.serial_number;
+        chips.appendChild(sn);
+      }
+      if (r.model_number) {
+        const mn = document.createElement('span');
+        mn.className = 'chip';
+        mn.textContent = r.model_number;
+        chips.appendChild(mn);
+      }
+      body.appendChild(chips);
+      card.appendChild(body);
+
+      // Notes line
+      if (r.placement_notes) {
+        const notes = document.createElement('div');
+        notes.style.cssText = 'font-size:12px;color:var(--muted);margin-top:3px;font-style:italic;';
+        notes.textContent = r.placement_notes;
+        card.appendChild(notes);
+      }
+
+      // Click action — navigate to the location
+      card.addEventListener('click', () => {
+        document.getElementById('globalSearch').value = '';
+        if (r.box_id) {
+          openBoxDetail(r.box_id);
+        } else if (r.room_id) {
+          showPanel('rooms');
+          setTimeout(() => {
+            const expand = document.getElementById(`room-expand-${r.room_id}`);
+            const hdr2   = expand?.previousElementSibling;
+            const chev   = hdr2?.querySelector('.cat-chevron');
+            if (expand && hdr2 && chev && !expand.classList.contains('open')) {
+              toggleRoomExpand(r.room_id, hdr2, chev, expand);
+            }
+            expand?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 150);
+        }
+      });
+
+      section.appendChild(card);
+    });
+
+    div.appendChild(section);
   });
 
-  div.innerHTML = Object.values(byBox).map(b => `
-    <div class="result-row" onclick="openBoxDetail(${b.box_id})">
-      <div class="result-box">BOX ${b.box_number} · 📍 ${esc(b.room_name||'No room')}</div>
-      <div class="result-label">${esc(b.label||'Unlabelled')}</div>
-      <div class="result-items">
-        ${b.matches.map(m=>`<span class="chip">${esc(m.item_name)} ×${m.quantity}</span>`).join('')}
-      </div>
-    </div>
-  `).join('');
+  // Summary count
+  const total = results.length;
+  const summary = document.createElement('div');
+  summary.style.cssText = 'font-size:12px;color:var(--muted);font-family:var(--mono);' +
+    'padding-top:8px;border-top:1px solid var(--border);';
+  summary.textContent = `${total} result${total !== 1 ? 's' : ''} for "${q}"`;
+  div.appendChild(summary);
 }
 
 // Close autocomplete lists on outside tap

@@ -152,22 +152,198 @@ def search():
     q = request.args.get("q", "").strip()
     if not q:
         return jsonify([])
+    like = f"%{q}%"
     conn = get_db()
     try:
         with conn.cursor() as cur:
+            results = []
+            seen = set()  # dedupe by (result_type, id)
+
+            # ── Priority 1: item name matches ─────────────────────────────────
+            # Items in boxes
             cur.execute("""
-                SELECT DISTINCT b.id as box_id, b.box_number, b.label,
-                       r.name as room_name,
+                SELECT 'box_item' as result_type, 1 as priority,
                        i.name as item_name, c.name as category,
-                       bi.quantity, bi.notes
+                       bi.quantity, bi.notes as placement_notes,
+                       b.id as box_id, b.box_number, b.label as box_label,
+                       r.name as room_name, r.id as room_id,
+                       NULL as shelf_location,
+                       NULL as serial_number, NULL as model_number
+                FROM items i
+                LEFT JOIN categories c ON c.id = i.category_id
+                JOIN box_items bi ON bi.item_id = i.id
+                JOIN boxes b ON b.id = bi.box_id
+                LEFT JOIN rooms r ON r.id = b.room_id
+                WHERE i.name LIKE %s
+                ORDER BY b.box_number, i.name
+            """, (like,))
+            for row in cur.fetchall():
+                key = ('box_item', row['box_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # Items in rooms
+            cur.execute("""
+                SELECT 'room_item' as result_type, 1 as priority,
+                       i.name as item_name, c.name as category,
+                       ri.quantity, ri.notes as placement_notes,
+                       NULL as box_id, NULL as box_number, NULL as box_label,
+                       r.name as room_name, r.id as room_id,
+                       ri.location as shelf_location,
+                       NULL as serial_number, NULL as model_number
+                FROM items i
+                LEFT JOIN categories c ON c.id = i.category_id
+                JOIN room_items ri ON ri.item_id = i.id
+                JOIN rooms r ON r.id = ri.room_id
+                WHERE i.name LIKE %s
+                ORDER BY r.name, i.name
+            """, (like,))
+            for row in cur.fetchall():
+                key = ('room_item', row['room_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # ── Priority 2: category matches ──────────────────────────────────
+            cur.execute("""
+                SELECT 'box_item' as result_type, 2 as priority,
+                       i.name as item_name, c.name as category,
+                       bi.quantity, bi.notes as placement_notes,
+                       b.id as box_id, b.box_number, b.label as box_label,
+                       r.name as room_name, r.id as room_id,
+                       NULL as shelf_location,
+                       NULL as serial_number, NULL as model_number
+                FROM categories c
+                JOIN items i ON i.category_id = c.id
+                JOIN box_items bi ON bi.item_id = i.id
+                JOIN boxes b ON b.id = bi.box_id
+                LEFT JOIN rooms r ON r.id = b.room_id
+                WHERE c.name LIKE %s AND i.name NOT LIKE %s
+                ORDER BY b.box_number, i.name
+            """, (like, like))
+            for row in cur.fetchall():
+                key = ('box_item', row['box_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            cur.execute("""
+                SELECT 'room_item' as result_type, 2 as priority,
+                       i.name as item_name, c.name as category,
+                       ri.quantity, ri.notes as placement_notes,
+                       NULL as box_id, NULL as box_number, NULL as box_label,
+                       r.name as room_name, r.id as room_id,
+                       ri.location as shelf_location,
+                       NULL as serial_number, NULL as model_number
+                FROM categories c
+                JOIN items i ON i.category_id = c.id
+                JOIN room_items ri ON ri.item_id = i.id
+                JOIN rooms r ON r.id = ri.room_id
+                WHERE c.name LIKE %s AND i.name NOT LIKE %s
+                ORDER BY r.name, i.name
+            """, (like, like))
+            for row in cur.fetchall():
+                key = ('room_item', row['room_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # ── Priority 3: metadata matches (notes, serial, model) ───────────
+            cur.execute("""
+                SELECT 'box_item' as result_type, 3 as priority,
+                       i.name as item_name, c.name as category,
+                       bi.quantity, bi.notes as placement_notes,
+                       b.id as box_id, b.box_number, b.label as box_label,
+                       r.name as room_name, r.id as room_id,
+                       NULL as shelf_location,
+                       m.serial_number, m.model_number
+                FROM item_metadata m
+                JOIN box_items bi ON bi.id = m.placement_id AND m.placement_type = 'box_item'
+                JOIN items i ON i.id = bi.item_id
+                LEFT JOIN categories c ON c.id = i.category_id
+                JOIN boxes b ON b.id = bi.box_id
+                LEFT JOIN rooms r ON r.id = b.room_id
+                WHERE m.serial_number LIKE %s OR m.model_number LIKE %s
+                   OR m.notes LIKE %s OR bi.notes LIKE %s
+                   AND i.name NOT LIKE %s AND (c.name IS NULL OR c.name NOT LIKE %s)
+                ORDER BY b.box_number, i.name
+            """, (like, like, like, like, like, like))
+            for row in cur.fetchall():
+                key = ('box_item', row['box_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            cur.execute("""
+                SELECT 'room_item' as result_type, 3 as priority,
+                       i.name as item_name, c.name as category,
+                       ri.quantity, ri.notes as placement_notes,
+                       NULL as box_id, NULL as box_number, NULL as box_label,
+                       r.name as room_name, r.id as room_id,
+                       ri.location as shelf_location,
+                       m.serial_number, m.model_number
+                FROM item_metadata m
+                JOIN room_items ri ON ri.id = m.placement_id AND m.placement_type = 'room_item'
+                JOIN items i ON i.id = ri.item_id
+                LEFT JOIN categories c ON c.id = i.category_id
+                JOIN rooms r ON r.id = ri.room_id
+                WHERE m.serial_number LIKE %s OR m.model_number LIKE %s
+                   OR m.notes LIKE %s OR ri.notes LIKE %s
+                   AND i.name NOT LIKE %s AND (c.name IS NULL OR c.name NOT LIKE %s)
+                ORDER BY r.name, i.name
+            """, (like, like, like, like, like, like))
+            for row in cur.fetchall():
+                key = ('room_item', row['room_id'], row['item_name'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # ── Box label / description matches ───────────────────────────────
+            cur.execute("""
+                SELECT 'box' as result_type, 4 as priority,
+                       NULL as item_name, NULL as category,
+                       NULL as quantity, NULL as placement_notes,
+                       b.id as box_id, b.box_number, b.label as box_label,
+                       r.name as room_name, r.id as room_id,
+                       NULL as shelf_location,
+                       NULL as serial_number, NULL as model_number
                 FROM boxes b
                 LEFT JOIN rooms r ON r.id = b.room_id
-                LEFT JOIN box_items bi ON bi.box_id = b.id
-                LEFT JOIN items i ON i.id = bi.item_id
-                LEFT JOIN categories c ON c.id = i.category_id
-                WHERE i.name LIKE %s OR c.name LIKE %s OR b.label LIKE %s
+                WHERE (b.label LIKE %s OR b.description LIKE %s)
                 ORDER BY b.box_number
-            """, (f"%{q}%", f"%{q}%", f"%{q}%"))
-            return jsonify(cur.fetchall())
+            """, (like, like))
+            for row in cur.fetchall():
+                key = ('box', row['box_id'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # ── Room name matches ─────────────────────────────────────────────
+            cur.execute("""
+                SELECT 'room' as result_type, 5 as priority,
+                       NULL as item_name, NULL as category,
+                       NULL as quantity, NULL as placement_notes,
+                       NULL as box_id, NULL as box_number, NULL as box_label,
+                       r.name as room_name, r.id as room_id,
+                       NULL as shelf_location,
+                       NULL as serial_number, NULL as model_number
+                FROM rooms r
+                WHERE r.name LIKE %s
+                ORDER BY r.name
+            """, (like,))
+            for row in cur.fetchall():
+                key = ('room', row['room_id'])
+                if key not in seen:
+                    seen.add(key)
+                    results.append(row)
+
+            # Stringify any date fields
+            for r in results:
+                for k, v in r.items():
+                    if hasattr(v, 'isoformat'):
+                        r[k] = str(v)
+
+            return jsonify(results)
     finally:
         conn.close()
