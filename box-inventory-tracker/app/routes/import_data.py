@@ -48,21 +48,37 @@ def import_preview():
 
 @bp.route("/api/import/run", methods=["POST"])
 def import_run():
-    """Import categories, rooms, items, and boxes from JSON. Skips duplicates by name."""
-    data = request.json
+    """Import categories, rooms, items, and boxes from JSON.
+
+    Options:
+      skip_existing (bool, default True): skip items that already exist by name
+      update_category (bool, default False): if item exists, update its category to match JSON
+      merge_categories (dict): {"Old Name": "New Name"} remap categories before inserting
+    """
+    data = request.json or {}
     if not data:
         return jsonify({"error": "No JSON body"}), 400
 
-    categories = data.get("categories", [])
-    rooms_list = data.get("rooms", [])
-    items = data.get("items", [])
-    boxes = data.get("boxes", [])
-    skip_existing = data.get("skip_existing", True)
+    categories      = data.get("categories", [])
+    rooms_list      = data.get("rooms", [])
+    items           = data.get("items", [])
+    boxes           = data.get("boxes", [])
+    skip_existing   = data.get("skip_existing", True)
+    update_category = data.get("update_category", False)
+    merge_categories = data.get("merge_categories", {})
+
+    # Apply merge_categories to item list before processing
+    if merge_categories:
+        for item in items:
+            cat = item.get("category", "")
+            if cat in merge_categories:
+                item["category"] = merge_categories[cat]
+        categories = list(dict.fromkeys(merge_categories.get(c, c) for c in categories))
 
     conn = get_db()
     stats = {
         "categories_added": 0, "rooms_added": 0,
-        "items_added": 0, "items_skipped": 0,
+        "items_added": 0, "items_skipped": 0, "items_updated": 0,
         "boxes_added": 0, "box_items_added": 0,
         "errors": [],
     }
@@ -100,15 +116,23 @@ def import_run():
                 if not name:
                     return None
                 lower = name.lower()
-                if skip_existing and lower in existing_items:
-                    stats["items_skipped"] += 1
-                    return existing_items[lower]
                 cat_name = (category or "").strip()
                 cat_id = None
                 if cat_name:
                     cur.execute("SELECT id FROM categories WHERE name=%s", (cat_name,))
                     row = cur.fetchone()
                     cat_id = row["id"] if row else None
+
+                if lower in existing_items:
+                    item_id = existing_items[lower]
+                    if update_category and cat_id:
+                        cur.execute("UPDATE items SET category_id=%s WHERE id=%s",
+                                    (cat_id, item_id))
+                        stats["items_updated"] += 1
+                    if skip_existing:
+                        stats["items_skipped"] += 1
+                    return item_id
+
                 upc_val = (upc or "").strip() or None
                 cur.execute(
                     "INSERT INTO items (name, category_id, upc) VALUES (%s,%s,%s)",
@@ -182,3 +206,54 @@ def import_run():
     sse_push("boxes")
     logger.info(f"Import complete: {stats}")
     return jsonify(stats)
+
+
+@bp.route("/api/import/category-remap", methods=["POST"])
+def import_category_remap():
+    """Move all items from one category to another.
+    Body: { "from": "Old Category Name", "to": "New Category Name" }
+    Creates the target category if it doesn't exist.
+    Deletes the source category if left empty.
+    """
+    body = request.json or {}
+    from_name = (body.get("from") or "").strip()
+    to_name   = (body.get("to") or "").strip()
+    if not from_name or not to_name:
+        return jsonify({"error": "Both 'from' and 'to' are required"}), 400
+
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT id FROM categories WHERE name=%s", (from_name,))
+            from_row = cur.fetchone()
+            if not from_row:
+                return jsonify({"error": f"Source category '{from_name}' not found"}), 404
+            from_id = from_row["id"]
+
+            cur.execute("SELECT id FROM categories WHERE name=%s", (to_name,))
+            to_row = cur.fetchone()
+            if to_row:
+                to_id = to_row["id"]
+            else:
+                cur.execute("INSERT INTO categories (name) VALUES (%s)", (to_name,))
+                to_id = cur.lastrowid
+                conn.commit()
+
+            if from_id == to_id:
+                return jsonify({"ok": True, "items_moved": 0})
+
+            cur.execute("UPDATE items SET category_id=%s WHERE category_id=%s", (to_id, from_id))
+            moved = cur.rowcount
+
+            cur.execute("SELECT COUNT(*) as n FROM items WHERE category_id=%s", (from_id,))
+            if cur.fetchone()["n"] == 0:
+                cur.execute("DELETE FROM categories WHERE id=%s", (from_id,))
+
+            conn.commit()
+
+        sse_push("items")
+        sse_push("categories")
+        logger.info(f"Category remap: '{from_name}' → '{to_name}', {moved} items moved")
+        return jsonify({"ok": True, "items_moved": moved, "from": from_name, "to": to_name})
+    finally:
+        conn.close()

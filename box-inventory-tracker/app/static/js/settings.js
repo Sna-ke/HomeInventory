@@ -67,9 +67,10 @@ async function importRun() {
   result.innerHTML = '';
 
   try {
-    const skip = document.getElementById('import-skip-existing').checked;
+    const skip   = document.getElementById('import-skip-existing').checked;
+    const update = document.getElementById('import-update-category')?.checked || false;
     const res = await api('/api/import/run', {
-      method: 'POST', body: JSON.stringify({ ..._importData, skip_existing: skip }),
+      method: 'POST', body: JSON.stringify({ ..._importData, skip_existing: skip, update_category: update }),
     });
     const lines = [
       `<div style="color:var(--accent);font-weight:700;margin-bottom:6px;">✓ Import complete</div>`,
@@ -77,6 +78,7 @@ async function importRun() {
       res.rooms_added      ? `<div>Rooms added: <strong>${res.rooms_added}</strong></div>` : '',
       res.items_added      ? `<div>Items added: <strong>${res.items_added}</strong></div>` : '',
       res.items_skipped    ? `<div>Items skipped (existing): <strong>${res.items_skipped}</strong></div>` : '',
+      res.items_updated    ? `<div>Items updated (category): <strong>${res.items_updated}</strong></div>` : '',
       res.boxes_added      ? `<div>Boxes created: <strong>${res.boxes_added}</strong></div>` : '',
       res.box_items_added  ? `<div>Box entries restored: <strong>${res.box_items_added}</strong></div>` : '',
     ];
@@ -249,5 +251,30 @@ async function resetRun() {
     toast(`Reset failed: ${e.message}`, true);
     btn.disabled = false;
     btn.textContent = 'Delete Everything';
+  }
+}
+
+// ── Category remap ────────────────────────────────────────────────────────
+async function runCategoryRemap() {
+  const from = document.getElementById('remap-from').value.trim();
+  const to   = document.getElementById('remap-to').value.trim();
+  const result = document.getElementById('remap-result');
+  result.textContent = '';
+  if (!from || !to) { toast('Enter both category names', true); return; }
+  if (from === to)  { toast('Categories are the same', true); return; }
+  if (!confirm(`Move all items from "${from}" into "${to}"?\nThe source category will be deleted if left empty.`)) return;
+  try {
+    const res = await api('/api/import/category-remap', {
+      method: 'POST', body: JSON.stringify({ from, to })
+    });
+    result.style.color = 'var(--accent)';
+    result.textContent = `✓ Moved ${res.items_moved} item${res.items_moved !== 1 ? 's' : ''} from "${from}" to "${to}"`;
+    document.getElementById('remap-from').value = '';
+    document.getElementById('remap-to').value = '';
+    toast(`Moved ${res.items_moved} items`);
+  } catch(e) {
+    result.style.color = '#c33';
+    result.textContent = `❌ ${e.message}`;
+    toast(`Failed: ${e.message}`, true);
   }
 }

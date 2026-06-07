@@ -1,5 +1,19 @@
 # Changelog
 
+## 2.9.12
+- **Fix / Merge Categories in Settings**: new section lets you move all items from one category into another with autocomplete on both fields. Source category is deleted automatically if left empty after the move. Use this to fix typos, merge duplicates, or consolidate after importing a new JSON file
+- **Import: Update Category option**: new checkbox on the Import screen — 'Update category of existing items to match file'. When checked, items that already exist will have their category updated to whatever the JSON says, without creating duplicates. This is how to fix category assignments on data already in the system
+- **Import: merge_categories map**: the /api/import/run endpoint now accepts a merge_categories object (e.g. {"Board & Paddle Sports": "Water Sports"}) to remap categories within the JSON before processing — useful for programmatic imports
+- **Data fixes**: Gloves – winter moved from Shoes & Accessories → Clothing – Men's; Backpack – everyday → Miscellaneous; Gym bag → Sports & Fitness; Luggage (carry-on, checked) → Miscellaneous in household_items.json
+- **Data fixes**: Board & Paddle Sports merged into Water Sports in household_items_2.json (18 items remapped, category removed)
+
+## 2.9.11
+- **Bedding & Linens – Sized category added** (131 items): duvet inserts, duvet covers, comforters, quilts, electric blankets, weighted blankets, throws, fitted sheets, flat/top sheets, sheet sets, pillowcases, pillow shams — all in twin/twin XL/full/double/queen/king/California king variants where applicable. Pillows by type (standard, queen, king, euro, body, memory foam, bamboo, pregnancy, cervical, toddler). Mattress protectors and toppers by size. Bed skirts by size. Towels (bath, hand, washcloth, bath sheet, beach, kitchen, hair, gym), robes, table linens, and specialty bedding (flannel/sateen/bamboo/linen/wool variants, crib sets, bunk bed curtains, storage bags). Storage locker pack now 1,514 items across 47 categories
+
+## 2.9.10
+- **Storage locker pack expanded**: household_items_2.json grown from 1,000 to 1,383 items and from 30 to 39 categories. New additions: Furniture (Bedroom, Living Room, Dining Room, Office, Outdoor) — bed frames, headboards, nightstands, dressers, wardrobes, sofas, sectionals, dining tables, desks, outdoor furniture; Mattresses & Bases — twin/full/queen/king/California king/crib mattresses, box springs, adjustable bases; Lighting — chandeliers, pendants, floor/table/desk lamps, outdoor; Window Treatments — curtains, blinds, shades, film; Rugs & Flooring — area rugs by size and style, underlayment, flooring boxes; Wall Decor — art, mirrors, shelves, wallpaper; Home Appliances — refrigerators, ranges, dishwashers, washers/dryers, HVAC, generators; Home Improvement — drywall, insulation, tile, paint, fixtures; Party & Events; School & Office Supplies; Food Preservation — canning, fermenting, dehydrating; Brewing & Winemaking
+- Removed all "set of N" quantity descriptors from both JSON files (2.9.8 fix applied to new items as well)
+
 ## 2.9.9
 - **Global search rebuilt**: the header search box now searches across everything — item names, categories, box labels/descriptions, room names, serial numbers, model numbers, placement notes, and asset notes
 - **Prioritised results**: results grouped into sections by match type — (1) Item name match, (2) Category match, (3) Details match (serial/model/notes), (4) Box label match, (5) Room name match
