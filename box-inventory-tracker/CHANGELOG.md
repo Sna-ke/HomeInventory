@@ -1,7 +1,7 @@
 # Changelog
 
 ## 2.9.4
-- **Added more potential items**: Added a second set of items.
+- **Added more potential items**: Added a second set of item JSONs.
 
 ## 2.9.3
 - **Fixed Issue Adding Items to Rooms without boxes**: can now add items to rooms without boxes.
