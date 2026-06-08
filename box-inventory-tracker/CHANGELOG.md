@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.2.1
+- **Fixed: QR code 'library not loaded' error** — the qrcode package (npm) has no pre-built browser bundle on jsDelivr; the build/ folder only exists locally after running the package build step. Switched to a self-hosted 80KB browserified bundle (qrcode.min.js) served from the add-on's own static files — no CDN dependency, no 404, no MIME type errors
+
 ## 3.2.0
 - **Dashboard is now the start screen**: opens to Home (📊) on every launch instead of Boxes
 - **Packing context question**: the dashboard opens with 'What are you packing for?' — Moving Home 🚛, Storage Locker 🏚️, Travel / Trip ✈️, or Home Organisation 🏠. Each context shows a relevant hint and a smart suggestion tip. Persists to localStorage. A small 'Change' button resets it
