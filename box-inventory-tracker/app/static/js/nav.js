@@ -26,7 +26,8 @@ function showPanel(name, writeHash = true) {
       setTimeout(() => window.addEventListener('hashchange', applyNav), 0);
     }
 
-    if (name === 'dashboard') loadDashboard();
+    if (name === 'wizard') loadWizard();
+    else if (name === 'dashboard') loadDashboard();
     else if (name === 'boxes') loadBoxes();
     else if (name === 'rooms') loadRooms();
     else if (name === 'items') loadItems();
@@ -301,7 +302,7 @@ function applyNav() {
     if (id) { openBoxDetail(id); return; }
   }
 
-  const panels = ['dashboard', 'boxes', 'rooms', 'items', 'categories', 'settings'];
+  const panels = ['wizard', 'dashboard', 'boxes', 'rooms', 'items', 'categories', 'settings'];
   const target = panels.includes(loc) ? loc : 'dashboard';
   showPanel(target, false);
 }

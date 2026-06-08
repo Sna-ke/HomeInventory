@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.3.0
+- **Guided Wizard — Phase 1 (Packing)**: tap a context from the dashboard to enter the wizard. Moving Home, Storage Locker, and Home Organisation each have their own room list, box type suggestions, and contextual tips
+- **Room picker**: icon-grid of rooms relevant to your context (Kitchen, Living Room, Bedroom, Kids Room, Bathroom, Home Office, Garage for moves). Tap any room or choose Other to name your own
+- **Box type picker**: for each room, suggested box types with icons (Everyday Dishes, Pots & Pans, Cutlery & Utensils, etc). Tap a type and the box is created automatically, named and assigned to the room
+- **Chip screen**: 530 pre-populated item chips for all rooms/boxes. Tap a chip to add that item to the box — each tap adds qty 1 and shows a count badge. Long-press or right-click to add a note (e.g. Summer, Sarah) creating a separate line item. + Other opens the standard item search
+- **Contextual tips**: each room and box type shows a relevant packing tip (wrap plates vertically, pack heavy items in small boxes, medicines go in your car not the truck)
+- **Progress bar**: shows rooms completed out of total for the current context
+- **Session persistence**: wizard state saved to DB (wizard_sessions table). Resuming the wizard after closing the app picks up exactly where you left off
+- **Build it myself**: escape hatch on every box picker screen opens packing mode directly
+- **wizard_data.json**: importable JSON schema for all wizard suggestions — rooms, box types, chip items, tips, icons. Update and re-import via Settings to refine over time
+- **DB migration 13**: wizard_sessions table added
+
 ## 3.2.3
 - **Fixed: QR codes return 401 when scanned from another device via HA ingress** — when the app is opened through Home Assistant ingress, the URL contains a session-specific token (e.g. /api/hassio_ingress/<token>/) that is only valid for the generating browser session. Scanning on another phone hits a 401. The QR code generator now calls getQRBaseURL() which: (1) uses a user-configured override if set; (2) falls back to location.origin if accessed directly (no ingress path); (3) auto-detects http://hostname:5000 when accessed via ingress, stripping the session-specific token
 - **Settings → QR Code URL**: new section lets you set the direct URL of the add-on (e.g. http://homeassistant.local:5000 or http://192.168.1.x:5000). A preview shows exactly what URL will be encoded. Save it once and all QR codes will work from any device on the network

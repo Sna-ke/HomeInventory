@@ -1395,3 +1395,184 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 .item-row.is-flagged {
   border-left: 3px solid var(--accent);
 }
+
+/* ═══════════════════════ WIZARD ════════════════════════════════════════════ */
+
+.wiz-loading, .wiz-error {
+  padding: 32px 20px; text-align: center;
+  font-family: var(--mono); font-size: 14px; color: var(--muted);
+}
+.wiz-error { color: #c33; }
+
+/* Progress bar */
+.wiz-progress-bar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 8px 16px; display: flex; align-items: center; gap: 12px;
+}
+.wiz-progress-track {
+  flex: 1; height: 4px; background: var(--border); overflow: hidden;
+}
+.wiz-progress-fill {
+  height: 100%; background: var(--accent);
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+.wiz-progress-label {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  white-space: nowrap; flex-shrink: 0;
+}
+
+/* Header */
+.wiz-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.wiz-back-btn {
+  background: none; border: none; color: var(--muted);
+  font-family: var(--sans); font-size: 13px; cursor: pointer;
+  padding: 4px 0; flex-shrink: 0;
+}
+.wiz-back-btn:hover { color: var(--accent); }
+.wiz-header-title {
+  font-size: 16px; font-weight: 900; color: var(--text);
+  flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* Body */
+.wiz-body {
+  padding: 16px; display: flex; flex-direction: column; gap: 14px;
+  max-width: 640px;
+}
+
+/* Tip */
+.wiz-tip {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface2); border-left: 3px solid var(--accent);
+  padding: 10px 12px; font-size: 13px; color: var(--muted);
+  line-height: 1.5;
+}
+.wiz-tip-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* Question */
+.wiz-question {
+  font-size: 17px; font-weight: 900; color: var(--text); letter-spacing: -.2px;
+}
+
+/* Room grid */
+.wiz-room-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.wiz-room-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; padding: 16px 12px;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-family: var(--sans); transition: border-color .12s, background .12s;
+}
+.wiz-room-btn:hover  { border-color: var(--accent); background: var(--surface2); }
+.wiz-room-btn:active { background: var(--surface2); }
+.wiz-room-icon  { font-size: 28px; line-height: 1; }
+.wiz-room-label { font-size: 13px; font-weight: 700; }
+.wiz-room-custom { border-style: dashed; color: var(--muted); }
+
+/* Box grid */
+.wiz-box-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;
+}
+.wiz-box-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); cursor: pointer; padding: 12px 10px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  font-family: var(--sans); position: relative;
+  transition: border-color .12s, background .12s;
+}
+.wiz-box-btn:hover  { border-color: var(--accent); background: var(--surface2); }
+.wiz-box-btn.done   { opacity: .55; }
+.wiz-box-btn.done:hover { opacity: 1; }
+.wiz-box-icon  { font-size: 22px; line-height: 1; }
+.wiz-box-label { font-size: 12px; font-weight: 700; text-align: center; }
+.wiz-box-done-badge {
+  position: absolute; top: 5px; right: 7px;
+  font-size: 11px; color: var(--accent);
+}
+.wiz-box-custom { border-style: dashed; color: var(--muted); }
+
+/* Done list */
+.wiz-done-list { display: flex; flex-direction: column; gap: 4px; }
+.wiz-done-item {
+  display: flex; justify-content: space-between;
+  font-size: 13px; color: var(--muted); padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.wiz-done-count {
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+}
+
+/* Room actions */
+.wiz-room-actions {
+  display: flex; gap: 8px; flex-wrap: wrap;
+}
+.wiz-action-btn {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--sans); font-size: 13px;
+  font-weight: 700; padding: 10px 14px; cursor: pointer; flex: 1;
+  transition: border-color .12s;
+}
+.wiz-action-btn:hover { border-color: var(--accent); }
+.wiz-action-btn.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+
+/* Current box label */
+.wiz-current-box-label {
+  font-family: var(--mono); font-size: 13px; color: var(--accent);
+  padding: 6px 10px; border: 1px solid var(--accent);
+  background: var(--surface2); display: inline-block;
+}
+
+/* Count bar */
+.wiz-count-bar {
+  font-family: var(--mono); font-size: 13px; color: var(--muted);
+  min-height: 20px; transition: color .2s;
+}
+
+/* Chip grid */
+.wiz-chip-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.wiz-chip {
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-family: var(--sans); font-size: 14px;
+  font-weight: 600; padding: 10px 14px;
+  cursor: pointer; display: flex; align-items: center; gap: 6px;
+  transition: background .1s, border-color .1s, transform .08s;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.wiz-chip:active       { transform: scale(.96); }
+.wiz-chip.active       { background: var(--surface2); border-color: var(--accent); color: var(--accent); }
+.wiz-chip.bump         { transform: scale(1.08); }
+.wiz-chip-qty {
+  background: var(--accent); color: #000; border-radius: 999px;
+  font-size: 11px; font-weight: 900; padding: 1px 7px;
+  min-width: 20px; text-align: center;
+}
+.wiz-chip-other {
+  border-style: dashed; color: var(--muted); font-weight: 600;
+}
+.wiz-chip-other:hover { color: var(--text); border-color: var(--text); }
+
+/* Done button */
+.wiz-done-btn {
+  width: 100%; background: var(--accent); border: none;
+  color: #000; font-family: var(--sans); font-weight: 900;
+  font-size: 16px; letter-spacing: .5px; padding: 16px;
+  cursor: pointer; transition: opacity .12s;
+  margin-top: 6px;
+}
+.wiz-done-btn:hover  { opacity: .9; }
+.wiz-done-btn:active { opacity: .8; transform: scale(.99); }
+
+/* Skip link */
+.wiz-skip {
+  text-align: center; padding: 4px 0 8px;
+}
+.wiz-skip a { color: var(--muted); font-size: 13px; }
+.wiz-skip a:hover { color: var(--accent); }

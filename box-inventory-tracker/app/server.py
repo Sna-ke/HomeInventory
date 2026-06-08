@@ -37,6 +37,7 @@ from routes.import_data  import bp as import_bp
 from routes.export_reset import bp as export_reset_bp
 from routes.metadata    import bp as metadata_bp
 from routes.dashboard   import bp as dashboard_bp
+from routes.wizard      import bp as wizard_bp
 
 app.register_blueprint(sse_bp)
 app.register_blueprint(categories_bp)
@@ -50,6 +51,7 @@ app.register_blueprint(import_bp)
 app.register_blueprint(export_reset_bp)
 app.register_blueprint(metadata_bp)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(wizard_bp)
 
 # ── Startup ────────────────────────────────────────────────────────────────
 if __name__ == "__main__":

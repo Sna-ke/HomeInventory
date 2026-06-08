@@ -39,6 +39,11 @@ function setPackingContext(key) {
   loadDashboard();
 }
 
+function startWizard(contextKey) {
+  setPackingContext(contextKey);
+  showPanel('wizard');
+}
+
 function renderContextBanner(el) {
   const ctx = getPackingContext();
   const banner = document.createElement('div');
@@ -51,7 +56,7 @@ function renderContextBanner(el) {
         <div class="dash-context-q-text">What are you packing for?</div>
         <div class="dash-context-options">
           ${Object.entries(PACKING_CONTEXTS).map(([key, c]) => `
-            <button class="dash-context-opt" onclick="setPackingContext('${key}')">
+            <button class="dash-context-opt" onclick="startWizard('${key}')">
               <span class="dash-context-opt-icon">${c.icon}</span>
               <span class="dash-context-opt-label">${c.label}</span>
             </button>
@@ -80,6 +85,8 @@ function renderContextBanner(el) {
 
 function setPackingContext_clear() {
   localStorage.removeItem('packingContext');
+  // Clear wizard session too
+  api('/api/wizard/session', {method:'DELETE'}).catch(()=>{});
   loadDashboard();
 }
 

@@ -160,6 +160,16 @@ def init_db():
                         FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
                     )
                 """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS wizard_sessions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        context VARCHAR(32) NOT NULL,
+                        phase VARCHAR(32) NOT NULL DEFAULT 'packing',
+                        state JSON,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                """)
             conn.commit()
             conn.close()
             logger.info("Database initialized successfully.")
@@ -365,6 +375,24 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 13: wizard_sessions table (v3.3.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='wizard_sessions'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating wizard_sessions table")
+                cur.execute("""
+                    CREATE TABLE wizard_sessions (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        context VARCHAR(32) NOT NULL,
+                        phase VARCHAR(32) NOT NULL DEFAULT 'packing',
+                        state JSON,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    )
+                """)
 
             # Migration 12: boxes.box_type + box_items.flagged (v3.2.0)
             cur.execute("""
