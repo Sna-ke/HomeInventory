@@ -449,13 +449,32 @@
 <div id="modal-box" class="modal-backdrop">
   <div class="modal">
     <h3 id="modal-box-title">New Box</h3>
-    <div class="field">
-      <label>Label / Short Name (optional)</label>
-      <input type="text" id="box-label" placeholder="e.g. Kitchen Essentials">
+    <!-- Box type toggle -->
+    <div class="field" style="margin-bottom:10px;">
+      <label style="margin-bottom:6px;">Box type</label>
+      <div style="display:flex;gap:0;">
+        <button type="button" id="box-type-inventory" onclick="setBoxType('inventory')"
+          class="box-type-btn active" style="flex:1;">
+          <span style="font-size:16px;">📋</span>
+          <span>Inventory</span>
+          <span style="font-size:10px;color:inherit;opacity:.7;">track what's inside</span>
+        </button>
+        <button type="button" id="box-type-quick" onclick="setBoxType('quick')"
+          class="box-type-btn" style="flex:1;">
+          <span style="font-size:16px;">⚡</span>
+          <span>Quick Label</span>
+          <span style="font-size:10px;color:inherit;opacity:.7;">just name + photo</span>
+        </button>
+      </div>
+      <input type="hidden" id="box-type" value="inventory">
     </div>
     <div class="field">
-      <label>Description (optional)</label>
-      <textarea id="box-description" placeholder="e.g. Contains everyday cooking items, spices, and small appliances"></textarea>
+      <label>Label / Short Name</label>
+      <input type="text" id="box-label" placeholder="e.g. Linens, Kitchen Stuff, Books">
+    </div>
+    <div class="field">
+      <label>Contents description <span style="color:var(--muted);font-size:11px;">(optional — makes box searchable)</span></label>
+      <textarea id="box-description" rows="2" placeholder="e.g. flannel sheets, summer duvet, two blankets, pillows"></textarea>
     </div>
     <div class="field">
       <label>Room</label>

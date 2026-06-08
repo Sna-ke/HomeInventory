@@ -160,6 +160,14 @@ function renderBoxes(boxes) {
   }
 }
 
+function setBoxType(type) {
+  document.getElementById('box-type').value = type;
+  const invBtn = document.getElementById('box-type-inventory');
+  const quiBtn = document.getElementById('box-type-quick');
+  if (invBtn) invBtn.classList.toggle('active', type === 'inventory');
+  if (quiBtn) quiBtn.classList.toggle('active', type === 'quick');
+}
+
 function openBoxModal(id = null, presetRoomId = null) {
   editingBox = id;
   document.getElementById('modal-box-title').textContent = id ? 'Edit Box' : 'New Box';
@@ -171,11 +179,13 @@ function openBoxModal(id = null, presetRoomId = null) {
       document.getElementById('box-label').value = b.label || '';
       document.getElementById('box-description').value = b.description || '';
       sel.value = b.room_id || '';
+      setBoxType(b.box_type || 'inventory');
     });
   } else {
     document.getElementById('box-label').value = '';
     document.getElementById('box-description').value = '';
     sel.value = presetRoomId || '';
+    setBoxType('inventory');
   }
   openModal('modal-box');
 }
@@ -186,12 +196,14 @@ async function saveBox() {
   const room_id = document.getElementById('box-room').value || null;
   try {
     if (editingBox) {
-      await api(`/api/boxes/${editingBox}`, { method:'PUT', body:JSON.stringify({label, description, room_id}) });
+      const box_type = document.getElementById('box-type')?.value || 'inventory';
+      await api(`/api/boxes/${editingBox}`, { method:'PUT', body:JSON.stringify({label, description, room_id, box_type}) });
       closeModal('modal-box');
       toast('Box updated');
       openBoxDetail(editingBox);
     } else {
-      const box = await api('/api/boxes', { method:'POST', body:JSON.stringify({label, description, room_id}) });
+      const box_type = document.getElementById('box-type')?.value || 'inventory';
+      const box = await api('/api/boxes', { method:'POST', body:JSON.stringify({label, description, room_id, box_type}) });
       closeModal('modal-box');
       toast(`Box #${box.box_number} created`);
       loadBoxes();
@@ -343,6 +355,15 @@ async function openBoxDetail(id) {
       moveBtn.title = 'Move to another box';
       moveBtn.textContent = '⇄';
 
+      const flagBtn = document.createElement('button');
+      flagBtn.className = 'btn-icon';
+      flagBtn.dataset.action = 'toggle-flag';
+      flagBtn.dataset.boxItemId = i.box_item_id;
+      flagBtn.dataset.flagged = i.flagged ? '1' : '0';
+      flagBtn.textContent = i.flagged ? '⭐' : '☆';
+      flagBtn.title = i.flagged ? 'Flagged — tap to unflag' : 'Flag as important';
+      flagBtn.style.color = i.flagged ? 'var(--accent)' : 'var(--muted)';
+
       const metaBtn = document.createElement('button');
       metaBtn.className = 'btn-icon';
       metaBtn.title = 'Asset details';
@@ -360,6 +381,7 @@ async function openBoxDetail(id) {
       row.appendChild(thumb);
       row.appendChild(info);
       row.appendChild(qtyCtrl);
+      row.appendChild(flagBtn);
       row.appendChild(editBtn);
       row.appendChild(moveBtn);
       row.appendChild(metaBtn);
@@ -501,6 +523,15 @@ async function refreshBoxItemsInPlace(id) {
         moveBtn.dataset.name = i.name; moveBtn.dataset.qty = i.quantity;
         moveBtn.title = 'Move to another box'; moveBtn.textContent = '⇄';
 
+        const flagBtnR = document.createElement('button');
+        flagBtnR.className = 'btn-icon';
+        flagBtnR.dataset.action = 'toggle-flag';
+        flagBtnR.dataset.boxItemId = i.box_item_id;
+        flagBtnR.dataset.flagged = i.flagged ? '1' : '0';
+        flagBtnR.textContent = i.flagged ? '⭐' : '☆';
+        flagBtnR.title = i.flagged ? 'Flagged — tap to unflag' : 'Flag as important';
+        flagBtnR.style.color = i.flagged ? 'var(--accent)' : 'var(--muted)';
+
         const metaBtnR = document.createElement('button');
         metaBtnR.className = 'btn-icon';
         metaBtnR.title = 'Asset details';
@@ -517,7 +548,7 @@ async function refreshBoxItemsInPlace(id) {
         fillBoxThumb(thumb, i.thumb_url ? { thumb_url: i.thumb_url } : {});
 
         row.appendChild(thumb); row.appendChild(info); row.appendChild(qtyCtrl);
-        row.appendChild(editBtn); row.appendChild(moveBtn); row.appendChild(metaBtnR);
+        row.appendChild(flagBtnR); row.appendChild(editBtn); row.appendChild(moveBtn); row.appendChild(metaBtnR);
         row.appendChild(delBtn);
         itemRowsEl.appendChild(row);
       });
@@ -645,6 +676,16 @@ document.getElementById('panel-box-detail').addEventListener('click', async e =>
   } else if (action === 'move-box-item') {
     openMoveItemModal(btn.dataset.id, btn.dataset.name, currentBoxId, btn.dataset.qty);
 
+  } else if (action === 'toggle-flag') {
+    const boxItemId = parseInt(btn.dataset.boxItemId);
+    api(`/api/box-items/${boxItemId}/flag`, { method: 'POST' })
+      .then(r => {
+        btn.textContent = r.flagged ? '⭐' : '☆';
+        btn.title = r.flagged ? 'Flagged — tap to unflag' : 'Flag as important';
+        btn.dataset.flagged = r.flagged ? '1' : '0';
+        btn.style.color = r.flagged ? 'var(--accent)' : 'var(--muted)';
+      })
+      .catch(e => toast(e.message, true));
   } else if (action === 'open-metadata') {
     openMetadataModal('box_item', parseInt(btn.dataset.boxItemId), btn.dataset.name);
 

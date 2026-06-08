@@ -56,7 +56,7 @@ document.querySelectorAll('.modal-backdrop').forEach(bd => {
 // ── Global Search ──────────────────────────────────────────────────────────
 function handleSearch(q) {
   clearTimeout(searchTimer);
-  if (!q.trim()) { showPanel('boxes'); return; }
+  if (!q.trim()) { showPanel('dashboard'); return; }
   searchTimer = setTimeout(() => doSearch(q), 300);
 }
 
@@ -302,7 +302,7 @@ function applyNav() {
   }
 
   const panels = ['dashboard', 'boxes', 'rooms', 'items', 'categories', 'settings'];
-  const target = panels.includes(loc) ? loc : 'boxes';
+  const target = panels.includes(loc) ? loc : 'dashboard';
   showPanel(target, false);
 }
 

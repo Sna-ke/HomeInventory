@@ -78,7 +78,7 @@ def get_box(box_id):
             if not box:
                 return jsonify({"error": "Not found"}), 404
             cur.execute("""
-                SELECT bi.id as box_item_id, bi.quantity, bi.notes,
+                SELECT bi.id as box_item_id, bi.quantity, bi.notes, bi.flagged,
                        i.id as item_id, i.name,
                        c.id as category_id, c.name as category,
                        (SELECT img.id

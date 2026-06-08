@@ -76,6 +76,7 @@ def init_db():
                         label VARCHAR(255),
                         description TEXT,
                         room_id INT,
+                        box_type ENUM('inventory','quick') NOT NULL DEFAULT 'inventory',
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
                     )
@@ -96,6 +97,7 @@ def init_db():
                         item_id INT NOT NULL,
                         quantity INT NOT NULL DEFAULT 1,
                         notes TEXT,
+                        flagged TINYINT(1) NOT NULL DEFAULT 0,
                         FOREIGN KEY (box_id) REFERENCES boxes(id) ON DELETE CASCADE,
                         FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE
                     )
@@ -363,6 +365,23 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 12: boxes.box_type + box_items.flagged (v3.2.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='boxes' AND COLUMN_NAME='box_type'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding boxes.box_type")
+                cur.execute("ALTER TABLE boxes ADD COLUMN box_type ENUM('inventory','quick') NOT NULL DEFAULT 'inventory'")
+
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='box_items' AND COLUMN_NAME='flagged'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding box_items.flagged")
+                cur.execute("ALTER TABLE box_items ADD COLUMN flagged TINYINT(1) NOT NULL DEFAULT 0")
 
             # Migration 11: room_items.location column (v2.9.4)
             cur.execute("""

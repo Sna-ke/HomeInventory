@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.2.0
+- **Dashboard is now the start screen**: opens to Home (📊) on every launch instead of Boxes
+- **Packing context question**: the dashboard opens with 'What are you packing for?' — Moving Home 🚛, Storage Locker 🏚️, Travel / Trip ✈️, or Home Organisation 🏠. Each context shows a relevant hint and a smart suggestion tip. Persists to localStorage. A small 'Change' button resets it
+- **Box types — Inventory vs Quick Label**: when creating or editing a box, choose its type. Inventory boxes track individual items (current behaviour). Quick Label boxes are just a name, description, and photo — done in seconds. Perfect for 'Box of linens', 'Kitchen stuff', 'Books'. The description field is now explicitly labelled as making the box searchable so you can type 'flannel sheets duvet pillow' and find the box without itemizing
+- **Flagged items** (⭐): tap the star icon on any item in a box to flag it as important. Flagged items show with an amber left border and the star is filled. Use this for the special blanket, the favourite pillow, the passport — things you need to be able to find specifically. The flag syncs instantly via SSE
+- **DB migration 12**: boxes.box_type ENUM and box_items.flagged TINYINT columns added
+
 ## 3.1.1
 - **Fixed: QR codes not scannable** — replaced the custom hand-rolled QR Code generator with the battle-tested `qrcode` npm package (v1.5.4, browser UMD build from jsDelivr). The custom implementation had multiple spec errors: version selection loop always picked the highest version, finder pattern inner ring was drawn incorrectly, format info copy 2 bit ordering was wrong, and the interleave block size calculation had an off-by-one. The `qrcode` library implements the full ISO/IEC 18004 spec correctly and is used in production by millions of projects. Renders as inline SVG, still vector-sharp at any size
 

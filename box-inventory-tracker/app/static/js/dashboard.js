@@ -1,3 +1,88 @@
+// ── Packing Context ───────────────────────────────────────────────────────
+const PACKING_CONTEXTS = {
+  move: {
+    icon: '🚛',
+    label: 'Moving Home',
+    hint: 'Pack room-by-room, label every box, inventory the valuables.',
+    defaultBoxType: 'inventory',
+    suggestion: 'Start with an essentials box — things you'll need on day one.',
+  },
+  storage: {
+    icon: '🏚️',
+    label: 'Storage Locker',
+    hint: 'Long-term retrieval matters. Clear labels and photos are your future self's best friend.',
+    defaultBoxType: 'quick',
+    suggestion: 'Put things you'll need soonest near the front. Label sides, not tops.',
+  },
+  travel: {
+    icon: '✈️',
+    label: 'Travel / Trip',
+    hint: 'Pack by activity or day. Flag anything you can't replace.',
+    defaultBoxType: 'inventory',
+    suggestion: 'Flag your passport, medications, and chargers so they're always findable.',
+  },
+  organize: {
+    icon: '🏠',
+    label: 'Home Organisation',
+    hint: 'Track where things actually live. Find anything in seconds.',
+    defaultBoxType: 'inventory',
+    suggestion: 'Use rooms to mirror your home — one room per shelf unit or area.',
+  },
+};
+
+function getPackingContext() {
+  return localStorage.getItem('packingContext') || null;
+}
+
+function setPackingContext(key) {
+  localStorage.setItem('packingContext', key);
+  loadDashboard();
+}
+
+function renderContextBanner(el) {
+  const ctx = getPackingContext();
+  const banner = document.createElement('div');
+  banner.className = 'dash-context-banner';
+
+  if (!ctx) {
+    // Question — no context chosen yet
+    banner.innerHTML = `
+      <div class="dash-context-question">
+        <div class="dash-context-q-text">What are you packing for?</div>
+        <div class="dash-context-options">
+          ${Object.entries(PACKING_CONTEXTS).map(([key, c]) => `
+            <button class="dash-context-opt" onclick="setPackingContext('${key}')">
+              <span class="dash-context-opt-icon">${c.icon}</span>
+              <span class="dash-context-opt-label">${c.label}</span>
+            </button>
+          `).join('')}
+        </div>
+      </div>`;
+  } else {
+    // Context set — show header with change option
+    const c = PACKING_CONTEXTS[ctx];
+    banner.innerHTML = `
+      <div class="dash-context-set">
+        <div class="dash-context-set-left">
+          <span class="dash-context-icon">${c.icon}</span>
+          <div>
+            <div class="dash-context-set-label">${c.label}</div>
+            <div class="dash-context-set-hint">${c.hint}</div>
+          </div>
+        </div>
+        <button class="dash-context-change" onclick="setPackingContext_clear()">Change</button>
+      </div>
+      ${c.suggestion ? `<div class="dash-context-tip">💡 ${c.suggestion}</div>` : ''}`;
+  }
+
+  el.appendChild(banner);
+}
+
+function setPackingContext_clear() {
+  localStorage.removeItem('packingContext');
+  loadDashboard();
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 async function loadDashboard() {
@@ -14,12 +99,13 @@ async function loadDashboard() {
 
 function renderDashboard(el, d) {
   const t = d.totals;
+  el.innerHTML = '';
+  renderContextBanner(el);
+  const ctx = getPackingContext();
   const totalThings = t.items_packed + t.items_placed;
   const packedPct = t.item_types > 0
     ? Math.min(100, Math.round(t.distinct_types_packed / t.item_types * 100))
     : 0;
-
-  el.innerHTML = '';
 
   // ── Hero stats row ────────────────────────────────────────────────────────
   const hero = document.createElement('div');
