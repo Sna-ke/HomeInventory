@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.3
+- **Fixed: QR codes return 401 when scanned from another device via HA ingress** — when the app is opened through Home Assistant ingress, the URL contains a session-specific token (e.g. /api/hassio_ingress/<token>/) that is only valid for the generating browser session. Scanning on another phone hits a 401. The QR code generator now calls getQRBaseURL() which: (1) uses a user-configured override if set; (2) falls back to location.origin if accessed directly (no ingress path); (3) auto-detects http://hostname:5000 when accessed via ingress, stripping the session-specific token
+- **Settings → QR Code URL**: new section lets you set the direct URL of the add-on (e.g. http://homeassistant.local:5000 or http://192.168.1.x:5000). A preview shows exactly what URL will be encoded. Save it once and all QR codes will work from any device on the network
+
 ## 3.2.2
 - **Fixed: dashboard SyntaxError** — unescaped apostrophes in single-quoted JS string literals (you'll, self's, can't, they're) caused a parse error that prevented dashboard.js loading entirely, which caused the 'Can't find variable: loadDashboard' error in nav.js. Replaced contractions with full forms
 - **Fixed: packing mode room/box picker not working** — positionDropdownFixed() was adding .fixed-position class and inline top/left/width styles to the dropdown after it opened, overriding the absolute CSS positioning and placing the list off-screen. Packing mode now strips those overrides immediately after opening either dropdown

@@ -278,3 +278,58 @@ async function runCategoryRemap() {
     toast(`Failed: ${e.message}`, true);
   }
 }
+
+// ── QR Base URL ───────────────────────────────────────────────────────────
+function loadQRURLSettings() {
+  const val = localStorage.getItem('qrBaseURL') || '';
+  const inp = document.getElementById('qr-base-url');
+  if (inp) inp.value = val;
+  updateQRURLPreview();
+}
+
+function updateQRURLPreview() {
+  const preview = document.getElementById('qr-url-preview');
+  if (!preview) return;
+  // Simulate getQRBaseURL without calling it (may not be loaded yet)
+  const override = localStorage.getItem('qrBaseURL');
+  let url;
+  if (override && override.trim()) {
+    url = override.trim().replace(/\/+$/, '');
+  } else if (!API_BASE || API_BASE === '') {
+    url = location.origin;
+  } else {
+    const port = localStorage.getItem('qrDirectPort') || '5000';
+    url = `http://${location.hostname}:${port}`;
+  }
+  preview.textContent = url + '/?box=N';
+}
+
+function saveQRBaseURL() {
+  const val = (document.getElementById('qr-base-url')?.value || '').trim();
+  if (val && !val.startsWith('http')) {
+    toast('URL must start with http:// or https://', true);
+    return;
+  }
+  if (val) {
+    localStorage.setItem('qrBaseURL', val.replace(/\/+$/, ''));
+  } else {
+    localStorage.removeItem('qrBaseURL');
+  }
+  updateQRURLPreview();
+  const status = document.getElementById('qr-url-status');
+  if (status) {
+    status.textContent = val ? 'Saved. New QR codes will use this URL.' : 'Cleared. Using auto-detected URL.';
+    status.style.color = 'var(--accent)';
+  }
+  toast(val ? 'QR URL saved' : 'QR URL cleared');
+}
+
+function clearQRBaseURL() {
+  localStorage.removeItem('qrBaseURL');
+  const inp = document.getElementById('qr-base-url');
+  if (inp) inp.value = '';
+  updateQRURLPreview();
+  const status = document.getElementById('qr-url-status');
+  if (status) { status.textContent = 'Cleared — using auto-detected URL.'; status.style.color = 'var(--muted)'; }
+  toast('QR URL cleared');
+}

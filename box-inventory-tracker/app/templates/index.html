@@ -266,6 +266,28 @@
       <div id="remap-result" style="font-family:var(--mono);font-size:12px;"></div>
 
       <!-- ── Export ─────────────────────────────────────────────────── -->
+      <!-- ── QR Code URL ──────────────────────────────────────────────── -->
+      <h3 class="settings-section-hdr" style="margin-top:32px;">QR Code URL</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:12px;line-height:1.5;">
+        When accessed via Home Assistant ingress, QR codes contain a session-specific
+        URL that only works on the generating device. Set the direct URL of this
+        add-on so QR codes work when scanned by any phone on your network.
+      </p>
+      <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:180px;margin:0;">
+          <label>Direct URL <span style="color:var(--muted);font-size:11px;">e.g. http://homeassistant.local:5000</span></label>
+          <input type="url" id="qr-base-url"
+            placeholder="http://192.168.1.x:5000 or http://hostname:5000"
+            style="font-family:var(--mono);font-size:13px;">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="saveQRBaseURL()" style="margin-bottom:1px;">Save</button>
+        <button class="btn btn-secondary btn-sm" onclick="clearQRBaseURL()" style="margin-bottom:1px;">Clear</button>
+      </div>
+      <div id="qr-url-status" style="font-family:var(--mono);font-size:12px;margin-top:6px;color:var(--muted);"></div>
+      <div style="margin-top:8px;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);font-family:var(--mono);font-size:12px;color:var(--muted);">
+        Current QR URL: <span id="qr-url-preview" style="color:var(--accent);"></span>
+      </div>
+
       <h3 class="settings-section-hdr" style="margin-top:32px;">Export / Backup</h3>
       <p style="color:var(--muted);font-size:14px;margin-bottom:16px;line-height:1.5;">
         Download a JSON backup of your data. The file can be re-imported to restore

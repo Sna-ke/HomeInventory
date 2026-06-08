@@ -17,8 +17,29 @@ async function openPrintModal(boxId) {
 // ── QR code generator — uses qrcode library (loaded from CDN) ──────────────
 // QRCode.toString() with type:'svg' produces verified SVG output from a
 // battle-tested implementation. Loaded as a browser UMD bundle.
+// ── QR base URL ──────────────────────────────────────────────────────────────
+// Returns the URL that gets encoded in QR codes. Uses a user-configured override
+// if set in localStorage, otherwise auto-detects the direct server URL
+// (strips HA ingress path so the code works when scanned from another device).
+function getQRBaseURL() {
+  // User override — set in Settings
+  const override = localStorage.getItem('qrBaseURL');
+  if (override && override.trim()) return override.trim().replace(/\/+$/, '');
+
+  // If accessed directly (not via ingress), use location.origin
+  // API_BASE is empty string when accessed directly
+  if (!API_BASE || API_BASE === '') return location.origin;
+
+  // Via HA ingress: API_BASE looks like /api/hassio_ingress/<token>
+  // The QR must encode a URL that works for anyone on the LAN,
+  // not a session-specific ingress token.
+  // Auto-detect: use hostname:5000 (default add-on port).
+  const autoPort = localStorage.getItem('qrDirectPort') || '5000';
+  return `http://${location.hostname}:${autoPort}`;
+}
+
 window.makeSVGQR = function(boxNumber, sizePx) {
-  const url = `${location.origin}${API_BASE}/?box=${boxNumber}`;
+  const url = getQRBaseURL() + `/?box=${boxNumber}`;
   const wrap = document.createElement('div');
   wrap.style.cssText = `width:${sizePx}px;height:${sizePx}px;flex-shrink:0;line-height:0;`;
 
