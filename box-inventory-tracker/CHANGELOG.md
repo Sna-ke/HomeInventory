@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.6.2
+- **Fixed: packing mode dropdowns not visible** — root cause was two compounding issues: (1) .pm-body has overflow-y:auto which creates a stacking/clipping context that clips any absolutely-positioned children that escape its bounds; (2) the dropdowns were using position:absolute with top:100% which relied on an ancestor with position:relative, but .pm-body clips them before they can render. Solution: switched both #pm-suggestions and #pm-dest-suggestions to position:static so they render inline in the document flow below their trigger element. No overflow clipping possible, no z-index conflicts, works on all devices
+
 ## 3.6.1
 - **Fixed: barcode scanner crash on HTTP** — navigator.mediaDevices is only available on HTTPS or localhost. HA ingress is served over LAN HTTP, so getUserMedia was undefined. Scanner tab now detects this and shows a friendly message with a button to switch to the photo/AI tab instead. Also improved error messages for denied permission and no camera found
 - **Dashboard: category pie chart** — replaced the progress ring (% catalogued) and horizontal bar chart with a single SVG pie chart showing the breakdown of packed items by category. Centre label shows total items. Colour-coded legend on the right with item counts. More useful at a glance than a % of item types
