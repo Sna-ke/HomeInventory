@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.2.2
+- **Fixed: dashboard SyntaxError** — unescaped apostrophes in single-quoted JS string literals (you'll, self's, can't, they're) caused a parse error that prevented dashboard.js loading entirely, which caused the 'Can't find variable: loadDashboard' error in nav.js. Replaced contractions with full forms
+- **Fixed: packing mode room/box picker not working** — positionDropdownFixed() was adding .fixed-position class and inline top/left/width styles to the dropdown after it opened, overriding the absolute CSS positioning and placing the list off-screen. Packing mode now strips those overrides immediately after opening either dropdown
+
 ## 3.2.1
 - **Fixed: QR code 'library not loaded' error** — the qrcode package (npm) has no pre-built browser bundle on jsDelivr; the build/ folder only exists locally after running the package build step. Switched to a self-hosted 80KB browserified bundle (qrcode.min.js) served from the add-on's own static files — no CDN dependency, no 404, no MIME type errors
 

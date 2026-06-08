@@ -153,6 +153,12 @@ async function openPMDestPicker() {
     });
   }
 
+  // Strip fixed positioning that positionDropdownFixed may have added
+  list.classList.remove('fixed-position');
+  list.style.top = '';
+  list.style.left = '';
+  list.style.width = '';
+
   // Close on outside tap/click
   setTimeout(() => {
     const close = e => {
@@ -233,6 +239,8 @@ function pmRenderSuggestions(items, query, showRecentHdr) {
 
   if (list.children.length) {
     list.classList.add('open');
+    list.classList.remove('fixed-position');
+    list.style.top = ''; list.style.left = ''; list.style.width = '';
   } else {
     list.classList.remove('open');
   }
