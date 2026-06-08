@@ -1,5 +1,19 @@
 # Changelog
 
+## 3.0.0
+- **Packing Mode**: full-screen distraction-free overlay for fast item entry. Tap ⚡ Pack in the nav bar or topbar to open it. Features:
+  - Dark theme, no chrome, nothing to navigate — just a search field and an Add button
+  - Destination bar at top: tap to choose any box or room from a grouped picker, pre-fills with the last-used box
+  - By Name tab: 22px search input, auto-focus, shows recently-packed items before you type; match highlighting inline; ＋ Add shortcut at top of results to create a new item inline without leaving packing mode
+  - Barcode / Scan tab: uses native BarcodeDetector API (modern iOS/Android browsers) with animated scan line; looks up UPC against local DB then external API; switches to name tab with result pre-filled
+  - AI Image tab: tap to take or choose a photo; sends to vision API and pre-fills the search with the top result
+  - Quantity stepper and optional note on each item before confirming
+  - Add button flashes green and resets for the next item — minimal pause between additions
+  - Session counter in top-right shows total items packed this session with a satisfying bounce animation
+  - Running session list shows last 8 items added with destination and quantity
+  - Escape key exits packing mode
+- **Room header fix**: room name and count now stack on two lines (name bold, count small mono below) so the room title never wraps or fights with action buttons on narrow iPhone screens. Added ＋ Item button directly on each room row alongside ＋ Box
+
 ## 2.9.16
 - **Fixed: QR code not rendering** — qrcode-svg is a Node.js module and does not expose a browser global; all calls to new QRCode() were silently failing. Replaced with a fully self-contained QR Code generator (~150 lines, pure JS, no dependencies) that runs directly in the browser. Generates clean SVG path output — vector, sharp at any size or print DPI. No CDN required, no loading failures possible
 

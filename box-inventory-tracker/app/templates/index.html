@@ -15,7 +15,14 @@
 
 <div class="topbar">
   <h1>BOX<span>TRACK</span></h1>
-  <div style="flex:1;display:flex;justify-content:center;">
+  <div style="flex:1;display:flex;justify-content:center;gap:6px;align-items:center;">
+    <button onclick="openPackingMode()" title="Packing Mode — fast item entry"
+      style="background:transparent;border:1px solid var(--accent);color:var(--accent);
+             font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:1px;
+             text-transform:uppercase;padding:5px 10px;cursor:pointer;white-space:nowrap;
+             flex-shrink:0;">
+      ⚡ Pack
+    </button>
     <div style="display:flex;gap:0;" id="quick-add-split">
       <button onclick="openQuickAddItem()" title="Add item to a box (by name)"
         style="background:var(--accent);border:none;color:#000;font-family:var(--sans);
@@ -53,6 +60,7 @@
   <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
   <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
   <button id="sidebar-categories" onclick="showPanel('categories')">🏷️ Categories</button>
+  <button id="sidebar-pack" onclick="openPackingMode()">⚡ Pack</button>
   <button id="sidebar-settings" onclick="showPanel('settings')">⚙️ Settings</button>
 </nav>
 
@@ -309,6 +317,105 @@
 
 </div><!-- end #mainContent -->
 
+<!-- ═══════════════════ PACKING MODE OVERLAY ═══════════════════════════════ -->
+<div id="packing-mode" class="packing-mode-overlay" style="display:none;">
+
+  <!-- Header bar -->
+  <div class="pm-header">
+    <div class="pm-header-left">
+      <button class="pm-close-btn" onclick="closePackingMode()" title="Exit packing mode">✕</button>
+      <span class="pm-title">PACKING MODE</span>
+    </div>
+    <div class="pm-session-count" id="pm-session-count" title="Items added this session">
+      <span id="pm-count-num">0</span>
+      <span class="pm-count-label">packed</span>
+    </div>
+  </div>
+
+  <!-- Box/room destination selector -->
+  <div class="pm-dest-bar" id="pm-dest-bar">
+    <div class="pm-dest-label">Adding to</div>
+    <button class="pm-dest-btn" id="pm-dest-btn" onclick="openPMDestPicker()">
+      <span id="pm-dest-name">— tap to choose box or room —</span>
+      <span class="pm-dest-chevron">▾</span>
+    </button>
+    <div id="pm-dest-suggestions" class="ac-list pm-ac-list"></div>
+  </div>
+
+  <!-- Tab switcher -->
+  <div class="pm-tabs">
+    <button class="pm-tab active" id="pm-tab-name"    onclick="setPMTab('name')">By Name</button>
+    <button class="pm-tab"        id="pm-tab-barcode" onclick="setPMTab('barcode')">📷 Scan</button>
+    <button class="pm-tab"        id="pm-tab-image"   onclick="setPMTab('image')">🖼 AI</button>
+  </div>
+
+  <!-- ── By Name tab ──────────────────────────────────────────────────────── -->
+  <div class="pm-body" id="pm-body-name">
+    <div class="pm-search-wrap">
+      <input type="text" id="pm-search" class="pm-search-input"
+        placeholder="What are you packing?"
+        oninput="pmSearchItems(this.value)"
+        onfocus="pmShowInitialSuggestions()"
+        onblur="setTimeout(()=>document.getElementById('pm-suggestions').classList.remove('open'),160)"
+        autocomplete="off" spellcheck="false">
+      <button class="pm-clear-btn" id="pm-clear-search" onclick="pmClearSearch()" style="display:none;">✕</button>
+    </div>
+    <div id="pm-suggestions" class="ac-list pm-ac-list"></div>
+
+    <!-- Selected item confirmation bar -->
+    <div id="pm-confirm-bar" class="pm-confirm-bar" style="display:none;">
+      <div class="pm-selected-name" id="pm-selected-name"></div>
+      <div class="pm-selected-cat"  id="pm-selected-cat"></div>
+      <div class="pm-qty-row">
+        <button class="pm-qty-btn" onclick="pmAdjQty(-1)">−</button>
+        <span   class="pm-qty-num" id="pm-qty-num">1</span>
+        <button class="pm-qty-btn" onclick="pmAdjQty(1)">+</button>
+        <input  type="text" id="pm-notes" class="pm-notes-input" placeholder="Note (optional)">
+      </div>
+      <button class="pm-add-btn" id="pm-add-btn" onclick="pmConfirmAdd()">
+        <span id="pm-add-btn-label">Add to Box</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Barcode / Scan tab ───────────────────────────────────────────────── -->
+  <div class="pm-body" id="pm-body-barcode" style="display:none;">
+    <div class="pm-scan-prompt">
+      <div id="pm-barcode-video-wrap">
+        <video id="pm-barcode-video" playsinline muted></video>
+        <div class="pm-scan-line"></div>
+      </div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:10px;"
+        onclick="pmStartBarcodeScanner()">Start Camera</button>
+      <div id="pm-barcode-status" class="pm-status-text"></div>
+    </div>
+  </div>
+
+  <!-- ── AI Image tab ─────────────────────────────────────────────────────── -->
+  <div class="pm-body" id="pm-body-image" style="display:none;">
+    <div class="pm-scan-prompt">
+      <button class="pm-big-camera-btn" onclick="document.getElementById('pm-image-input').click()">
+        📷
+        <span>Take or Choose Photo</span>
+      </button>
+      <input type="file" id="pm-image-input" accept="image/*" capture="environment"
+        style="display:none;" onchange="pmHandleImage(this)">
+      <div id="pm-image-status" class="pm-status-text"></div>
+      <img id="pm-image-preview" style="display:none;max-width:140px;max-height:140px;
+        margin:10px auto;border:2px solid var(--accent);display:block;">
+    </div>
+  </div>
+
+  <!-- Recent items added this session -->
+  <div class="pm-recent" id="pm-recent">
+    <div class="pm-recent-hdr" id="pm-recent-hdr" style="display:none;">This session</div>
+    <div id="pm-recent-list" class="pm-recent-list"></div>
+  </div>
+
+  <!-- Toast overlay for this screen -->
+  <div id="pm-toast" class="pm-toast" style="display:none;"></div>
+</div>
+
 <div class="tabbar">
   <button class="active" id="tab-boxes" onclick="showPanel('boxes')">
     <span class="icon">📦</span>Boxes
@@ -321,6 +428,9 @@
   </button>
   <button id="tab-categories" onclick="showPanel('categories')">
     <span class="icon">🏷️</span>Categories
+  </button>
+  <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode">
+    <span class="icon">⚡</span>Pack
   </button>
   <button id="tab-settings" onclick="showPanel('settings')">
     <span class="icon">⚙️</span>Settings
@@ -1040,6 +1150,7 @@
 <script src="{{ ingress_path }}/static/js/images.js"></script>
 <script src="{{ ingress_path }}/static/js/categories.js"></script>
 <script src="{{ ingress_path }}/static/js/labels.js"></script>
+<script src="{{ ingress_path }}/static/js/packing.js"></script>
 <script src="{{ ingress_path }}/static/js/items.js"></script>
 <script src="{{ ingress_path }}/static/js/rooms.js"></script>
 <script src="{{ ingress_path }}/static/js/atb.js"></script>
