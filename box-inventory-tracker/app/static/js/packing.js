@@ -153,11 +153,18 @@ async function openPMDestPicker() {
     });
   }
 
-  // Close on outside click
+  // Close on outside tap/click
   setTimeout(() => {
-    const close = e => { if (!list.contains(e.target) && e.target !== btn) { list.classList.remove('open'); document.removeEventListener('click', close); } };
+    const close = e => {
+      if (!list.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+        list.classList.remove('open');
+        document.removeEventListener('click', close);
+        document.removeEventListener('touchend', close);
+      }
+    };
     document.addEventListener('click', close);
-  }, 10);
+    document.addEventListener('touchend', close);
+  }, 50);
 }
 
 // ── Item Search ───────────────────────────────────────────────────────────────
@@ -225,7 +232,6 @@ function pmRenderSuggestions(items, query, showRecentHdr) {
   });
 
   if (list.children.length) {
-    positionDropdownFixed(list);
     list.classList.add('open');
   } else {
     list.classList.remove('open');

@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.3
+- **Packing Mode now respects app theme**: all hard-coded dark hex colors replaced with CSS variables (--bg, --surface, --border, --text, --muted, --accent). Light mode users see the packing overlay in their normal light theme; dark mode stays dark
+- **Fixed destination picker not working**: the dropdown was using fixed positioning calculated from screen coordinates (positionDropdownFixed), which breaks inside an overlay with its own stacking context. Switched to CSS absolute positioning within the dest bar and search wrap containers. Touch/click outside now also properly closes the picker on mobile
+
 ## 3.0.2
 - **Fixed box list view: BOX # badge no longer stretches full width** — grid was defined as 3 columns (thumb | info | actions) but the DOM has 4 (thumb | num | info | actions), so the num badge was getting 1fr — the full middle column. Fixed to 4-column grid with num as auto-sized
 - **Packing Mode more discoverable**: ⚡ PACK button in the topbar is now filled accent color (same weight as + Item). The ⚡ Pack tab in the bottom nav bar is always accent-colored with a glow so it stands out from the regular navigation tabs
