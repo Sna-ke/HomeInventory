@@ -303,7 +303,7 @@ function renderChipScreen(el, state, boxTypeOverride) {
   const hdr = document.createElement('div');
   hdr.className = 'wiz-header';
   hdr.innerHTML = `
-    <button class="wiz-back-btn" onclick="abandonCurrentBox(state)">← Back</button>
+    <button class="wiz-back-btn" onclick="abandonCurrentBox()">← Back</button>
     <div class="wiz-header-title">📦 BOX ${state.currentBoxNum}</div>`;
   el.appendChild(hdr);
 
@@ -356,13 +356,26 @@ function renderChipScreen(el, state, boxTypeOverride) {
 
   body.appendChild(chipGrid);
 
-  // Done button
+  // New box + Done buttons
+  const btnRow = document.createElement('div');
+  btnRow.className = 'wiz-chip-actions';
+
+  const newBoxBtn = document.createElement('button');
+  newBoxBtn.className = 'wiz-action-btn secondary';
+  newBoxBtn.textContent = '＋ New Box (same room)';
+  newBoxBtn.title = 'Finish this box and start another one for the same room';
+  newBoxBtn.addEventListener('click', () => finishBoxStartNew(state, el));
+  btnRow.appendChild(newBoxBtn);
+
   const doneBtn = document.createElement('button');
   doneBtn.className = 'wiz-done-btn';
   doneBtn.id = 'wiz-done-btn';
+  doneBtn.style.flex = '1';
   doneBtn.textContent = 'Done with this box →';
   doneBtn.addEventListener('click', () => finishBox(state, el));
-  body.appendChild(doneBtn);
+  btnRow.appendChild(doneBtn);
+
+  body.appendChild(btnRow);
 
   // View box link
   const viewLink = document.createElement('div');
@@ -495,6 +508,12 @@ function openQuickAddItem_wizard(state) {
 
 // ── Finish box ────────────────────────────────────────────────────────────────
 
+async function finishBoxStartNew(state, el) {
+  // Complete current box and immediately show box picker for same room
+  await finishBox(state, el);
+  // finishBox calls renderRoomBoxPicker which is what we want
+}
+
 async function finishBox(state, el) {
   const total = Object.values(_chipCounts).reduce((s, n) => s + n, 0);
   const newCompleted = [...(state.completedBoxes || []), {
@@ -523,8 +542,9 @@ async function finishBox(state, el) {
   renderRoomBoxPicker(el, newState);
 }
 
-async function abandonCurrentBox(state) {
-  // Go back without marking box as complete
+async function abandonCurrentBox() {
+  // Go back without marking box as complete — read from live session
+  const state = _wizardSession?.state || {};
   const newState = { ...state, currentBoxId: null, currentBoxTypeId: null };
   _wizardSession = await api('/api/wizard/session', {
     method: 'PUT', body: JSON.stringify({ state: newState }),

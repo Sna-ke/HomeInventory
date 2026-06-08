@@ -32,7 +32,7 @@ function showPanel(name, writeHash = true) {
     else if (name === 'rooms') loadRooms();
     else if (name === 'items') loadItems();
     else if (name === 'categories') loadCategories();
-    else if (name === 'settings') { loadCreditCardsSettings(); loadQRURLSettings(); }
+    else if (name === 'settings') { loadCreditCardsSettings(); loadQRURLSettings(); loadLockersSettings(); }
 
     // Clear search box when navigating away from search results
     if (name !== 'search') {

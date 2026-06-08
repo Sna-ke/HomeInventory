@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.6.0
+- **Fixed: wizard ← Back button** — chip screen back button called abandonCurrentBox(state) where state was a local scope variable not accessible from the HTML onclick string. Now calls abandonCurrentBox() which reads from _wizardSession directly
+- **Fixed: packing mode destination picker not showing** — .packing-mode-overlay had overflow:hidden which clipped the absolute-positioned dropdown. Changed to overflow:visible; scroll is handled by the inner .pm-body element
+- **Fixed: dashboard async renderDashboard** — wizard session was being fetched inside the async renderDashboard causing partial renders and silent failures. loadDashboard now fetches dashboard data and wizard session in parallel with Promise.all and passes wizSession as a parameter to the synchronous renderDashboard
+- **New box (same room) button**: on the chip screen, a New Box (same room) button sits alongside the Done button. Tap it to finish the current box and immediately start another one for the same room — for when one box is not enough
+- **Storage Locker Manager**: new section in Settings → Storage Lockers. Add multiple lockers with: name, provider/facility, unit number, address, dimensions (width × depth × height in feet with live sq ft and cu ft preview), monthly cost + currency with annual total preview, contract start/end dates (expiry warning at 45 days), access hours, gate code, lock type, climate controlled flag, insurance tracking, notes, and optional room link. Lockers show box and item counts from their linked room
+- **DB migration 15**: storage_lockers table added
+
 ## 3.5.0
 - **Storage Locker wizard fully built out**: 5 room categories (Seasonal & Holiday, Sports & Outdoor, Furniture & Household, Tools & Workshop, Collectibles & Media), 14 box types, 300+ chips. Christmas, Halloween, and other holiday decoration chips. Full camping, cycling, water sports, winter sports gear. Power tools, hand tools, garden tools. Books, valuables, sentimental items
 - **Storage locker Tetris infographic**: SVG diagram shown on the storage context intro screen — back zone (rarely needed: furniture, electronics, seasonal), middle zone (occasional access, heavy boxes on floor), front zone (need soonest: tools, sports gear). Aisle indicator. Mattress upright indicator

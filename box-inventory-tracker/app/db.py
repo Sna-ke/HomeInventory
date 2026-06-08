@@ -162,6 +162,32 @@ def init_db():
                     )
                 """)
                 cur.execute("""
+                    CREATE TABLE IF NOT EXISTS storage_lockers (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        provider VARCHAR(255),
+                        address TEXT,
+                        unit_number VARCHAR(64),
+                        size_width_ft DECIMAL(6,1),
+                        size_depth_ft DECIMAL(6,1),
+                        size_height_ft DECIMAL(6,1),
+                        monthly_cost DECIMAL(10,2),
+                        currency VARCHAR(8) DEFAULT 'CAD',
+                        access_hours VARCHAR(255),
+                        gate_code VARCHAR(64),
+                        lock_type VARCHAR(128),
+                        climate_controlled TINYINT(1) DEFAULT 0,
+                        insurance_included TINYINT(1) DEFAULT 0,
+                        insurance_monthly DECIMAL(10,2),
+                        contract_start DATE,
+                        contract_end DATE,
+                        notes TEXT,
+                        room_id INT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
+                    )
+                """)
+                cur.execute("""
                     CREATE TABLE IF NOT EXISTS wizard_sessions (
                         id INT AUTO_INCREMENT PRIMARY KEY,
                         context VARCHAR(32) NOT NULL,
@@ -376,6 +402,40 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 15: storage_lockers table (v3.6.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='storage_lockers'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: creating storage_lockers table")
+                cur.execute("""
+                    CREATE TABLE storage_lockers (
+                        id INT AUTO_INCREMENT PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL,
+                        provider VARCHAR(255),
+                        address TEXT,
+                        unit_number VARCHAR(64),
+                        size_width_ft DECIMAL(6,1),
+                        size_depth_ft DECIMAL(6,1),
+                        size_height_ft DECIMAL(6,1),
+                        monthly_cost DECIMAL(10,2),
+                        currency VARCHAR(8) DEFAULT 'CAD',
+                        access_hours VARCHAR(255),
+                        gate_code VARCHAR(64),
+                        lock_type VARCHAR(128),
+                        climate_controlled TINYINT(1) DEFAULT 0,
+                        insurance_included TINYINT(1) DEFAULT 0,
+                        insurance_monthly DECIMAL(10,2),
+                        contract_start DATE,
+                        contract_end DATE,
+                        notes TEXT,
+                        room_id INT,
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
+                    )
+                """)
 
             # Migration 14: boxes.move_status (v3.4.0)
             cur.execute("""

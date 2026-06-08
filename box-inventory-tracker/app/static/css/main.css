@@ -930,7 +930,7 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   background: var(--bg);
   display: flex; flex-direction: column;
   font-family: var(--sans);
-  overflow: hidden;
+  overflow: visible;  /* must not be hidden — clips absolute dropdowns */
 }
 
 /* Header */
@@ -1559,6 +1559,12 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 }
 .wiz-chip-other:hover { color: var(--text); border-color: var(--text); }
 
+/* Chip action row (New Box + Done) */
+.wiz-chip-actions {
+  display: flex; gap: 8px; align-items: stretch; margin-top: 6px;
+}
+.wiz-chip-actions .wiz-done-btn { margin-top: 0; }
+
 /* Done button */
 .wiz-done-btn {
   width: 100%; background: var(--accent); border: none;
@@ -1692,3 +1698,37 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 .wiz-all-done-icon  { font-size: 48px; line-height: 1; margin-bottom: 10px; }
 .wiz-all-done-title { font-size: 22px; font-weight: 900; color: var(--text); }
 .wiz-all-done-sub   { font-size: 14px; color: var(--muted); margin-top: 6px; }
+
+/* ── Storage Locker Manager ───────────────────────────────────────────────── */
+.locker-card {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start;
+}
+.locker-card-main { flex: 1; min-width: 0; }
+.locker-card-name {
+  font-size: 15px; font-weight: 700; margin-bottom: 4px;
+}
+.locker-card-meta {
+  display: flex; gap: 10px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+  margin-bottom: 4px;
+}
+.locker-card-cost {
+  display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.locker-cost-badge {
+  font-family: var(--mono); font-size: 13px; font-weight: 700;
+  color: var(--accent);
+}
+.locker-card-chips {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.locker-chip {
+  font-size: 11px; font-family: var(--mono); padding: 2px 6px;
+  border: 1px solid var(--border); color: var(--muted);
+}
+.locker-chip.expiring { border-color: #d4944a; color: #d4944a; }
+.locker-card-actions {
+  display: flex; flex-direction: column; gap: 4px; flex-shrink: 0;
+}

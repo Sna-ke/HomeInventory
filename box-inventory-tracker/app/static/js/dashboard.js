@@ -115,14 +115,17 @@ async function loadDashboard() {
   if (!el) return;
   el.innerHTML = '<div style="padding:24px;color:var(--muted);font-family:var(--mono);font-size:13px;">Loading…</div>';
   try {
-    const d = await api('/api/dashboard');
-    renderDashboard(el, d);
+    const [d, wizSession] = await Promise.all([
+      api('/api/dashboard'),
+      api('/api/wizard/session').catch(() => null),
+    ]);
+    renderDashboard(el, d, wizSession);
   } catch(e) {
     el.innerHTML = `<div style="padding:24px;color:#c33;">Failed to load dashboard: ${esc(e.message)}</div>`;
   }
 }
 
-async function renderDashboard(el, d) {
+function renderDashboard(el, d, wizSession) {
   const t = d.totals;
   el.innerHTML = '';
   renderContextBanner(el);
@@ -213,8 +216,7 @@ async function renderDashboard(el, d) {
   const qa = document.createElement('div');
   qa.className = 'dash-actions';
 
-  // Check for active wizard session
-  const wizSession = await api('/api/wizard/session').catch(()=>null);
+  // Use wizard session passed in from loadDashboard
   if (wizSession && ctx) {
     const phase = wizSession.phase;
     const phaseLabel = phase === 'moving_day' ? 'Moving Day' : phase === 'settling' ? 'Settling In' : 'Packing';

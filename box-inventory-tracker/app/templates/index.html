@@ -331,6 +331,15 @@
       <div id="cc-list" style="margin-bottom:12px;"></div>
       <button class="btn btn-primary btn-sm" onclick="openCreditCardModal()">+ Add Card</button>
 
+      <!-- ── Storage Lockers ───────────────────────────────────────────── -->
+      <h3 class="settings-section-hdr" style="margin-top:32px;">Storage Lockers</h3>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:12px;line-height:1.5;">
+        Track your storage locker(s) — provider, unit, size, cost, access info.
+        Each locker can be linked to a room so its boxes appear together.
+      </p>
+      <div id="lockers-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;"></div>
+      <button class="btn btn-primary btn-sm" onclick="openLockerModal()">＋ Add Storage Locker</button>
+
       <!-- ── Reset ──────────────────────────────────────────────────── -->
       <h3 class="settings-section-hdr"
           style="margin-top:32px;color:#cc2200;border-color:#cc2200;">
@@ -780,6 +789,115 @@
   </div>
 </div>
 
+<!-- ── Storage Locker modal ──────────────────────────────────────────── -->
+<div id="modal-locker" class="modal-backdrop">
+  <div class="modal" style="max-width:560px;">
+    <h3 id="locker-modal-title">Add Storage Locker</h3>
+    <input type="hidden" id="locker-editing-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field" style="grid-column:1/-1;">
+        <label>Locker Name</label>
+        <input type="text" id="locker-name" placeholder="Main Storage Locker, Seasonal Unit…">
+      </div>
+      <div class="field">
+        <label>Provider / Facility</label>
+        <input type="text" id="locker-provider" placeholder="e.g. Public Storage">
+      </div>
+      <div class="field">
+        <label>Unit Number</label>
+        <input type="text" id="locker-unit" placeholder="e.g. B-42">
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Address</label>
+        <input type="text" id="locker-address" placeholder="123 Storage Lane, Victoria BC">
+      </div>
+      <div class="field">
+        <label>Width (ft)</label>
+        <input type="number" id="locker-width" placeholder="10" min="0" step="0.5" oninput="updateLockerSizePreview()">
+      </div>
+      <div class="field">
+        <label>Depth (ft)</label>
+        <input type="number" id="locker-depth" placeholder="10" min="0" step="0.5" oninput="updateLockerSizePreview()">
+      </div>
+      <div class="field">
+        <label>Height (ft)</label>
+        <input type="number" id="locker-height" placeholder="8" min="0" step="0.5" oninput="updateLockerSizePreview()">
+      </div>
+      <div class="field">
+        <label>Size</label>
+        <div id="locker-size-preview" style="padding:8px;font-family:var(--mono);font-size:12px;
+          color:var(--accent);border:1px solid var(--border);background:var(--surface2);min-height:38px;display:flex;align-items:center;">—</div>
+      </div>
+      <div class="field">
+        <label>Monthly Cost</label>
+        <input type="number" id="locker-cost" placeholder="0.00" min="0" step="0.01" oninput="updateLockerCostPreview()">
+      </div>
+      <div class="field">
+        <label>Currency</label>
+        <select id="locker-currency" onchange="updateLockerCostPreview()"
+          style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+                 font-family:var(--sans);font-size:14px;padding:8px;-webkit-appearance:none;">
+          <option value="CAD">CAD</option><option value="USD">USD</option>
+          <option value="GBP">GBP</option><option value="EUR">EUR</option>
+          <option value="AUD">AUD</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <div id="locker-cost-preview" style="font-family:var(--mono);font-size:12px;color:var(--muted);"></div>
+      </div>
+      <div class="field">
+        <label>Contract Start</label>
+        <input type="date" id="locker-start">
+      </div>
+      <div class="field">
+        <label>Contract End</label>
+        <input type="date" id="locker-end">
+      </div>
+      <div class="field">
+        <label>Access Hours</label>
+        <input type="text" id="locker-access" placeholder="6am–10pm daily">
+      </div>
+      <div class="field">
+        <label>Gate Code</label>
+        <input type="text" id="locker-gate" placeholder="1234#">
+      </div>
+      <div class="field">
+        <label>Lock Type</label>
+        <input type="text" id="locker-lock" placeholder="Disc lock, padlock…">
+      </div>
+      <div class="field">
+        <label>Link to Room</label>
+        <select id="locker-room"
+          style="background:var(--bg);border:1px solid var(--border);color:var(--text);
+                 font-family:var(--sans);font-size:14px;padding:8px;-webkit-appearance:none;">
+          <option value="">— No room linked —</option>
+        </select>
+      </div>
+      <div class="field" style="display:flex;flex-direction:column;gap:6px;">
+        <label>Options</label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="locker-climate"> Climate controlled
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;">
+          <input type="checkbox" id="locker-insurance" onchange="toggleInsuranceCost()"> Insurance included in rent
+        </label>
+      </div>
+      <div class="field" id="locker-ins-wrap" style="display:none;">
+        <label>Insurance Monthly Cost</label>
+        <input type="number" id="locker-insurance-cost" placeholder="0.00" min="0" step="0.01" oninput="updateLockerCostPreview()">
+      </div>
+      <div class="field" style="grid-column:1/-1;">
+        <label>Notes</label>
+        <textarea id="locker-notes" rows="2" placeholder="Access instructions, key location, special notes…"></textarea>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-locker')">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="saveLocker()">Save</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-atb" class="modal-backdrop">
   <div class="modal">
     <h3>Add Item</h3>
@@ -1208,6 +1326,7 @@
 <script src="{{ ingress_path }}/static/js/labels.js"></script>
 <script src="{{ ingress_path }}/static/js/dashboard.js"></script>
 <script src="{{ ingress_path }}/static/js/wizard.js"></script>
+<script src="{{ ingress_path }}/static/js/lockers.js"></script>
 <script src="{{ ingress_path }}/static/js/packing.js"></script>
 <script src="{{ ingress_path }}/static/js/items.js"></script>
 <script src="{{ ingress_path }}/static/js/rooms.js"></script>
