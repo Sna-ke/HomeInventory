@@ -125,6 +125,86 @@ async function loadDashboard() {
   }
 }
 
+// ── Category pie chart SVG ────────────────────────────────────────────────────
+function makeCategoryPieChart(cats) {
+  const wrap = document.createElement('div');
+  wrap.className = 'dash-pie-wrap';
+
+  const total = cats.reduce((s, c) => s + c.qty, 0);
+  if (!total) { wrap.textContent = 'Nothing packed yet'; return wrap; }
+
+  // Accent palette — cycle through accent + muted variants
+  const palette = [
+    'var(--accent)', '#4a9', '#6af', '#f4a', '#fa6',
+    '#a6f', '#6fa', '#f66', '#66f', '#aaa',
+  ];
+
+  // Build pie slices
+  const size = 140;
+  const cx = size / 2, cy = size / 2, r = 54;
+  let angle = -Math.PI / 2;
+  const slices = [];
+  cats.slice(0, 10).forEach((c, i) => {
+    const frac  = c.qty / total;
+    const start = angle;
+    angle += frac * 2 * Math.PI;
+    slices.push({ ...c, frac, start, end: angle, color: palette[i % palette.length] });
+  });
+
+  // SVG pie
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  svg.style.flexShrink = '0';
+
+  slices.forEach(s => {
+    const x1 = cx + r * Math.cos(s.start);
+    const y1 = cy + r * Math.sin(s.start);
+    const x2 = cx + r * Math.cos(s.end);
+    const y2 = cy + r * Math.sin(s.end);
+    const large = s.frac > 0.5 ? 1 : 0;
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${cx},${cy} L${x1.toFixed(2)},${y1.toFixed(2)} A${r},${r} 0 ${large},1 ${x2.toFixed(2)},${y2.toFixed(2)} Z`);
+    path.setAttribute('fill', s.color);
+    path.setAttribute('stroke', 'var(--bg)');
+    path.setAttribute('stroke-width', '1.5');
+    svg.appendChild(path);
+  });
+
+  // Centre label
+  const totalText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  totalText.setAttribute('x', cx); totalText.setAttribute('y', cy - 4);
+  totalText.setAttribute('text-anchor', 'middle');
+  totalText.setAttribute('font-size', '18'); totalText.setAttribute('font-weight', '900');
+  totalText.setAttribute('fill', 'var(--accent)');
+  totalText.textContent = total;
+  svg.appendChild(totalText);
+  const sub = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+  sub.setAttribute('x', cx); sub.setAttribute('y', cy + 14);
+  sub.setAttribute('text-anchor', 'middle');
+  sub.setAttribute('font-size', '9'); sub.setAttribute('fill', 'var(--muted)');
+  sub.textContent = 'items';
+  svg.appendChild(sub);
+
+  // Legend
+  const legend = document.createElement('div');
+  legend.className = 'dash-pie-legend';
+  slices.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'dash-pie-legend-row';
+    row.innerHTML = `
+      <span class="dash-pie-swatch" style="background:${s.color};"></span>
+      <span class="dash-pie-cat">${esc(s.name || 'Uncategorised')}</span>
+      <span class="dash-pie-qty">${s.qty}</span>`;
+    legend.appendChild(row);
+  });
+
+  wrap.appendChild(svg);
+  wrap.appendChild(legend);
+  return wrap;
+}
+
 function renderDashboard(el, d, wizSession) {
   const t = d.totals;
   el.innerHTML = '';
@@ -157,60 +237,28 @@ function renderDashboard(el, d, wizSession) {
     </div>`;
   el.appendChild(hero);
 
-  // ── Progress ring ─────────────────────────────────────────────────────────
-  const progress = document.createElement('div');
-  progress.className = 'dash-progress-section';
+  // ── Category pie chart ───────────────────────────────────────────────────
+  if (d.top_cats && d.top_cats.length) {
+    const chartSection = document.createElement('div');
+    chartSection.className = 'dash-section dash-chart-section';
+    const chartHdr = document.createElement('div');
+    chartHdr.className = 'dash-section-hdr';
+    chartHdr.textContent = 'What you have packed';
+    chartSection.appendChild(chartHdr);
+    chartSection.appendChild(makeCategoryPieChart(d.top_cats));
+    el.appendChild(chartSection);
+  }
 
-  const circumference = 2 * Math.PI * 52; // r=52
-  const offset = circumference * (1 - packedPct / 100);
-
-  progress.innerHTML = `
-    <div class="dash-progress-wrap">
-      <svg class="dash-ring" viewBox="0 0 120 120" width="120" height="120">
-        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" stroke-width="10"/>
-        <circle cx="60" cy="60" r="52" fill="none" stroke="var(--accent)" stroke-width="10"
-          stroke-dasharray="${circumference.toFixed(1)}"
-          stroke-dashoffset="${circumference.toFixed(1)}"
-          stroke-linecap="round"
-          transform="rotate(-90 60 60)"
-          class="dash-ring-fill"
-          data-offset="${offset.toFixed(1)}"
-          style="transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1);"/>
-      </svg>
-      <div class="dash-ring-label">
-        <div class="dash-ring-pct">${packedPct}%</div>
-        <div class="dash-ring-sub">catalogued</div>
-      </div>
-    </div>
-    <div class="dash-progress-detail">
-      <div class="dash-progress-line">
-        <span class="dash-progress-key">Packed</span>
-        <span class="dash-progress-val">${t.items_packed} items in ${t.boxes} box${t.boxes!==1?'es':''}</span>
-      </div>
-      <div class="dash-progress-line">
-        <span class="dash-progress-key">Placed</span>
-        <span class="dash-progress-val">${t.items_placed} items in rooms directly</span>
-      </div>
-      <div class="dash-progress-line">
-        <span class="dash-progress-key">Types tracked</span>
-        <span class="dash-progress-val">${t.distinct_types_packed} of ${t.item_types}</span>
-      </div>
-      ${t.empty_boxes > 0 ? `<div class="dash-progress-line dash-warn">
-        <span class="dash-progress-key">⚠️ Empty boxes</span>
-        <span class="dash-progress-val">${t.empty_boxes}</span>
-      </div>` : ''}
-      ${t.unassigned_boxes > 0 ? `<div class="dash-progress-line dash-warn">
-        <span class="dash-progress-key">⚠️ No room assigned</span>
-        <span class="dash-progress-val">${t.unassigned_boxes} box${t.unassigned_boxes!==1?'es':''}</span>
-      </div>` : ''}
-    </div>`;
-  el.appendChild(progress);
-
-  // Animate the ring after paint
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    const fill = el.querySelector('.dash-ring-fill');
-    if (fill) fill.style.strokeDashoffset = fill.dataset.offset;
-  }));
+  // ── Summary stats (compact) ───────────────────────────────────────────────
+  if (t.empty_boxes > 0 || t.unassigned_boxes > 0) {
+    const warns = document.createElement('div');
+    warns.className = 'dash-warns';
+    if (t.empty_boxes > 0)
+      warns.innerHTML += `<div class="dash-warn-item">⚠️ ${t.empty_boxes} empty box${t.empty_boxes!==1?'es':''}</div>`;
+    if (t.unassigned_boxes > 0)
+      warns.innerHTML += `<div class="dash-warn-item">⚠️ ${t.unassigned_boxes} box${t.unassigned_boxes!==1?'es':''} with no room</div>`;
+    el.appendChild(warns);
+  }
 
   // ── Quick actions — context-aware based on wizard phase ──────────────────
   const qa = document.createElement('div');
@@ -306,42 +354,7 @@ function renderDashboard(el, d, wizSession) {
     el.appendChild(sec);
   }
 
-  // ── Top categories ────────────────────────────────────────────────────────
-  if (d.top_cats.length) {
-    const sec = document.createElement('div');
-    sec.className = 'dash-section';
-    const hdr = document.createElement('div');
-    hdr.className = 'dash-section-hdr';
-    hdr.textContent = 'Top Categories Packed';
-    sec.appendChild(hdr);
 
-    const maxQty = d.top_cats[0].qty || 1;
-    const bars = document.createElement('div');
-    bars.className = 'dash-bars';
-
-    d.top_cats.forEach(c => {
-      const pct = Math.round(c.qty / maxQty * 100);
-      const row = document.createElement('div');
-      row.className = 'dash-bar-row';
-      row.innerHTML = `
-        <div class="dash-bar-label">${esc(c.name || 'Uncategorised')}</div>
-        <div class="dash-bar-track">
-          <div class="dash-bar-fill" style="width:0%" data-pct="${pct}"></div>
-        </div>
-        <div class="dash-bar-qty">${c.qty}</div>`;
-      bars.appendChild(row);
-    });
-    sec.appendChild(bars);
-    el.appendChild(sec);
-
-    // Animate bars
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.querySelectorAll('.dash-bar-fill').forEach(b => {
-        b.style.transition = 'width 0.8s cubic-bezier(.4,0,.2,1)';
-        b.style.width = b.dataset.pct + '%';
-      });
-    }));
-  }
 
   // ── Recent activity ───────────────────────────────────────────────────────
   if (d.recent.length) {

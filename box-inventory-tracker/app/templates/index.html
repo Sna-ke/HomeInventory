@@ -16,11 +16,8 @@
 <div class="topbar">
   <h1>BOX<span>TRACK</span></h1>
   <div style="flex:1;display:flex;justify-content:center;gap:6px;align-items:center;">
-    <button onclick="openPackingMode()" title="Packing Mode — fast item entry"
-      style="background:var(--accent);border:none;color:#000;
-             font-family:var(--sans);font-weight:900;font-size:12px;letter-spacing:1px;
-             text-transform:uppercase;padding:6px 12px;cursor:pointer;white-space:nowrap;
-             flex-shrink:0;">
+    <button onclick="openPackingMode()" title="Packing Mode"
+      class="topbar-pack-btn">
       ⚡ PACK
     </button>
     <div style="display:flex;gap:0;" id="quick-add-split">
@@ -472,9 +469,11 @@
   <button id="tab-categories" onclick="showPanel('categories')">
     <span class="icon">🏷️</span>Categories
   </button>
-  <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode — fast item entry"
-    style="color:var(--accent);position:relative;">
-    <span class="icon">⚡</span>Pack
+  <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode — fast item entry">
+    <span class="pack-fab">
+      <span class="pack-fab-icon">⚡</span>
+      <span class="pack-fab-label">Pack</span>
+    </span>
   </button>
   <button id="tab-settings" onclick="showPanel('settings')">
     <span class="icon">⚙️</span>Settings

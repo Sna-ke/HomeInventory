@@ -1,5 +1,10 @@
 # Changelog
 
+## 3.6.1
+- **Fixed: barcode scanner crash on HTTP** — navigator.mediaDevices is only available on HTTPS or localhost. HA ingress is served over LAN HTTP, so getUserMedia was undefined. Scanner tab now detects this and shows a friendly message with a button to switch to the photo/AI tab instead. Also improved error messages for denied permission and no camera found
+- **Dashboard: category pie chart** — replaced the progress ring (% catalogued) and horizontal bar chart with a single SVG pie chart showing the breakdown of packed items by category. Centre label shows total items. Colour-coded legend on the right with item counts. More useful at a glance than a % of item types
+- **Pack tab redesigned** — on mobile: a circular raised FAB button in the centre of the tab bar, accent-coloured, slightly elevated above the bar with a shadow. The icon and label sit inside the circle. On desktop: appears as the second item in the sidebar in the normal style. Topbar Pack button is hidden on mobile where the FAB handles it
+
 ## 3.6.0
 - **Fixed: wizard ← Back button** — chip screen back button called abandonCurrentBox(state) where state was a local scope variable not accessible from the HTML onclick string. Now calls abandonCurrentBox() which reads from _wizardSession directly
 - **Fixed: packing mode destination picker not showing** — .packing-mode-overlay had overflow:hidden which clipped the absolute-positioned dropdown. Changed to overflow:visible; scroll is handled by the inner .pm-body element

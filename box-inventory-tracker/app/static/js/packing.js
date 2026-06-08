@@ -391,17 +391,40 @@ function pmRenderSessionList() {
 async function pmStartBarcodeScanner() {
   const status = document.getElementById('pm-barcode-status');
   const video  = document.getElementById('pm-barcode-video');
+
+  // navigator.mediaDevices requires HTTPS or localhost.
+  // HA ingress is served over HTTP on the LAN — fall back to file input.
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    status.innerHTML = `
+      <div style="text-align:center;padding:8px 0;">
+        <div style="margin-bottom:8px;color:var(--muted);font-size:13px;">
+          Camera scanning requires HTTPS.<br>Use the image tab to scan a barcode photo, or type the item name.
+        </div>
+        <button class="btn btn-secondary btn-sm"
+          onclick="setPMTab('image')">📷 Take a Photo Instead</button>
+      </div>`;
+    return;
+  }
+
   status.textContent = 'Starting camera…';
   try {
     pmBarcodeStream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: 'environment', width: { ideal: 1280 } }
     });
     video.srcObject = pmBarcodeStream;
+    video.style.display = 'block';
     await video.play();
     status.textContent = 'Point camera at barcode';
     pmScanLoop(video, status);
   } catch(e) {
-    status.textContent = 'Camera not available: ' + e.message;
+    const msg = e.name === 'NotAllowedError'
+      ? 'Camera permission denied — allow camera access in your browser settings.'
+      : e.name === 'NotFoundError'
+      ? 'No camera found on this device.'
+      : 'Camera not available: ' + e.message;
+    status.innerHTML = `<div style="color:#c33;font-size:13px;">${msg}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:8px;"
+        onclick="setPMTab('image')">📷 Take a Photo Instead</button>`;
   }
 }
 

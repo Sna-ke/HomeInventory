@@ -99,9 +99,59 @@ body {
 }
 .tabbar button .icon { font-size: 20px; line-height: 1; }
 .tabbar button.active { color: var(--accent); border-top-color: var(--accent); }
-/* Pack tab always shows accent — it's the primary action, not a regular nav tab */
-#tab-pack { color: var(--accent) !important; }
-#tab-pack .icon { text-shadow: 0 0 8px var(--accent); }
+/* ── Pack tab — centre, raised, accent background, bleeds above tabbar ───── */
+.tabbar { overflow: visible; }   /* allow Pack button to bleed upward */
+#tab-pack {
+  color: #000 !important;
+  position: relative;
+  flex: 1.4;                     /* slightly wider slot */
+  z-index: 1;
+}
+#tab-pack .pack-fab {
+  position: absolute;
+  bottom: 4px;                   /* sits above tabbar bottom */
+  left: 50%; transform: translateX(-50%);
+  width: 56px; height: 56px;
+  background: var(--accent);
+  border-radius: 50%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1px;
+  box-shadow: 0 -2px 12px rgba(0,0,0,.25);
+  transition: transform .12s, box-shadow .12s;
+}
+#tab-pack:hover .pack-fab, #tab-pack:active .pack-fab {
+  transform: translateX(-50%) scale(1.06);
+  box-shadow: 0 -4px 18px rgba(0,0,0,.35);
+}
+#tab-pack .pack-fab-icon { font-size: 22px; line-height: 1; }
+#tab-pack .pack-fab-label {
+  font-size: 9px; font-weight: 900; letter-spacing: 1px;
+  text-transform: uppercase; color: #000;
+}
+/* Hide the regular tab label/icon — replaced by .pack-fab children */
+#tab-pack > .icon, #tab-pack > span:not(.pack-fab) { display: none; }
+/* Desktop sidebar: show Pack as a normal button, second in list */
+@media (min-width: 900px) {
+  .tabbar { overflow: hidden; }  /* restore on desktop */
+  #tab-pack { flex: 1; }
+  #tab-pack .pack-fab {
+    position: static; transform: none;
+    width: 100%; height: 100%;
+    background: none; border-radius: 0;
+    box-shadow: none;
+    flex-direction: row; gap: 8px; justify-content: flex-start;
+    padding: 0 16px;
+  }
+  #tab-pack .pack-fab-icon { font-size: 20px; }
+  #tab-pack .pack-fab-label {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    letter-spacing: .5px; text-transform: none;
+  }
+  #tab-pack:hover .pack-fab, #tab-pack:active .pack-fab {
+    transform: none; box-shadow: none;
+  }
+}
 
 /* ── Scrollable content area ── */
 .content {
@@ -758,6 +808,17 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 }
 .meta-field textarea { resize: vertical; min-height: 60px; }
 
+/* ── Topbar Pack button ── */
+.topbar-pack-btn {
+  background: var(--accent); border: none; color: #000;
+  font-family: var(--sans); font-weight: 900; font-size: 12px;
+  letter-spacing: 1px; text-transform: uppercase;
+  padding: 6px 12px; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+}
+@media (max-width: 899px) {
+  .topbar-pack-btn { display: none; }  /* mobile: tab bar FAB handles it */
+}
+
 /* ── FAB (floating action button) ── */
 #boxes-fab {
   display: none;   /* shown by JS when panel-boxes is active */
@@ -1185,6 +1246,38 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 .dash-stat-label {
   font-size: 10px; font-weight: 700; letter-spacing: 1px;
   text-transform: uppercase; color: var(--muted); margin-top: 3px;
+}
+
+/* ── Dashboard category pie chart ────────────────────────────────────────── */
+.dash-chart-section { padding: 0 16px 16px; }
+.dash-pie-wrap {
+  display: flex; align-items: flex-start; gap: 16px;
+  padding: 8px 0;
+}
+.dash-pie-legend { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.dash-pie-legend-row {
+  display: flex; align-items: center; gap: 7px;
+}
+.dash-pie-swatch {
+  width: 10px; height: 10px; flex-shrink: 0; border-radius: 2px;
+}
+.dash-pie-cat {
+  font-size: 12px; color: var(--text); flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dash-pie-qty {
+  font-family: var(--mono); font-size: 12px; color: var(--accent); flex-shrink: 0;
+}
+
+/* ── Dashboard warning pills ─────────────────────────────────────────────── */
+.dash-warns {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 0 16px 12px;
+}
+.dash-warn-item {
+  font-size: 12px; color: #d4944a;
+  border: 1px solid #d4944a; padding: 3px 10px;
+  font-family: var(--mono);
 }
 
 /* Progress ring */
