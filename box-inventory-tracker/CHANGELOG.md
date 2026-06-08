@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.0
+- **Dashboard (Home tab)**: new 📊 Home panel as the first tab, giving a summary of everything at a glance:
+  - Hero stats row: total boxes, rooms, items, and item types across the whole inventory
+  - Progress ring: animated SVG ring showing % of known item types that have been catalogued, with breakdown of packed vs placed vs total types
+  - Warnings: surfaces empty boxes and boxes with no room assigned
+  - Quick actions: ⚡ Start Packing, + Add Item, View Boxes, Find Something — one tap to the most common workflows
+  - Room cards: every room shown with box count and item count, click to go to Rooms panel
+  - Top categories bar chart: animated horizontal bars showing which categories have the most items packed
+  - Recent activity: last 20 items added to boxes with destination breadcrumb, click to open the box
+  - Refreshes automatically via SSE when any data changes
+
 ## 3.0.3
 - **Packing Mode now respects app theme**: all hard-coded dark hex colors replaced with CSS variables (--bg, --surface, --border, --text, --muted, --accent). Light mode users see the packing overlay in their normal light theme; dark mode stays dark
 - **Fixed destination picker not working**: the dropdown was using fixed positioning calculated from screen coordinates (positionDropdownFixed), which breaks inside an overlay with its own stacking context. Switched to CSS absolute positioning within the dest bar and search wrap containers. Touch/click outside now also properly closes the picker on mobile

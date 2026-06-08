@@ -26,7 +26,8 @@ function showPanel(name, writeHash = true) {
       setTimeout(() => window.addEventListener('hashchange', applyNav), 0);
     }
 
-    if (name === 'boxes') loadBoxes();
+    if (name === 'dashboard') loadDashboard();
+    else if (name === 'boxes') loadBoxes();
     else if (name === 'rooms') loadRooms();
     else if (name === 'items') loadItems();
     else if (name === 'categories') loadCategories();
@@ -300,7 +301,7 @@ function applyNav() {
     if (id) { openBoxDetail(id); return; }
   }
 
-  const panels = ['boxes', 'rooms', 'items', 'categories', 'settings'];
+  const panels = ['dashboard', 'boxes', 'rooms', 'items', 'categories', 'settings'];
   const target = panels.includes(loc) ? loc : 'boxes';
   showPanel(target, false);
 }
@@ -360,6 +361,7 @@ function handleRemoteChange(ev) {
 
   if (panel === 'boxes' && (type === 'boxes' || type === 'items')) {
     // Re-fetch and re-render boxes grid/list (no expand state to preserve)
+    scheduleRefresh('dashboard', () => loadDashboard());
     scheduleRefresh('boxes', () => loadBoxes());
 
   } else if (panel === 'rooms' && type === 'rooms') {

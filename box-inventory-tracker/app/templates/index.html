@@ -56,6 +56,7 @@
 
 <!-- Sidebar nav (desktop only, hidden on mobile via CSS) -->
 <nav class="sidebar" style="display:none;">
+  <button id="sidebar-dashboard" onclick="showPanel('dashboard')">📊 Home</button>
   <button id="sidebar-boxes" class="active" onclick="showPanel('boxes')">📦 Boxes</button>
   <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
   <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
@@ -65,6 +66,10 @@
 </nav>
 
 <div class="content" id="mainContent">
+
+  <div id="panel-dashboard" class="panel">
+    <div id="dashboard-content"></div>
+  </div>
 
   <div id="panel-boxes" class="panel active">
     <div class="panel-hdr">
@@ -417,6 +422,9 @@
 </div>
 
 <div class="tabbar">
+  <button id="tab-dashboard" onclick="showPanel('dashboard')">
+    <span class="icon">📊</span>Home
+  </button>
   <button class="active" id="tab-boxes" onclick="showPanel('boxes')">
     <span class="icon">📦</span>Boxes
   </button>
@@ -1151,6 +1159,7 @@
 <script src="{{ ingress_path }}/static/js/images.js"></script>
 <script src="{{ ingress_path }}/static/js/categories.js"></script>
 <script src="{{ ingress_path }}/static/js/labels.js"></script>
+<script src="{{ ingress_path }}/static/js/dashboard.js"></script>
 <script src="{{ ingress_path }}/static/js/packing.js"></script>
 <script src="{{ ingress_path }}/static/js/items.js"></script>
 <script src="{{ ingress_path }}/static/js/rooms.js"></script>
