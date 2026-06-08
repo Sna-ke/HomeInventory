@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.1.1
+- **Fixed: QR codes not scannable** — replaced the custom hand-rolled QR Code generator with the battle-tested `qrcode` npm package (v1.5.4, browser UMD build from jsDelivr). The custom implementation had multiple spec errors: version selection loop always picked the highest version, finder pattern inner ring was drawn incorrectly, format info copy 2 bit ordering was wrong, and the interleave block size calculation had an off-by-one. The `qrcode` library implements the full ISO/IEC 18004 spec correctly and is used in production by millions of projects. Renders as inline SVG, still vector-sharp at any size
+
 ## 3.1.0
 - **Dashboard (Home tab)**: new 📊 Home panel as the first tab, giving a summary of everything at a glance:
   - Hero stats row: total boxes, rooms, items, and item types across the whole inventory
