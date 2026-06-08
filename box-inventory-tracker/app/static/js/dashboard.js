@@ -6,6 +6,7 @@ const PACKING_CONTEXTS = {
     hint: 'Pack room-by-room, label every box, inventory the valuables.',
     defaultBoxType: 'inventory',
     suggestion: 'Start with an essentials box — things you need on day one.',
+    phases: ['packing', 'moving_day', 'settling'],
   },
   storage: {
     icon: '🏚️',
@@ -13,6 +14,7 @@ const PACKING_CONTEXTS = {
     hint: 'Long-term retrieval matters. Clear labels and photos are critical.',
     defaultBoxType: 'quick',
     suggestion: 'Put things you need soonest near the front. Label sides, not tops.',
+    phases: ['packing'],
   },
   travel: {
     icon: '✈️',
@@ -20,6 +22,7 @@ const PACKING_CONTEXTS = {
     hint: 'Pack by activity or day. Flag anything irreplaceable.',
     defaultBoxType: 'inventory',
     suggestion: 'Flag your passport, medications, and chargers so they are always findable.',
+    phases: ['packing'],
   },
   organize: {
     icon: '🏠',
@@ -27,6 +30,7 @@ const PACKING_CONTEXTS = {
     hint: 'Track where things actually live. Find anything in seconds.',
     defaultBoxType: 'inventory',
     suggestion: 'Use rooms to mirror your home — one room per shelf unit or area.',
+    phases: ['packing'],
   },
 };
 
@@ -66,6 +70,15 @@ function renderContextBanner(el) {
   } else {
     // Context set — show header with change option
     const c = PACKING_CONTEXTS[ctx];
+    // Phase pills for contexts that have multiple phases
+    const phasePills = (c.phases && c.phases.length > 1)
+      ? `<div class="wiz-phase-pills" style="margin-top:6px;">
+          ${c.phases.map(p => {
+            const label = p === 'packing' ? 'Packing' : p === 'moving_day' ? 'Moving Day' : 'Settling In';
+            const icon  = p === 'packing' ? '📦' : p === 'moving_day' ? '🚛' : '🏠';
+            return `<button class="wiz-phase-pill" onclick="openWizardPhase('${p}')">${icon} ${label}</button>`;
+          }).join('')}
+        </div>` : '';
     banner.innerHTML = `
       <div class="dash-context-set">
         <div class="dash-context-set-left">
@@ -73,9 +86,14 @@ function renderContextBanner(el) {
           <div>
             <div class="dash-context-set-label">${c.label}</div>
             <div class="dash-context-set-hint">${c.hint}</div>
+            ${phasePills}
           </div>
         </div>
-        <button class="dash-context-change" onclick="setPackingContext_clear()">Change</button>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0;">
+          <button class="dash-action-btn primary" style="font-size:12px;padding:6px 12px;"
+            onclick="showPanel('wizard')">Resume →</button>
+          <button class="dash-context-change" onclick="setPackingContext_clear()">Change</button>
+        </div>
       </div>
       ${c.suggestion ? `<div class="dash-context-tip">💡 ${c.suggestion}</div>` : ''}`;
   }

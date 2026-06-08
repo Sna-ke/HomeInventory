@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.5.0
+- **Storage Locker wizard fully built out**: 5 room categories (Seasonal & Holiday, Sports & Outdoor, Furniture & Household, Tools & Workshop, Collectibles & Media), 14 box types, 300+ chips. Christmas, Halloween, and other holiday decoration chips. Full camping, cycling, water sports, winter sports gear. Power tools, hand tools, garden tools. Books, valuables, sentimental items
+- **Storage locker Tetris infographic**: SVG diagram shown on the storage context intro screen — back zone (rarely needed: furniture, electronics, seasonal), middle zone (occasional access, heavy boxes on floor), front zone (need soonest: tools, sports gear). Aisle indicator. Mattress upright indicator
+- **Home Organisation wizard fully built out**: 7 room categories (Kitchen, Living Room, Bedroom, Kids Room, Garage, Laundry & Utility, Home Office), 14 box types, 350+ chips. Pantry organisation, wardrobe system, hardware sorting, document filing, cleaning supplies
+- **Travel / Trip wizard added**: 4 room categories (Clothing, Toiletries, Tech & Documents, Health & Comfort), 10 box types, 160+ chips. Clothing mixing tips. Tech essentials. Health and medication packing with carry-on guidance. Comfort items for flights
+- **Dashboard context banner updated**: shows phase pills for Move context (tap to jump to Packing, Moving Day, or Settling In). Resume button takes you straight back into the wizard. All four contexts (Move, Storage, Travel, Organise) shown in question screen
+- **Total wizard data: 23 rooms, 62 box types, 1,070 chip items across all four contexts**
+
 ## 3.4.0
 - **Moving Day phase**: accessible from the wizard or directly from the dashboard. Shows a truck-loading infographic (SVG zones: heavy/first-in at back, medium in middle, fragile/last-in near cab, valuables in your car). Pre-move checklist (12 items: utilities transferred, keys ready, essentials box set aside, etc). Box manifest grouped by room — tap the status icon to cycle packing → loaded → delivered → unpacked. Tap 'All loaded' to mark every box in a room at once. Progress bar shows % of boxes loaded
 - **Settling In phase**: unpack tracker — check off boxes as you empty them, mark entire rooms done at once, link to view box contents. Separate settling checklist (14 items: beds set up, kitchen basics out, Wi-Fi connected, etc). Tips cycle as you make progress. Celebration screen when all boxes are unpacked

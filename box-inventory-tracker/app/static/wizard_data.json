@@ -854,52 +854,91 @@
       ],
       "tips": {
         "packing": [
-          "Heaviest items go on the floor, against the back wall.",
-          "Label every box on the sides \u2014 you will stack them and only the sides will be visible.",
-          "Things you might need sooner go near the front.",
-          "Use uniform box sizes where possible \u2014 they stack better.",
-          "Disassemble furniture to save vertical space.",
-          "Stand mattresses upright against a wall \u2014 never flat.",
-          "Wrap upholstered furniture in moving blankets or plastic wrap.",
-          "Leave a central aisle so you can reach things without unloading everything.",
-          "Climate-sensitive items (electronics, art, wood furniture) go furthest from the door.",
-          "Take photos of the layout so you remember where things are.",
-          "Use a master inventory list numbered to match box labels."
+          "Heaviest items on the floor against the back wall \u2014 never on top of lighter ones.",
+          "Label every box on all four sides \u2014 you will stack them and only see the sides.",
+          "Leave a central aisle down the middle so you can reach things without unloading.",
+          "Items you might need sooner go nearest the door.",
+          "Use uniform box sizes \u2014 they stack more securely and use vertical space better.",
+          "Stand mattresses upright against the side wall, never flat \u2014 they warp.",
+          "Disassemble furniture to save space. Tape hardware bags to the piece they belong to.",
+          "Wrap upholstered furniture in plastic wrap or moving blankets \u2014 moisture and dust.",
+          "Climate-sensitive items (electronics, wood furniture, art, photos) go furthest from the door.",
+          "Fill boxes completely \u2014 partial boxes collapse under weight.",
+          "Take a photo of your layout before you close the door.",
+          "Keep a numbered master list that matches your box labels.",
+          "Cedar blocks and silica gel packets protect clothing and soft goods from pests and moisture.",
+          "Never store flammable liquids, food, or plants in a storage locker.",
+          "Pallets or wooden boards off the floor protect boxes from ground moisture."
         ]
       },
       "rooms": [
         {
-          "id": "seasonal",
+          "id": "seasonal_holiday",
           "label": "Seasonal & Holiday",
           "icon": "\ud83c\udf84",
           "order": 1,
           "boxes": [
             {
-              "id": "holiday_decor",
-              "label": "Holiday Decorations",
-              "icon": "\ud83c\udf81",
+              "id": "christmas",
+              "label": "Christmas",
+              "icon": "\ud83c\udf84",
               "items": [
-                "Christmas ornaments",
-                "Christmas lights",
+                "Artificial tree",
                 "Tree stand",
-                "Wreath",
-                "Garland",
-                "Tinsel",
+                "Tree lights \u2014 LED",
+                "Tree lights \u2014 traditional",
+                "Tree topper",
                 "Tree skirt",
+                "Baubles \u2014 glass",
+                "Baubles \u2014 plastic",
+                "Tinsel",
+                "Garland",
+                "Wreath \u2014 front door",
+                "Wreath \u2014 interior",
                 "Advent calendar",
                 "Nativity set",
-                "Stockings",
-                "Halloween decorations",
-                "Easter decorations",
-                "Thanksgiving decorations",
-                "Valentine decor",
-                "Candle holders \u2014 seasonal",
-                "Table runner \u2014 seasonal"
+                "Stocking",
+                "Stocking hanger",
+                "Christmas village",
+                "Snow globe",
+                "Table centrepiece",
+                "Candle holder \u2014 seasonal",
+                "Fairy lights \u2014 window",
+                "Outdoor lights \u2014 icicle",
+                "Outdoor lights \u2014 net",
+                "Outdoor stake lights",
+                "Santa figurine",
+                "Reindeer decoration",
+                "Elf decoration"
               ],
-              "tip": "Ornament boxes and egg crate foam protect fragile decorations well in long-term storage."
+              "tip": "Ornament storage boxes with individual cells prevent breakage. Wrap glass ornaments in tissue paper."
             },
             {
-              "id": "seasonal_clothing",
+              "id": "other_holidays",
+              "label": "Other Holidays",
+              "icon": "\ud83c\udf83",
+              "items": [
+                "Halloween \u2014 costumes",
+                "Halloween \u2014 pumpkin",
+                "Halloween \u2014 spider web",
+                "Halloween \u2014 skeletons",
+                "Halloween \u2014 lights orange",
+                "Halloween \u2014 fog machine",
+                "Easter \u2014 basket",
+                "Easter \u2014 egg dye kit",
+                "Easter \u2014 bunny decoration",
+                "Easter \u2014 egg tree",
+                "Valentine \u2014 hearts",
+                "Valentine \u2014 string lights",
+                "Thanksgiving \u2014 table decor",
+                "St Patricks \u2014 decor",
+                "Diwali \u2014 lights",
+                "Hanukkah \u2014 menorah",
+                "Hanukkah \u2014 dreidel"
+              ]
+            },
+            {
+              "id": "seasonal_clothing_storage",
               "label": "Seasonal Clothing",
               "icon": "\ud83e\udde5",
               "items": [
@@ -908,32 +947,144 @@
                 "Ski pants",
                 "Snow pants",
                 "Ski gloves",
-                "Ski goggles",
                 "Ski helmet",
-                "Winter boots",
-                "Rain boots",
+                "Ski goggles",
+                "Winter boots \u2014 adult",
+                "Winter boots \u2014 kids",
                 "Ice skates",
-                "Swimsuit",
-                "Swim fins",
+                "Snowshoes",
+                "Snowboard gear",
+                "Swimsuit \u2014 adult",
+                "Swimsuit \u2014 kids",
                 "Wetsuit",
                 "Rash guard",
                 "Beach cover-up",
-                "Sun hat",
-                "Wide-brim hat"
+                "Sun hat \u2014 adult",
+                "Sun hat \u2014 kids",
+                "Beach towel",
+                "Swim fins",
+                "Pool floats"
               ],
-              "tip": "Clean all clothing before storing. Dirty clothes attract pests. Use cedar blocks to deter moths."
+              "tip": "Clean all clothing before storing. Dirty clothes attract pests. Vacuum bags save significant space and protect from moisture."
             }
           ]
         },
         {
-          "id": "furniture_appliances",
-          "label": "Furniture & Appliances",
-          "icon": "\ud83d\udecb\ufe0f",
+          "id": "sports_outdoor",
+          "label": "Sports & Outdoor",
+          "icon": "\u26f7\ufe0f",
           "order": 2,
           "boxes": [
             {
-              "id": "furniture_parts",
-              "label": "Furniture Parts & Hardware",
+              "id": "camping_gear",
+              "label": "Camping & Hiking",
+              "icon": "\u26fa",
+              "items": [
+                "Tent",
+                "Tent poles",
+                "Tent stakes",
+                "Tent footprint",
+                "Sleeping bag \u2014 adult",
+                "Sleeping bag \u2014 kids",
+                "Sleeping pad",
+                "Camp stove",
+                "Gas canisters",
+                "Cook set",
+                "Camp lantern",
+                "Headlamp",
+                "Tarp",
+                "Hammock",
+                "Camp chairs",
+                "Camp table",
+                "Cooler",
+                "Water filter",
+                "Bear canister",
+                "First aid kit \u2014 camping",
+                "Navigation \u2014 compass",
+                "Trekking poles",
+                "Hiking boots",
+                "Camp axe"
+              ],
+              "tip": "Store sleeping bags uncompressed in a large cotton sack \u2014 long-term compression kills the loft."
+            },
+            {
+              "id": "cycling_gear",
+              "label": "Cycling",
+              "icon": "\ud83d\udeb4",
+              "items": [
+                "Bicycle \u2014 road",
+                "Bicycle \u2014 mountain",
+                "Bicycle \u2014 kids",
+                "Bicycle \u2014 e-bike",
+                "Bicycle helmet",
+                "Cycling shoes",
+                "Pump \u2014 floor",
+                "Pump \u2014 mini",
+                "Repair kit",
+                "Chain lube",
+                "Bike lock",
+                "Bike lights",
+                "Panniers",
+                "Bike rack \u2014 car",
+                "Trainer \u2014 indoor"
+              ],
+              "tip": "Hang bikes vertically to save floor space. Deflate tyres slightly for long-term storage to reduce sidewall stress."
+            },
+            {
+              "id": "water_sports_storage",
+              "label": "Water Sports",
+              "icon": "\ud83c\udfc4",
+              "items": [
+                "Kayak \u2014 inflatable",
+                "SUP \u2014 inflatable",
+                "SUP pump",
+                "Paddle",
+                "Life jacket \u2014 adult",
+                "Life jacket \u2014 kids",
+                "Wetsuit",
+                "Snorkel set",
+                "Drybag",
+                "Wakeboard",
+                "Water skis",
+                "Tow rope",
+                "Towable tube"
+              ],
+              "tip": "Rinse and fully dry all water sports gear before storing \u2014 mould and mildew build quickly in fabric."
+            },
+            {
+              "id": "winter_sports_storage",
+              "label": "Winter Sports",
+              "icon": "\ud83c\udfbf",
+              "items": [
+                "Skis \u2014 adult",
+                "Skis \u2014 kids",
+                "Ski boots \u2014 adult",
+                "Ski boots \u2014 kids",
+                "Ski poles",
+                "Ski bindings",
+                "Snowboard",
+                "Snowboard boots",
+                "Snowboard bindings",
+                "Ski bag",
+                "Boot bag",
+                "Ski wax kit",
+                "Avalanche beacon",
+                "Avalanche probe",
+                "Avalanche shovel"
+              ],
+              "tip": "Store skis horizontally on a wall rack or vertically in a ski bag. Wax before storing to prevent edge rust."
+            }
+          ]
+        },
+        {
+          "id": "furniture_household",
+          "label": "Furniture & Household",
+          "icon": "\ud83d\udecb\ufe0f",
+          "order": 3,
+          "boxes": [
+            {
+              "id": "furniture_hardware",
+              "label": "Furniture Hardware",
               "icon": "\ud83d\udd29",
               "items": [
                 "Screws \u2014 furniture",
@@ -944,10 +1095,179 @@
                 "Casters",
                 "Feet \u2014 furniture",
                 "Drawer slides",
-                "Hinges",
-                "Assembly instructions"
+                "Hinges \u2014 cabinet",
+                "Handles \u2014 cabinet",
+                "Knobs \u2014 cabinet",
+                "Assembly instructions",
+                "Warranty cards"
               ],
-              "tip": "Tape hardware bags directly to the furniture piece they belong to. Label the bag with the furniture name."
+              "tip": "Tape hardware bags directly to the furniture piece with a label. Never store hardware separately \u2014 you will not remember which piece it belongs to."
+            },
+            {
+              "id": "bedding_long_term",
+              "label": "Bedding & Linens",
+              "icon": "\ud83d\udecc",
+              "items": [
+                "Duvet insert \u2014 spare",
+                "Comforter \u2014 spare",
+                "Blanket \u2014 spare",
+                "Quilt \u2014 spare",
+                "Sheet set \u2014 spare",
+                "Pillow \u2014 spare",
+                "Mattress protector \u2014 spare",
+                "Tablecloth \u2014 set",
+                "Napkins \u2014 cloth",
+                "Towel set \u2014 spare",
+                "Bath mat \u2014 spare"
+              ],
+              "tip": "Store bedding in breathable cotton bags or vacuum bags \u2014 never plastic bins which trap moisture."
+            },
+            {
+              "id": "kitchen_overflow",
+              "label": "Kitchen Overflow",
+              "icon": "\ud83c\udf73",
+              "items": [
+                "Serving platters \u2014 large",
+                "Punch bowl",
+                "Cake stand",
+                "Fondue set",
+                "Raclette grill",
+                "Turkey roaster",
+                "Canning jars",
+                "Preserving equipment",
+                "Ice cream maker",
+                "Bread maker",
+                "Waffle maker",
+                "Juicer",
+                "Extra plates \u2014 formal",
+                "Extra glasses \u2014 crystal",
+                "Silver cutlery set"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tools_workshop",
+          "label": "Tools & Workshop",
+          "icon": "\ud83d\udd27",
+          "order": 4,
+          "boxes": [
+            {
+              "id": "power_tools_storage",
+              "label": "Power Tools",
+              "icon": "\ud83d\udd0c",
+              "items": [
+                "Drill \u2014 cordless",
+                "Circular saw",
+                "Jigsaw",
+                "Orbital sander",
+                "Random orbital sander",
+                "Router",
+                "Table saw",
+                "Mitre saw",
+                "Belt sander",
+                "Nail gun",
+                "Air compressor",
+                "Air hose",
+                "Angle grinder",
+                "Heat gun"
+              ],
+              "tip": "Drain all fuel from petrol-powered tools before storage. Loosen drill chucks to prevent spring fatigue."
+            },
+            {
+              "id": "hand_tools_storage",
+              "label": "Hand Tools",
+              "icon": "\ud83d\udd28",
+              "items": [
+                "Hammer",
+                "Mallet",
+                "Screwdrivers \u2014 set",
+                "Wrenches \u2014 set",
+                "Pliers \u2014 set",
+                "Level",
+                "Tape measure",
+                "Square",
+                "Utility knife",
+                "Chisels \u2014 set",
+                "Files \u2014 set",
+                "Clamps",
+                "Vise grips",
+                "Allen keys \u2014 set",
+                "Torque wrench"
+              ]
+            },
+            {
+              "id": "garden_tools_storage",
+              "label": "Garden Tools",
+              "icon": "\ud83c\udf31",
+              "items": [
+                "Lawn mower",
+                "String trimmer",
+                "Leaf blower",
+                "Garden hoe",
+                "Garden fork",
+                "Spade",
+                "Rake \u2014 leaves",
+                "Rake \u2014 garden",
+                "Trowel",
+                "Pruning shears",
+                "Loppers",
+                "Hedge trimmer",
+                "Watering can",
+                "Hose",
+                "Hose reel",
+                "Garden kneeler",
+                "Wheelbarrow"
+              ],
+              "tip": "Clean and oil all garden tools before storing. Hang long-handled tools vertically \u2014 store flat and the handles warp."
+            }
+          ]
+        },
+        {
+          "id": "collectibles_media",
+          "label": "Collectibles & Media",
+          "icon": "\ud83d\udcc0",
+          "order": 5,
+          "boxes": [
+            {
+              "id": "books_media_storage",
+              "label": "Books & Media",
+              "icon": "\ud83d\udcda",
+              "items": [
+                "Books \u2014 hardcover",
+                "Books \u2014 paperback",
+                "Books \u2014 textbooks",
+                "DVDs",
+                "Blu-rays",
+                "CDs",
+                "Vinyl records",
+                "Video games \u2014 cartridges",
+                "Board games",
+                "Puzzles",
+                "Comic books",
+                "Magazines \u2014 bound"
+              ],
+              "tip": "Pack books spine-down or standing upright \u2014 never on their pages. Seal boxes well to prevent silverfish damage."
+            },
+            {
+              "id": "valuables_storage",
+              "label": "Valuables & Sentimental",
+              "icon": "\ud83d\udc8e",
+              "items": [
+                "Photo albums",
+                "Printed photos",
+                "Home videos \u2014 tapes",
+                "Home videos \u2014 discs",
+                "Baby mementos",
+                "School records",
+                "Awards \u2014 trophies",
+                "Awards \u2014 certificates",
+                "Artwork \u2014 framed",
+                "Artwork \u2014 canvas",
+                "Heirlooms \u2014 fragile",
+                "Jewellery \u2014 costume"
+              ],
+              "tip": "Photos and home videos are irreplaceable. Consider digitising before putting into long-term storage. Store in a climate-controlled unit if possible."
             }
           ]
         }
@@ -961,68 +1281,674 @@
       ],
       "tips": {
         "packing": [
-          "One zone at a time \u2014 finish one area completely before starting another.",
-          "Everything should have a home. If it does not, decide: donate, discard, or find a place.",
-          "Like goes with like. Group by use, not by object type.",
-          "Label bins from the front, not the top.",
-          "Clear containers are your best friend \u2014 you can see what is inside.",
-          "The most-used items go at waist height. Less-used items go high or low.",
-          "Seasonal items go in the hardest-to-reach spots."
+          "Finish one zone completely before starting another \u2014 partial organisation is discouraging.",
+          "Everything needs a home. If it does not have one: donate, discard, or designate a spot.",
+          "Like goes with like. Group by use and activity, not by object type.",
+          "The most-used items go at waist height. Rarely-used items go high or low.",
+          "Clear containers let you see contents without opening \u2014 worth the cost.",
+          "Label bins on the front, not the top \u2014 bins get stacked.",
+          "Seasonal items go in the hardest-to-reach spots.",
+          "Leave 20% empty space in every storage area \u2014 life expands to fill all available space otherwise.",
+          "Before you buy storage, measure twice. Before you organise, purge first."
         ]
       },
       "rooms": [
         {
-          "id": "playroom",
-          "label": "Playroom & Toys",
-          "icon": "\ud83e\uddf8",
+          "id": "kitchen_org",
+          "label": "Kitchen",
+          "icon": "\ud83c\udf73",
           "order": 1,
           "boxes": [
             {
-              "id": "arts_crafts",
-              "label": "Arts & Crafts",
+              "id": "pantry_org",
+              "label": "Pantry",
+              "icon": "\ud83e\udd6b",
+              "items": [
+                "Canned goods \u2014 vegetables",
+                "Canned goods \u2014 beans",
+                "Canned goods \u2014 tomatoes",
+                "Canned goods \u2014 fish",
+                "Pasta",
+                "Rice",
+                "Grains \u2014 quinoa",
+                "Cereal",
+                "Oats",
+                "Muesli",
+                "Flour \u2014 plain",
+                "Flour \u2014 self-raising",
+                "Sugar \u2014 white",
+                "Sugar \u2014 brown",
+                "Icing sugar",
+                "Baking powder",
+                "Baking soda",
+                "Yeast",
+                "Cooking oil",
+                "Olive oil",
+                "Vinegar",
+                "Soy sauce",
+                "Fish sauce",
+                "Hot sauce",
+                "Spice jars",
+                "Dried herbs",
+                "Salt",
+                "Pepper",
+                "Stock \u2014 liquid",
+                "Stock cubes",
+                "Snacks",
+                "Crackers",
+                "Nuts",
+                "Dried fruit",
+                "Chocolate",
+                "Tea",
+                "Coffee"
+              ],
+              "tip": "Group pantry items by category: baking, canned goods, grains, sauces. Decant into uniform containers for a calmer shelf."
+            },
+            {
+              "id": "kitchen_drawers",
+              "label": "Drawers & Utensils",
+              "icon": "\ud83e\udd44",
+              "items": [
+                "Cutlery \u2014 forks",
+                "Cutlery \u2014 knives",
+                "Cutlery \u2014 teaspoons",
+                "Cutlery \u2014 tablespoons",
+                "Cutlery \u2014 serving spoons",
+                "Spatula",
+                "Whisk",
+                "Tongs",
+                "Ladle",
+                "Slotted spoon",
+                "Fish slice",
+                "Peeler",
+                "Grater",
+                "Can opener",
+                "Bottle opener",
+                "Corkscrew",
+                "Measuring spoons",
+                "Measuring cups",
+                "Skewers",
+                "Kitchen scissors",
+                "Rubber bands",
+                "Bag clips",
+                "Batteries \u2014 kitchen drawer",
+                "Instruction manuals \u2014 appliances",
+                "Takeaway menus"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "living_room_org",
+          "label": "Living Room",
+          "icon": "\ud83d\udecb\ufe0f",
+          "order": 2,
+          "boxes": [
+            {
+              "id": "media_org",
+              "label": "Media & Electronics",
+              "icon": "\ud83d\udcfa",
+              "items": [
+                "Remote controls",
+                "HDMI cables",
+                "Power cables",
+                "USB cables",
+                "Streaming devices",
+                "Game controllers",
+                "Headphones",
+                "Earbuds",
+                "Smart home devices",
+                "Batteries \u2014 AA",
+                "Batteries \u2014 AAA",
+                "Extension leads",
+                "Power bars"
+              ],
+              "tip": "Label every cable with masking tape and a marker. A cable box with labelled velcro ties saves hours of future frustration."
+            },
+            {
+              "id": "books_display",
+              "label": "Books & Display",
+              "icon": "\ud83d\udcda",
+              "items": [
+                "Books \u2014 hardcover",
+                "Books \u2014 paperback",
+                "Photo frames",
+                "Candles",
+                "Vases",
+                "Ornaments",
+                "Figurines",
+                "Plants \u2014 small",
+                "Bookends",
+                "Coasters",
+                "Throws",
+                "Cushions"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bedroom_org",
+          "label": "Bedroom",
+          "icon": "\ud83d\udecf\ufe0f",
+          "order": 3,
+          "boxes": [
+            {
+              "id": "wardrobe_org",
+              "label": "Wardrobe",
+              "icon": "\ud83d\udc55",
+              "items": [
+                "Shirts \u2014 hanging",
+                "Dresses \u2014 hanging",
+                "Suits \u2014 hanging",
+                "Jackets \u2014 hanging",
+                "Trousers \u2014 folded",
+                "Jeans \u2014 folded",
+                "Jumpers \u2014 folded",
+                "T-shirts \u2014 folded",
+                "Activewear \u2014 folded",
+                "Socks \u2014 paired",
+                "Underwear",
+                "Belts \u2014 rolled",
+                "Ties \u2014 hung",
+                "Scarves \u2014 folded",
+                "Shoes \u2014 pairs",
+                "Shoe boxes",
+                "Hangers \u2014 matching"
+              ],
+              "tip": "Organise by category then by colour within each category. Turn all hangers backwards \u2014 after 6 months, donate anything not touched."
+            },
+            {
+              "id": "bedside_org",
+              "label": "Bedside & Bedroom",
+              "icon": "\ud83d\udca1",
+              "items": [
+                "Books \u2014 reading",
+                "Notebook",
+                "Phone charger",
+                "Glasses case",
+                "Earplugs",
+                "Sleep mask",
+                "Hand cream",
+                "Lip balm",
+                "Medication \u2014 nightly",
+                "Lamp",
+                "Water bottle \u2014 bedside"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "kids_room_org",
+          "label": "Kids Room",
+          "icon": "\ud83e\uddf8",
+          "order": 4,
+          "boxes": [
+            {
+              "id": "toys_org",
+              "label": "Toys",
+              "icon": "\ud83c\udfae",
+              "items": [
+                "Stuffed animals",
+                "Action figures",
+                "Dolls",
+                "Doll accessories",
+                "LEGO \u2014 sorted by colour",
+                "LEGO \u2014 sets in boxes",
+                "Duplo",
+                "Magnetic tiles",
+                "Wooden blocks",
+                "Toy cars",
+                "Train track",
+                "Play kitchen",
+                "Puzzles",
+                "Card games",
+                "Board games",
+                "Outdoor toys",
+                "Sports balls",
+                "Jump rope"
+              ],
+              "tip": "Involve kids in the organisation. Bins at their height labelled with pictures (not just words) build habits."
+            },
+            {
+              "id": "art_school",
+              "label": "Art & School",
               "icon": "\ud83c\udfa8",
               "items": [
                 "Crayons",
                 "Coloured pencils",
-                "Markers",
-                "Paint \u2014 watercolour",
-                "Paint \u2014 acrylic",
+                "Markers \u2014 washable",
+                "Watercolour paints",
+                "Acrylic paints",
                 "Paint brushes",
                 "Colouring books",
                 "Drawing paper",
                 "Construction paper",
-                "Glue sticks",
                 "Scissors \u2014 kids",
+                "Glue sticks",
                 "Stickers",
                 "Stamps",
-                "Ink pads",
-                "Clay",
-                "Play-doh",
-                "Pipe cleaners",
-                "Foam sheets",
-                "Googly eyes",
-                "Pom poms",
-                "Felt",
-                "Ribbon",
-                "Yarn"
+                "School books \u2014 current year",
+                "School books \u2014 previous year",
+                "School supplies"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "garage_org",
+          "label": "Garage",
+          "icon": "\ud83d\udd27",
+          "order": 5,
+          "boxes": [
+            {
+              "id": "tools_org",
+              "label": "Tools",
+              "icon": "\ud83d\udee0\ufe0f",
+              "items": [
+                "Hammer",
+                "Screwdrivers \u2014 flat",
+                "Screwdrivers \u2014 Phillips",
+                "Drill",
+                "Drill bits",
+                "Level",
+                "Tape measure",
+                "Pliers",
+                "Wrenches",
+                "Allen keys",
+                "Utility knife",
+                "Saw \u2014 hand",
+                "Sandpaper",
+                "Clamps",
+                "Vice grips",
+                "Paint brushes",
+                "Paint rollers",
+                "Putty knife"
+              ],
+              "tip": "A pegboard for hand tools is the single highest-ROI garage organisation investment. Outline each tool with a marker so things go back in the right spot."
+            },
+            {
+              "id": "hardware_fasteners",
+              "label": "Hardware & Fasteners",
+              "icon": "\ud83d\udd29",
+              "items": [
+                "Screws \u2014 wood",
+                "Screws \u2014 machine",
+                "Nails \u2014 finishing",
+                "Nails \u2014 framing",
+                "Bolts \u2014 assorted",
+                "Nuts \u2014 assorted",
+                "Washers",
+                "Anchors \u2014 drywall",
+                "Picture hooks",
+                "Command strips",
+                "Cable clips",
+                "Zip ties",
+                "Duct tape",
+                "Electrical tape",
+                "Packing tape",
+                "Sandpaper \u2014 grits",
+                "Lubricant \u2014 WD-40",
+                "Wood glue",
+                "Epoxy"
+              ],
+              "tip": "Sort fasteners into a parts organiser with small drawers. Label each drawer. Worth every penny."
+            },
+            {
+              "id": "sports_everyday",
+              "label": "Sports & Recreation",
+              "icon": "\u26bd",
+              "items": [
+                "Football",
+                "Basketball",
+                "Tennis racquet",
+                "Tennis balls",
+                "Frisbee",
+                "Badminton set",
+                "Golf clubs",
+                "Golf bag",
+                "Yoga mat",
+                "Foam roller",
+                "Jump rope",
+                "Resistance bands",
+                "Weights \u2014 dumbbells",
+                "Bicycle pump",
+                "Helmet \u2014 bike",
+                "Helmet \u2014 skateboard"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "laundry_utility",
+          "label": "Laundry & Utility",
+          "icon": "\ud83e\uddfa",
+          "order": 6,
+          "boxes": [
+            {
+              "id": "laundry_supplies",
+              "label": "Laundry Supplies",
+              "icon": "\ud83e\uddf4",
+              "items": [
+                "Laundry detergent \u2014 liquid",
+                "Laundry detergent \u2014 pods",
+                "Fabric softener",
+                "Dryer sheets",
+                "Stain remover",
+                "Bleach",
+                "Laundry bags \u2014 mesh",
+                "Hangers \u2014 extra",
+                "Clothes pegs",
+                "Ironing board",
+                "Iron",
+                "Steamer",
+                "Lint roller",
+                "Sewing kit",
+                "Safety pins"
               ]
             },
             {
-              "id": "building_toys",
-              "label": "Building & Construction",
-              "icon": "\ud83e\uddf1",
+              "id": "cleaning_supplies_org",
+              "label": "Cleaning Supplies",
+              "icon": "\ud83e\uddf9",
               "items": [
-                "LEGO \u2014 mixed",
-                "LEGO \u2014 sorted by colour",
-                "Duplo",
-                "Magnetic tiles",
-                "Wooden blocks",
-                "Lincoln logs",
-                "Marble run",
-                "K'Nex",
-                "Erector set"
+                "All-purpose cleaner",
+                "Bathroom cleaner",
+                "Kitchen cleaner \u2014 degreaser",
+                "Glass cleaner",
+                "Bleach \u2014 spray",
+                "Floor cleaner",
+                "Toilet cleaner",
+                "Mould remover",
+                "Microfibre cloths",
+                "Sponges",
+                "Scrubbing brush",
+                "Mop",
+                "Mop refills",
+                "Broom",
+                "Dustpan",
+                "Rubber gloves",
+                "Rubbish bags \u2014 kitchen",
+                "Rubbish bags \u2014 large"
               ],
-              "tip": "Sort LEGO by colour before storing \u2014 it makes building sessions start faster."
+              "tip": "Keep one cleaning caddy stocked and portable \u2014 it travels room to room and nothing gets left behind."
+            }
+          ]
+        },
+        {
+          "id": "home_office_org",
+          "label": "Home Office",
+          "icon": "\ud83d\udcbc",
+          "order": 7,
+          "boxes": [
+            {
+              "id": "documents_org",
+              "label": "Documents & Filing",
+              "icon": "\ud83d\udcc4",
+              "items": [
+                "Passport",
+                "Birth certificates",
+                "Tax returns \u2014 current",
+                "Tax returns \u2014 previous",
+                "Bank statements",
+                "Insurance policies",
+                "Vehicle documents",
+                "Property documents",
+                "Medical records",
+                "Investment statements",
+                "Warranties",
+                "Receipts \u2014 major",
+                "Instruction manuals"
+              ],
+              "tip": "Scan important documents and store in cloud backup. Paper copies in a fireproof folder or safe."
+            },
+            {
+              "id": "office_supplies_org",
+              "label": "Office Supplies",
+              "icon": "\u270f\ufe0f",
+              "items": [
+                "Pens \u2014 working",
+                "Pencils",
+                "Highlighters",
+                "Markers",
+                "Sticky notes",
+                "Notepads",
+                "Binders",
+                "Folders",
+                "Stapler",
+                "Staples",
+                "Scissors",
+                "Tape",
+                "Paper clips",
+                "Rubber bands",
+                "Envelopes",
+                "Stamps",
+                "Calculator"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "travel": {
+      "label": "Travel / Trip",
+      "icon": "\u2708\ufe0f",
+      "phases": [
+        "packing"
+      ],
+      "tips": {
+        "packing": [
+          "Roll clothes instead of folding \u2014 saves space and reduces wrinkles.",
+          "Pack your heaviest items at the bottom of your bag, closest to your back.",
+          "Wear your bulkiest items on the plane \u2014 coat, boots, heaviest jumper.",
+          "Pack a day-bag inside your main bag so you have one for day trips.",
+          "Toiletries in a clear zip-lock bag that passes security easily.",
+          "Copy important documents and email them to yourself before you leave.",
+          "Chargers and cables in one dedicated pouch \u2014 you will use them every day.",
+          "Leave 20% space for things you buy on the trip.",
+          "Always pack one full outfit in your carry-on in case luggage is delayed.",
+          "Fragile items go in the centre of the bag surrounded by soft clothing.",
+          "Check weather at your destination before packing \u2014 pack for real conditions."
+        ]
+      },
+      "rooms": [
+        {
+          "id": "clothing_travel",
+          "label": "Clothing",
+          "icon": "\ud83d\udc55",
+          "order": 1,
+          "boxes": [
+            {
+              "id": "everyday_wear",
+              "label": "Everyday Wear",
+              "icon": "\ud83d\udc55",
+              "items": [
+                "T-shirt",
+                "Shirt \u2014 button-up",
+                "Lightweight jumper",
+                "Cardigan",
+                "Trousers \u2014 lightweight",
+                "Jeans",
+                "Shorts",
+                "Dress",
+                "Skirt",
+                "Activewear top",
+                "Activewear leggings",
+                "Socks",
+                "Underwear",
+                "Pyjamas \u2014 lightweight",
+                "Belt",
+                "Scarf \u2014 light"
+              ],
+              "tip": "Pack clothes that mix and match. 3 bottoms + 5 tops = 15 outfits."
+            },
+            {
+              "id": "weather_layers",
+              "label": "Layers & Weather",
+              "icon": "\ud83e\udde5",
+              "items": [
+                "Down jacket \u2014 packable",
+                "Rain jacket \u2014 packable",
+                "Fleece",
+                "Thermal top",
+                "Thermal leggings",
+                "Gloves \u2014 lightweight",
+                "Hat \u2014 beanie",
+                "Hat \u2014 sun",
+                "Scarf \u2014 warm",
+                "Swim shorts",
+                "Swimsuit"
+              ]
+            },
+            {
+              "id": "footwear_travel",
+              "label": "Footwear",
+              "icon": "\ud83d\udc5f",
+              "items": [
+                "Sneakers \u2014 walking",
+                "Sandals",
+                "Flip flops",
+                "Smart shoes",
+                "Hiking boots",
+                "Compression socks",
+                "Shoe bags"
+              ],
+              "tip": "Stuff socks inside shoes to maintain shape and save space."
+            }
+          ]
+        },
+        {
+          "id": "toiletries_travel",
+          "label": "Toiletries",
+          "icon": "\ud83e\uddf4",
+          "order": 2,
+          "boxes": [
+            {
+              "id": "toiletries_basics",
+              "label": "Toiletries",
+              "icon": "\ud83e\udea5",
+              "items": [
+                "Toothbrush",
+                "Toothpaste \u2014 travel",
+                "Shampoo \u2014 travel size",
+                "Conditioner \u2014 travel size",
+                "Body wash \u2014 travel size",
+                "Deodorant",
+                "Face wash",
+                "Moisturiser \u2014 travel",
+                "Sunscreen \u2014 face",
+                "Sunscreen \u2014 body",
+                "Razor",
+                "Shaving cream \u2014 travel",
+                "Makeup \u2014 essentials",
+                "Makeup remover",
+                "Cotton pads",
+                "Cotton buds",
+                "Hairbrush",
+                "Hair ties",
+                "Dry shampoo",
+                "Perfume \u2014 travel size"
+              ],
+              "tip": "Decant products into travel bottles. Weigh your bag before adding toiletries \u2014 liquids are heavy."
+            }
+          ]
+        },
+        {
+          "id": "tech_travel",
+          "label": "Tech & Documents",
+          "icon": "\ud83d\udcbb",
+          "order": 3,
+          "boxes": [
+            {
+              "id": "tech_essentials",
+              "label": "Tech Essentials",
+              "icon": "\ud83d\udd0c",
+              "items": [
+                "Phone",
+                "Phone charger",
+                "Portable battery pack",
+                "Laptop",
+                "Laptop charger",
+                "Universal travel adaptor",
+                "Headphones",
+                "Earbuds",
+                "Camera",
+                "Camera charger",
+                "Memory cards",
+                "Camera battery \u2014 spare",
+                "Kindle / e-reader",
+                "USB cable \u2014 multi",
+                "Cable organiser pouch"
+              ]
+            },
+            {
+              "id": "documents_travel",
+              "label": "Documents & Money",
+              "icon": "\ud83d\udcc4",
+              "items": [
+                "Passport",
+                "Visa documents",
+                "Travel insurance \u2014 printed",
+                "Booking confirmations",
+                "Driving licence",
+                "Cash \u2014 local currency",
+                "Credit card \u2014 travel",
+                "Debit card \u2014 backup",
+                "RFID wallet",
+                "Money belt",
+                "Vaccine certificate",
+                "Medication prescriptions"
+              ],
+              "tip": "Flag your passport and medication in the app so you can always confirm which bag they are in."
+            }
+          ]
+        },
+        {
+          "id": "health_comfort",
+          "label": "Health & Comfort",
+          "icon": "\ud83d\udc8a",
+          "order": 4,
+          "boxes": [
+            {
+              "id": "medications_health",
+              "label": "Health & Medications",
+              "icon": "\ud83d\udc8a",
+              "items": [
+                "Prescription medication",
+                "Painkillers",
+                "Antihistamine",
+                "Anti-nausea tablets",
+                "Antidiarrheal tablets",
+                "Rehydration sachets",
+                "Throat lozenges",
+                "Blister plasters",
+                "Antiseptic wipes",
+                "Plasters \u2014 assorted",
+                "Insect repellent",
+                "After-bite cream",
+                "Hand sanitiser",
+                "Face masks",
+                "Period products"
+              ],
+              "tip": "Keep all medications in your carry-on, never in checked luggage."
+            },
+            {
+              "id": "comfort_items",
+              "label": "Comfort & Sleep",
+              "icon": "\ud83d\ude34",
+              "items": [
+                "Travel pillow \u2014 neck",
+                "Eye mask",
+                "Earplugs",
+                "Noise-cancelling headphones",
+                "Compression socks \u2014 flight",
+                "Blanket \u2014 travel",
+                "Melatonin",
+                "Snacks \u2014 flight",
+                "Water bottle \u2014 empty",
+                "Gum \u2014 ear pressure",
+                "Book",
+                "Download entertainment"
+              ]
             }
           ]
         }

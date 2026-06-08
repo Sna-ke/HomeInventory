@@ -52,13 +52,22 @@ function renderWizardContext(el, ctxKey) {
   const body = document.createElement('div');
   body.className = 'wiz-body';
 
-  // First tip
+  // First tip + context-specific infographic
   const tips = ctx.tips?.packing || [];
   if (tips.length) {
     const tip = document.createElement('div');
     tip.className = 'wiz-tip';
     tip.innerHTML = `<span class="wiz-tip-icon">💡</span><span>${esc(tips[0])}</span>`;
     body.appendChild(tip);
+  }
+  // Storage locker: show Tetris infographic upfront
+  if (ctxKey === 'storage') {
+    const infoEl = document.createElement('div');
+    infoEl.className = 'wiz-info-section';
+    infoEl.innerHTML = `
+      <div class="wiz-section-hdr" style="margin-bottom:4px;">How to pack a storage locker</div>
+      ${makeStorageTetrisSVG()}`;
+    body.appendChild(infoEl);
   }
 
   // Room question
@@ -772,6 +781,70 @@ function makeTruckDiagramSVG() {
     <!-- Arrow showing load order -->
     <text x="155" y="115" text-anchor="middle"
       font-family="sans-serif" font-size="9" fill="var(--muted)">← load this end first</text>
+  </svg>`;
+}
+
+function makeStorageTetrisSVG() {
+  return `<svg viewBox="0 0 320 160" xmlns="http://www.w3.org/2000/svg"
+    style="width:100%;max-width:420px;display:block;margin:8px auto;">
+
+    <!-- Locker outline -->
+    <rect x="10" y="10" width="300" height="140" rx="4"
+      fill="var(--surface2)" stroke="var(--border)" stroke-width="2"/>
+    <!-- Door opening indicator -->
+    <text x="155" y="158" text-anchor="middle"
+      font-family="sans-serif" font-size="9" fill="var(--muted)">↑ DOOR — access aisle here</text>
+
+    <!-- Zone: Back (climate-sensitive / rarely needed) -->
+    <rect x="15" y="15" width="80" height="130" rx="2"
+      fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+    <text x="55" y="42" text-anchor="middle"
+      font-family="sans-serif" font-size="8" fill="var(--muted)" font-weight="700">BACK</text>
+    <text x="55" y="54" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">rarely needed</text>
+    <text x="55" y="66" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">electronics</text>
+    <text x="55" y="78" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">furniture</text>
+    <text x="55" y="90" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">seasonal</text>
+    <text x="55" y="108" text-anchor="middle" font-size="20">🏛️</text>
+
+    <!-- Zone: Middle (medium access) -->
+    <rect x="100" y="15" width="80" height="130" rx="2"
+      fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+    <text x="140" y="42" text-anchor="middle"
+      font-family="sans-serif" font-size="8" fill="var(--text)" font-weight="700">MIDDLE</text>
+    <text x="140" y="54" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">occasional access</text>
+    <text x="140" y="66" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">heavy boxes</text>
+    <text x="140" y="78" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">floor level</text>
+    <text x="140" y="108" text-anchor="middle" font-size="20">📦</text>
+
+    <!-- Zone: Front (frequent access) -->
+    <rect x="185" y="15" width="120" height="130" rx="2"
+      fill="var(--accent)" opacity="0.12" stroke="var(--accent)" stroke-width="1"/>
+    <text x="245" y="42" text-anchor="middle"
+      font-family="sans-serif" font-size="8" fill="var(--accent)" font-weight="700">FRONT</text>
+    <text x="245" y="54" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">need soonest</text>
+    <text x="245" y="66" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">sports gear</font>
+    <text x="245" y="78" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">tools</text>
+    <text x="245" y="108" text-anchor="middle" font-size="20">🚪</text>
+
+    <!-- Mattress standing upright indicator -->
+    <rect x="18" y="20" width="12" height="120" rx="1"
+      fill="var(--border)" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="24" y="148" text-anchor="middle"
+      font-family="sans-serif" font-size="7" fill="var(--muted)">🛏️</text>
+
+    <!-- Aisle arrow -->
+    <line x1="160" y1="30" x2="160" y2="140" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4,3"/>
+    <text x="163" y="90" font-family="sans-serif" font-size="7" fill="var(--muted)">aisle</text>
   </svg>`;
 }
 
