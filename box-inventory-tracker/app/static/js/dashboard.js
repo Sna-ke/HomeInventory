@@ -104,7 +104,7 @@ async function loadDashboard() {
   }
 }
 
-function renderDashboard(el, d) {
+async function renderDashboard(el, d) {
   const t = d.totals;
   el.innerHTML = '';
   renderContextBanner(el);
@@ -191,22 +191,65 @@ function renderDashboard(el, d) {
     if (fill) fill.style.strokeDashoffset = fill.dataset.offset;
   }));
 
-  // ── Quick actions ─────────────────────────────────────────────────────────
+  // ── Quick actions — context-aware based on wizard phase ──────────────────
   const qa = document.createElement('div');
   qa.className = 'dash-actions';
-  qa.innerHTML = `
-    <button class="dash-action-btn primary" onclick="openPackingMode()">
-      <span>⚡</span>Start Packing
-    </button>
-    <button class="dash-action-btn" onclick="openQuickAddItem()">
-      <span>＋</span>Add Item
-    </button>
-    <button class="dash-action-btn" onclick="showPanel('boxes')">
-      <span>📦</span>View Boxes
-    </button>
-    <button class="dash-action-btn" onclick="document.getElementById('globalSearch').focus();showPanel('search') ">
-      <span>🔍</span>Find Something
-    </button>`;
+
+  // Check for active wizard session
+  const wizSession = await api('/api/wizard/session').catch(()=>null);
+  if (wizSession && ctx) {
+    const phase = wizSession.phase;
+    const phaseLabel = phase === 'moving_day' ? 'Moving Day' : phase === 'settling' ? 'Settling In' : 'Packing';
+    const phaseIcon  = phase === 'moving_day' ? '🚛' : phase === 'settling' ? '🏠' : '📦';
+    const resumeBtn  = document.createElement('button');
+    resumeBtn.className = 'dash-action-btn primary';
+    resumeBtn.innerHTML = `<span>${phaseIcon}</span>Resume ${phaseLabel}`;
+    resumeBtn.addEventListener('click', () => {
+      if (phase === 'moving_day') openWizardPhase('moving_day');
+      else if (phase === 'settling') openWizardPhase('settling');
+      else showPanel('wizard');
+    });
+    qa.appendChild(resumeBtn);
+
+    if (phase === 'packing') {
+      const mdBtn = document.createElement('button');
+      mdBtn.className = 'dash-action-btn';
+      mdBtn.innerHTML = '<span>🚛</span>Moving Day';
+      mdBtn.addEventListener('click', () => openWizardPhase('moving_day'));
+      qa.appendChild(mdBtn);
+    } else if (phase === 'moving_day') {
+      const siBtn = document.createElement('button');
+      siBtn.className = 'dash-action-btn';
+      siBtn.innerHTML = '<span>🏠</span>Settling In';
+      siBtn.addEventListener('click', () => openWizardPhase('settling'));
+      qa.appendChild(siBtn);
+    }
+  } else {
+    const packBtn = document.createElement('button');
+    packBtn.className = 'dash-action-btn primary';
+    packBtn.innerHTML = '<span>⚡</span>Start Packing';
+    packBtn.addEventListener('click', openPackingMode);
+    qa.appendChild(packBtn);
+  }
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'dash-action-btn';
+  addBtn.innerHTML = '<span>＋</span>Add Item';
+  addBtn.addEventListener('click', openQuickAddItem);
+  qa.appendChild(addBtn);
+
+  const boxBtn = document.createElement('button');
+  boxBtn.className = 'dash-action-btn';
+  boxBtn.innerHTML = '<span>📦</span>View Boxes';
+  boxBtn.addEventListener('click', () => showPanel('boxes'));
+  qa.appendChild(boxBtn);
+
+  const searchBtn = document.createElement('button');
+  searchBtn.className = 'dash-action-btn';
+  searchBtn.innerHTML = '<span>🔍</span>Find Something';
+  searchBtn.addEventListener('click', () => { document.getElementById('globalSearch').focus(); showPanel('search'); });
+  qa.appendChild(searchBtn);
+
   el.appendChild(qa);
 
   // ── Rooms breakdown ───────────────────────────────────────────────────────

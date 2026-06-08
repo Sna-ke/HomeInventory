@@ -736,6 +736,114 @@
             }
           ]
         }
+      ],
+      "moving_day_checklist": [
+        {
+          "id": "utilities_booked",
+          "label": "Utilities transferred / connected at new home"
+        },
+        {
+          "id": "address_updated",
+          "label": "Address updated with bank, employer, post"
+        },
+        {
+          "id": "truck_booked",
+          "label": "Moving truck / company confirmed"
+        },
+        {
+          "id": "keys_ready",
+          "label": "Keys to new home in hand"
+        },
+        {
+          "id": "essentials_box",
+          "label": "Essentials box packed and set aside"
+        },
+        {
+          "id": "kids_pets_plan",
+          "label": "Kids and pets arranged for moving day"
+        },
+        {
+          "id": "valuables_car",
+          "label": "Documents, valuables, and medications in your car"
+        },
+        {
+          "id": "fridge_emptied",
+          "label": "Fridge emptied and cleaned"
+        },
+        {
+          "id": "appliances_ready",
+          "label": "Appliances disconnected and ready to move"
+        },
+        {
+          "id": "old_home_walkthrough",
+          "label": "Final walkthrough of old home completed"
+        },
+        {
+          "id": "meter_readings",
+          "label": "Meter readings taken at both properties"
+        },
+        {
+          "id": "keys_returned",
+          "label": "Keys to old home returned"
+        }
+      ],
+      "settling_checklist": [
+        {
+          "id": "beds_setup",
+          "label": "Beds set up and made"
+        },
+        {
+          "id": "essentials_unpacked",
+          "label": "Essentials box unpacked"
+        },
+        {
+          "id": "kitchen_basics",
+          "label": "Kitchen basics unpacked (kettle, plates, cutlery)"
+        },
+        {
+          "id": "bathrooms_ready",
+          "label": "Bathrooms stocked with toiletries and towels"
+        },
+        {
+          "id": "wifi_connected",
+          "label": "Wi-Fi router connected and working"
+        },
+        {
+          "id": "heating_cooling",
+          "label": "Heating / cooling working and set"
+        },
+        {
+          "id": "security_check",
+          "label": "Locks checked, alarm set up if applicable"
+        },
+        {
+          "id": "smoke_detectors",
+          "label": "Smoke and CO detectors tested"
+        },
+        {
+          "id": "post_redirected",
+          "label": "Post redirection set up"
+        },
+        {
+          "id": "neighbours_met",
+          "label": "Introduced yourself to a neighbour"
+        },
+        {
+          "id": "rubbish_bins",
+          "label": "Bin collection day noted"
+        },
+        {
+          "id": "schools_enrolled",
+          "label": "Kids enrolled in new school"
+        },
+        {
+          "id": "gp_registered",
+          "label": "Registered with a local GP"
+        },
+        {
+          "id": "boxes_recycled",
+          "label": "Empty boxes broken down or donated"
+        }
       ]
     },
     "storage": {

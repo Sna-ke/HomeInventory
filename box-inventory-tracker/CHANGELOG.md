@@ -1,5 +1,12 @@
 # Changelog
 
+## 3.4.0
+- **Moving Day phase**: accessible from the wizard or directly from the dashboard. Shows a truck-loading infographic (SVG zones: heavy/first-in at back, medium in middle, fragile/last-in near cab, valuables in your car). Pre-move checklist (12 items: utilities transferred, keys ready, essentials box set aside, etc). Box manifest grouped by room — tap the status icon to cycle packing → loaded → delivered → unpacked. Tap 'All loaded' to mark every box in a room at once. Progress bar shows % of boxes loaded
+- **Settling In phase**: unpack tracker — check off boxes as you empty them, mark entire rooms done at once, link to view box contents. Separate settling checklist (14 items: beds set up, kitchen basics out, Wi-Fi connected, etc). Tips cycle as you make progress. Celebration screen when all boxes are unpacked
+- **Phase navigation**: pill buttons at the top of each wizard phase let you jump between Packing, Moving Day, and Settling In. Dashboard quick actions show phase-aware buttons — Resume Packing/Moving Day/Settling In based on current wizard session state
+- **boxes.move_status column**: tracks each box through packing → loaded → delivered → unpacked. DB migration 14 adds the column automatically
+- **API additions**: GET/POST /api/boxes/:id/status, GET /api/wizard/manifest (boxes grouped by room with status)
+
 ## 3.3.0
 - **Guided Wizard — Phase 1 (Packing)**: tap a context from the dashboard to enter the wizard. Moving Home, Storage Locker, and Home Organisation each have their own room list, box type suggestions, and contextual tips
 - **Room picker**: icon-grid of rooms relevant to your context (Kitchen, Living Room, Bedroom, Kids Room, Bathroom, Home Office, Garage for moves). Tap any room or choose Other to name your own

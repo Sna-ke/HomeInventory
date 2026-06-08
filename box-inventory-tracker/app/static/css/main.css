@@ -1576,3 +1576,119 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
 }
 .wiz-skip a { color: var(--muted); font-size: 13px; }
 .wiz-skip a:hover { color: var(--accent); }
+
+/* ── Wizard phase pills ───────────────────────────────────────────────────── */
+.wiz-phase-pills {
+  display: flex; gap: 4px; flex-wrap: wrap; margin-left: auto;
+}
+.wiz-phase-pill {
+  font-size: 11px; font-weight: 700; padding: 3px 10px;
+  border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; letter-spacing: .3px;
+  transition: border-color .12s, color .12s;
+}
+.wiz-phase-pill.active { border-color: var(--accent); color: var(--accent); }
+.wiz-phase-pill.done   { color: var(--muted); opacity: .6; }
+.wiz-phase-pill.done:hover { opacity: 1; color: var(--text); }
+
+/* ── Wizard section header ────────────────────────────────────────────────── */
+.wiz-section-hdr {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border); padding-bottom: 6px;
+  margin-bottom: 10px; display: flex; justify-content: space-between;
+}
+
+/* ── Infographic section ──────────────────────────────────────────────────── */
+.wiz-info-section { display: flex; flex-direction: column; gap: 8px; }
+.wiz-info-tips    { display: flex; flex-direction: column; gap: 5px; }
+.wiz-info-tip {
+  font-size: 13px; color: var(--muted); line-height: 1.4; padding-left: 4px;
+}
+
+/* ── Manifest ─────────────────────────────────────────────────────────────── */
+.wiz-manifest-count {
+  font-family: var(--mono); font-size: 12px; color: var(--accent);
+  font-weight: 700; letter-spacing: 0; text-transform: none;
+}
+.wiz-manifest-room { margin-bottom: 16px; }
+.wiz-manifest-room-hdr {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px; background: var(--surface2);
+  border: 1px solid var(--border); margin-bottom: 4px;
+}
+.wiz-manifest-room-name {
+  font-weight: 700; font-size: 13px; flex: 1;
+}
+.wiz-manifest-room-count {
+  font-family: var(--mono); font-size: 11px; color: var(--muted);
+}
+.wiz-manifest-room-all {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-family: var(--sans); font-size: 11px; padding: 2px 8px; cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.wiz-manifest-room-all:hover { border-color: var(--accent); color: var(--accent); }
+.wiz-manifest-box {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border: 1px solid var(--border);
+  border-top: none; transition: background .12s;
+}
+.wiz-manifest-box.unpacked { opacity: .55; }
+.wiz-manifest-box-info { flex: 1; min-width: 0; }
+.wiz-manifest-box-num {
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+}
+.wiz-manifest-box-label {
+  font-size: 13px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.wiz-manifest-box-count {
+  font-family: var(--mono); font-size: 11px; color: var(--muted); flex-shrink: 0;
+}
+.wiz-manifest-view-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  font-family: var(--sans); font-size: 11px; padding: 2px 8px; cursor: pointer;
+}
+.wiz-manifest-view-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Status buttons ───────────────────────────────────────────────────────── */
+.wiz-status-btn {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  cursor: pointer; font-size: 16px; display: flex;
+  align-items: center; justify-content: center;
+  transition: background .12s;
+}
+.wiz-status-btn.status-loaded    { border-color: var(--accent); }
+.wiz-status-btn.status-delivered { border-color: #4a9; }
+.wiz-status-btn.status-unpacked  { border-color: var(--muted); opacity: .5; }
+
+/* ── Checklist rows ───────────────────────────────────────────────────────── */
+.wiz-checklist-section { display: flex; flex-direction: column; gap: 0; }
+.wiz-check-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-bottom: 1px solid var(--border);
+  transition: opacity .15s;
+}
+.wiz-check-row.done { opacity: .5; }
+.wiz-check-btn {
+  width: 26px; height: 26px; flex-shrink: 0;
+  background: var(--surface); border: 2px solid var(--border);
+  cursor: pointer; font-size: 14px; font-weight: 900; color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color .12s, background .12s;
+}
+.wiz-check-btn.checked {
+  background: var(--accent); border-color: var(--accent); color: #000;
+}
+.wiz-check-label { font-size: 14px; line-height: 1.4; }
+
+/* ── All done celebration ─────────────────────────────────────────────────── */
+.wiz-all-done {
+  text-align: center; padding: 32px 20px;
+  border: 2px solid var(--accent); background: var(--surface2);
+}
+.wiz-all-done-icon  { font-size: 48px; line-height: 1; margin-bottom: 10px; }
+.wiz-all-done-title { font-size: 22px; font-weight: 900; color: var(--text); }
+.wiz-all-done-sub   { font-size: 14px; color: var(--muted); margin-top: 6px; }

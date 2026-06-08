@@ -311,3 +311,79 @@ def remove_box_item(box_item_id):
             return jsonify({"ok": True})
     finally:
         conn.close()
+
+
+@bp.route("/api/box-items/<int:box_item_id>/flag", methods=["POST"])
+def toggle_flag(box_item_id):
+    """Toggle flagged status of a box item."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT flagged FROM box_items WHERE id=%s", (box_item_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            new_val = 0 if row["flagged"] else 1
+            cur.execute("UPDATE box_items SET flagged=%s WHERE id=%s", (new_val, box_item_id))
+            conn.commit()
+        sse_push("boxes")
+        return jsonify({"ok": True, "flagged": bool(new_val)})
+    finally:
+        conn.close()
+
+
+@bp.route("/api/boxes/<int:box_id>/status", methods=["GET", "POST"])
+def box_status(box_id):
+    """Get or set the move_status of a box."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            if request.method == "GET":
+                cur.execute("SELECT move_status FROM boxes WHERE id=%s", (box_id,))
+                row = cur.fetchone()
+                if not row: return jsonify({"error": "Not found"}), 404
+                return jsonify({"status": row["move_status"]})
+            else:
+                data   = request.json or {}
+                status = data.get("status", "packing")
+                valid  = ("packing", "loaded", "delivered", "unpacked")
+                if status not in valid:
+                    return jsonify({"error": f"Status must be one of {valid}"}), 400
+                cur.execute("UPDATE boxes SET move_status=%s WHERE id=%s", (status, box_id))
+                conn.commit()
+                sse_push("boxes")
+                return jsonify({"ok": True, "status": status})
+    finally:
+        conn.close()
+
+
+@bp.route("/api/wizard/manifest", methods=["GET"])
+def get_manifest():
+    """All boxes grouped by room with move_status — moving day manifest."""
+    conn = get_db()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT b.id, b.box_number, b.label, b.description,
+                       b.move_status, b.box_type,
+                       r.id as room_id, r.name as room_name,
+                       COUNT(bi.id) as item_count
+                FROM boxes b
+                LEFT JOIN rooms r ON r.id = b.room_id
+                LEFT JOIN box_items bi ON bi.box_id = b.id
+                GROUP BY b.id
+                ORDER BY r.name, b.box_number
+            """)
+            boxes_list = cur.fetchall()
+            rooms_map = {}
+            for box in boxes_list:
+                rname = box['room_name'] or 'No Room'
+                rid   = box['room_id'] or 0
+                if rid not in rooms_map:
+                    rooms_map[rid] = {'room_id': rid, 'room_name': rname, 'boxes': []}
+                b = dict(box)
+                b.pop('room_name'); b.pop('room_id')
+                rooms_map[rid]['boxes'].append(b)
+            return jsonify(sorted(rooms_map.values(), key=lambda r: r['room_name']))
+    finally:
+        conn.close()

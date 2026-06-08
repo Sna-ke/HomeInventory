@@ -77,6 +77,7 @@ def init_db():
                         description TEXT,
                         room_id INT,
                         box_type ENUM('inventory','quick') NOT NULL DEFAULT 'inventory',
+                        move_status ENUM('packing','loaded','delivered','unpacked') NOT NULL DEFAULT 'packing',
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE SET NULL
                     )
@@ -375,6 +376,17 @@ def migrate_db():
                 """, (DB_NAME,))
                 if cur.fetchone()["n"] > 0:
                     cur.execute("ALTER TABLE item_metadata DROP COLUMN warranty_expiry")
+
+            # Migration 14: boxes.move_status (v3.4.0)
+            cur.execute("""
+                SELECT COUNT(*) as n FROM information_schema.COLUMNS
+                WHERE TABLE_SCHEMA=%s AND TABLE_NAME='boxes' AND COLUMN_NAME='move_status'
+            """, (DB_NAME,))
+            if cur.fetchone()["n"] == 0:
+                logger.info("Migration: adding boxes.move_status")
+                cur.execute("""ALTER TABLE boxes ADD COLUMN move_status
+                    ENUM('packing','loaded','delivered','unpacked')
+                    NOT NULL DEFAULT 'packing'""")
 
             # Migration 13: wizard_sessions table (v3.3.0)
             cur.execute("""
