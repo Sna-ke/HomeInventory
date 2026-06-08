@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.0.2
+- **Fixed box list view: BOX # badge no longer stretches full width** — grid was defined as 3 columns (thumb | info | actions) but the DOM has 4 (thumb | num | info | actions), so the num badge was getting 1fr — the full middle column. Fixed to 4-column grid with num as auto-sized
+- **Packing Mode more discoverable**: ⚡ PACK button in the topbar is now filled accent color (same weight as + Item). The ⚡ Pack tab in the bottom nav bar is always accent-colored with a glow so it stands out from the regular navigation tabs
+
 ## 3.0.0
 - **Packing Mode**: full-screen distraction-free overlay for fast item entry. Tap ⚡ Pack in the nav bar or topbar to open it. Features:
   - Dark theme, no chrome, nothing to navigate — just a search field and an Add button

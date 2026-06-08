@@ -184,15 +184,35 @@ async function openPrintModal(boxId) {
         m[r][c] = (m[r][c] === 10) !== fn(r, c) ? 1 : 0;
       } else if (m[r][c] < 0) m[r][c] = 0;
     }
-    // Write format info
+
+    // Write format information — QR spec section 8.9
+    // 15 bits placed in two copies on the matrix.
     const fmt = FMT_M[maskIdx];
-    const fmtBits = [];
-    for (let i = 14; i >= 0; i--) fmtBits.push((fmt >> i) & 1);
-    const fpos = [0,1,2,3,4,5,7,8,  size-8,size-7,size-6,size-5,size-4,size-3,size-2,size-1];
-    for (let i = 0; i < 6; i++) { m[8][fpos[i]] = fmtBits[i]; m[fpos[i]][8] = fmtBits[i]; }
-    m[8][7] = fmtBits[6]; m[7][8] = fmtBits[6];
-    m[8][8] = fmtBits[7]; m[size-8][8] = fmtBits[8]; // dark module
-    for (let i = 9; i < 15; i++) { m[8][fpos[i-7+6]] = fmtBits[i]; m[fpos[15-i+size-8]][8] = fmtBits[i]; }
+    const b = [];
+    for (let i = 14; i >= 0; i--) b.push((fmt >> i) & 1);
+    // b[0]..b[14] = format bits MSB→LSB
+
+    // Copy 1: around top-left finder
+    // Row 8, columns 0-5 → bits 0-5
+    for (let i = 0; i < 6; i++) m[8][i] = b[i];
+    // Row 8, column 7 → bit 6  (column 6 is timing)
+    m[8][7] = b[6];
+    // Row 8, column 8 → bit 7
+    m[8][8] = b[7];
+    // Column 8, row 7 → bit 8  (row 6 is timing)
+    m[7][8] = b[8];
+    // Column 8, rows 5-0 → bits 9-14
+    for (let i = 0; i < 6; i++) m[5 - i][8] = b[9 + i];
+
+    // Copy 2: top-right and bottom-left finders
+    // Column 8, rows size-7 .. size-1 → bits 0-6  (bottom-left)
+    for (let i = 0; i < 7; i++) m[size - 7 + i][8] = b[i];
+    // Row 8, columns size-8 .. size-1 → bits 7-14  (top-right, reversed)
+    for (let i = 0; i < 8; i++) m[8][size - 8 + i] = b[7 + i];
+
+    // Dark module (always 1)
+    m[size - 8][8] = 1;
+
     return m;
   }
 

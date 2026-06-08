@@ -17,11 +17,11 @@
   <h1>BOX<span>TRACK</span></h1>
   <div style="flex:1;display:flex;justify-content:center;gap:6px;align-items:center;">
     <button onclick="openPackingMode()" title="Packing Mode — fast item entry"
-      style="background:transparent;border:1px solid var(--accent);color:var(--accent);
-             font-family:var(--sans);font-weight:700;font-size:12px;letter-spacing:1px;
-             text-transform:uppercase;padding:5px 10px;cursor:pointer;white-space:nowrap;
+      style="background:var(--accent);border:none;color:#000;
+             font-family:var(--sans);font-weight:900;font-size:12px;letter-spacing:1px;
+             text-transform:uppercase;padding:6px 12px;cursor:pointer;white-space:nowrap;
              flex-shrink:0;">
-      ⚡ Pack
+      ⚡ PACK
     </button>
     <div style="display:flex;gap:0;" id="quick-add-split">
       <button onclick="openQuickAddItem()" title="Add item to a box (by name)"
@@ -429,7 +429,8 @@
   <button id="tab-categories" onclick="showPanel('categories')">
     <span class="icon">🏷️</span>Categories
   </button>
-  <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode">
+  <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode — fast item entry"
+    style="color:var(--accent);position:relative;">
     <span class="icon">⚡</span>Pack
   </button>
   <button id="tab-settings" onclick="showPanel('settings')">
