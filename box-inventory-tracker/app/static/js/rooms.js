@@ -40,6 +40,10 @@ async function loadRooms() {
     chevron.className = 'cat-chevron'; chevron.textContent = '▶';
     chevron.style.visibility = (r.box_count > 0 || r.room_item_count > 0) ? 'visible' : 'hidden';
 
+    // Info block — name on top, count below (avoids wrapping on narrow screens)
+    const info = document.createElement('div');
+    info.className = 'room-row-info';
+
     const nameEl = document.createElement('div');
     nameEl.className = 'room-row-name'; nameEl.textContent = r.name;
 
@@ -49,24 +53,53 @@ async function loadRooms() {
     if (r.box_count > 0) parts.push(`${r.box_count} box${r.box_count!=1?'es':''}`);
     if (r.room_item_count > 0) parts.push(`${r.room_item_count} item${r.room_item_count!=1?'s':''}`);
     countEl.textContent = parts.length ? parts.join(', ') : 'empty';
+    info.appendChild(nameEl); info.appendChild(countEl);
+
+    // Action buttons group — flex-shrink:0 so they never get squeezed
+    const actions = document.createElement('div');
+    actions.className = 'room-row-actions';
 
     // HA area badge
     if (r.ha_area_id) {
       const badge = document.createElement('span');
       badge.className = 'ha-badge' + (r.ha_synced ? '' : ' stale');
-      badge.textContent = r.ha_synced ? 'HA Area' : 'HA (removed)';
+      badge.textContent = r.ha_synced ? 'HA' : 'HA (removed)';
       badge.title = r.ha_synced
         ? 'Synced from Home Assistant — rename in HA'
         : 'This area was removed from HA. You can now rename or delete it.';
-      hdr.appendChild(badge);
+      actions.appendChild(badge);
     }
 
-    // Add Box button — always visible
+    // Add Item button
+    const addItemBtn = document.createElement('button');
+    addItemBtn.className = 'btn btn-sm btn-primary';
+    addItemBtn.style.cssText = 'font-size:11px;padding:3px 8px;';
+    addItemBtn.textContent = '+ Item';
+    addItemBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      addToBoxId = null; addToRoomId = r.id;
+      document.getElementById('atb-dest-field').style.display = 'none';
+      document.getElementById('atb-room-location-field').style.display = 'block';
+      document.getElementById('atb-room-location').value = '';
+      const btn = document.getElementById('atb-confirm-btn');
+      if (btn) btn.textContent = 'Place in Room';
+      window._lastRoomPlacingId = r.id;
+      window._lastRoomPlacingContainer = null;
+      resetATBModal();
+      document.getElementById('atb-dest-field').style.display = 'none';
+      document.getElementById('atb-room-location-field').style.display = 'block';
+      openModal('modal-atb');
+      setTimeout(() => document.getElementById('atb-search').focus(), 80);
+    });
+    actions.appendChild(addItemBtn);
+
+    // Add Box button
     const addBoxBtn = document.createElement('button');
     addBoxBtn.className = 'btn btn-sm btn-secondary';
-    addBoxBtn.style.cssText = 'font-size:11px;padding:3px 8px;flex-shrink:0;';
+    addBoxBtn.style.cssText = 'font-size:11px;padding:3px 8px;';
     addBoxBtn.textContent = '+ Box';
     addBoxBtn.addEventListener('click', e => { e.stopPropagation(); openAddBoxToRoom(r.id, r.name); });
+    actions.appendChild(addBoxBtn);
 
     // Edit/delete — hidden for active HA areas
     if (!r.ha_area_id || !r.ha_synced) {
@@ -76,12 +109,10 @@ async function loadRooms() {
       const delBtn = document.createElement('button');
       delBtn.className = 'btn-icon danger'; delBtn.textContent = '🗑';
       delBtn.addEventListener('click', e => { e.stopPropagation(); deleteRoom(r.id); });
-      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl);
-      hdr.appendChild(addBoxBtn); hdr.appendChild(editBtn); hdr.appendChild(delBtn);
-    } else {
-      hdr.appendChild(chevron); hdr.appendChild(nameEl); hdr.appendChild(countEl);
-      hdr.appendChild(addBoxBtn);
+      actions.appendChild(editBtn); actions.appendChild(delBtn);
     }
+
+    hdr.appendChild(chevron); hdr.appendChild(info); hdr.appendChild(actions);
 
     const expand = document.createElement('div');
     expand.className = 'room-expand';

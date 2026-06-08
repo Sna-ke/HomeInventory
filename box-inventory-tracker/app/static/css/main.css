@@ -314,13 +314,16 @@ tr:active td { background: var(--surface2); }
   margin-bottom: 8px; overflow: hidden;
 }
 .room-row-header {
-  padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; display: flex; align-items: center; gap: 8px;
   cursor: pointer; transition: background .12s;
 }
 .room-row-header:hover { background: var(--surface2); }
 .room-row-header.expanded { background: var(--surface2); border-bottom: 1px solid var(--border); }
-.room-row-name { font-size: 17px; font-weight: 700; flex: 1; }
-.room-row-count { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+/* Name + count stacked so they don't fight buttons for space */
+.room-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.room-row-name { font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.room-row-count { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.room-row-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 .ha-badge {
   font-family: var(--mono); font-size: 10px; padding: 1px 6px;
   background: #1a3a5c; border: 1px solid #2a6aad; color: #7ab8f5;

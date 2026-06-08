@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.9.16
+- **Fixed: QR code not rendering** — qrcode-svg is a Node.js module and does not expose a browser global; all calls to new QRCode() were silently failing. Replaced with a fully self-contained QR Code generator (~150 lines, pure JS, no dependencies) that runs directly in the browser. Generates clean SVG path output — vector, sharp at any size or print DPI. No CDN required, no loading failures possible
+
 ## 2.9.15
 - **QR code now renders as pure SVG instead of canvas**: replaced QRCode.js (canvas-based, blurry when small) with qrcode-svg (vector SVG, infinitely sharp at any size or print DPI). The QR is now crisp regardless of label size or screen resolution
 - **QR minimum size increased**: raised from 15mm to 18mm minimum, 42% of the label short edge, capped at 32mm — gives phones more pixels to decode
