@@ -961,6 +961,12 @@ td.filter-active { color: var(--accent2); cursor: pointer; }
   }
   .sidebar button:hover { color: var(--text); background: var(--surface2); }
   .sidebar button.active { color: var(--accent); border-left-color: var(--accent); background: var(--surface2); }
+#sidebar-pack {
+  color: var(--accent); font-weight: 900;
+  border-left-color: var(--accent);
+  letter-spacing: .3px;
+}
+#sidebar-pack:hover { background: var(--surface2); }
 
   /* Push content right of sidebar, remove bottom offset */
   .content {

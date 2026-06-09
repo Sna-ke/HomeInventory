@@ -54,11 +54,11 @@
 <!-- Sidebar nav (desktop only, hidden on mobile via CSS) -->
 <nav class="sidebar" style="display:none;">
   <button id="sidebar-dashboard" onclick="showPanel('dashboard')">📊 Home</button>
+  <button id="sidebar-pack" onclick="openPackingMode()">⚡ Pack</button>
   <button id="sidebar-boxes" class="active" onclick="showPanel('boxes')">📦 Boxes</button>
   <button id="sidebar-rooms" onclick="showPanel('rooms')">🏠 Rooms</button>
   <button id="sidebar-items" onclick="showPanel('items')">📋 Items</button>
   <button id="sidebar-categories" onclick="showPanel('categories')">🏷️ Categories</button>
-  <button id="sidebar-pack" onclick="openPackingMode()">⚡ Pack</button>
   <button id="sidebar-settings" onclick="showPanel('settings')">⚙️ Settings</button>
 </nav>
 
@@ -463,17 +463,17 @@
   <button id="tab-rooms" onclick="showPanel('rooms')">
     <span class="icon">🏠</span>Rooms
   </button>
-  <button id="tab-items" onclick="showPanel('items')">
-    <span class="icon">📋</span>Items
-  </button>
-  <button id="tab-categories" onclick="showPanel('categories')">
-    <span class="icon">🏷️</span>Categories
-  </button>
   <button id="tab-pack" onclick="openPackingMode()" title="Packing Mode — fast item entry">
     <span class="pack-fab">
       <span class="pack-fab-icon">⚡</span>
       <span class="pack-fab-label">Pack</span>
     </span>
+  </button>
+  <button id="tab-items" onclick="showPanel('items')">
+    <span class="icon">📋</span>Items
+  </button>
+  <button id="tab-categories" onclick="showPanel('categories')">
+    <span class="icon">🏷️</span>Categories
   </button>
   <button id="tab-settings" onclick="showPanel('settings')">
     <span class="icon">⚙️</span>Settings
