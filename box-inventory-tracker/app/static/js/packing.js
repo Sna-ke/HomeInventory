@@ -103,32 +103,39 @@ function pmUpdateAddBtnLabel() {
 async function openPMDestPicker() {
   const btn = document.getElementById('pm-dest-btn');
 
-  // Remove any existing dropdown
+  // Toggle — remove if already open
   const existing = document.getElementById('pm-dest-dropdown');
   if (existing) { existing.remove(); return; }
 
-  // Build a fully self-contained dropdown — no ac-list classes, no CSS cascade
+  // Measure button position to anchor the dropdown
+  const rect = btn.getBoundingClientRect();
+
+  // Build dropdown — appended to body so nothing clips it
   const drop = document.createElement('div');
   drop.id = 'pm-dest-dropdown';
   drop.style.cssText = [
-    'background:var(--surface)',
-    'border:1px solid var(--accent)',
-    'max-height:320px',
-    'overflow-y:auto',
-    'width:100%',
-    'box-shadow:0 4px 16px rgba(0,0,0,.3)',
-    'z-index:9999',
-    'margin-top:2px',
+    `position:fixed`,
+    `top:${rect.bottom + 2}px`,
+    `left:${rect.left}px`,
+    `width:${rect.width}px`,
+    `z-index:9999`,
+    `background:var(--surface)`,
+    `border:1px solid var(--accent)`,
+    `max-height:320px`,
+    `overflow-y:auto`,
+    `box-shadow:0 6px 20px rgba(0,0,0,.35)`,
   ].join(';');
 
-  // Loading state
   const loading = document.createElement('div');
   loading.style.cssText = 'padding:12px 14px;color:var(--muted);font-family:var(--mono);font-size:12px;';
   loading.textContent = 'Loading…';
   drop.appendChild(loading);
+  document.body.appendChild(drop);
 
-  // Insert immediately after the button (inline flow)
-  btn.parentNode.insertBefore(drop, btn.nextSibling);
+  const dismiss = () => {
+    const d = document.getElementById('pm-dest-dropdown');
+    if (d) d.remove();
+  };
 
   try {
     const [boxes, rooms] = await Promise.all([getBoxesCached(), getRoomsCached()]);
@@ -136,23 +143,20 @@ async function openPMDestPicker() {
 
     const mkHdr = text => {
       const h = document.createElement('div');
-      h.style.cssText = 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;';
+      h.style.cssText = 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;cursor:default;';
       h.textContent = text;
       return h;
     };
 
     const mkRow = (icon, primary, secondary, onChoose) => {
       const row = document.createElement('div');
-      row.style.cssText = [
-        'display:flex','align-items:center','justify-content:space-between',
-        'padding:11px 14px','cursor:pointer','border-bottom:1px solid var(--border)',
-        'font-size:15px','color:var(--text)',
-      ].join(';');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:11px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:15px;color:var(--text);';
       row.innerHTML = `<span>${icon} ${esc(primary)}</span><small style="color:var(--muted);font-family:var(--mono);font-size:11px;">${esc(secondary)}</small>`;
-      row.addEventListener('mousedown', e => { e.preventDefault(); onChoose(); drop.remove(); });
-      row.addEventListener('touchstart', e => { e.preventDefault(); onChoose(); drop.remove(); }, {passive:false});
-      row.addEventListener('mouseover',  () => { row.style.background = 'var(--surface2)'; });
-      row.addEventListener('mouseout',   () => { row.style.background = ''; });
+      const choose = e => { e.preventDefault(); e.stopPropagation(); onChoose(); dismiss(); };
+      row.addEventListener('mousedown', choose);
+      row.addEventListener('touchend',  choose, {passive:false});
+      row.addEventListener('mouseover', () => { row.style.background = 'var(--surface2)'; });
+      row.addEventListener('mouseout',  () => { row.style.background = ''; });
       return row;
     };
 
@@ -168,7 +172,7 @@ async function openPMDestPicker() {
       const sorted = sortByRecency(boxes, recentBoxIds, 'id');
       sorted.forEach(b => {
         const lbl  = b.label ? ` · ${b.label}` : '';
-        const room = b.room_name ? `${b.room_name}` : '';
+        const room = b.room_name ? b.room_name : '';
         drop.appendChild(
           mkRow('📦', `BOX ${b.box_number}${lbl}`, room,
             () => pmSetDest('box', b.id, `BOX ${b.box_number}${lbl}`))
@@ -191,14 +195,14 @@ async function openPMDestPicker() {
     const close = e => {
       const d = document.getElementById('pm-dest-dropdown');
       if (d && !d.contains(e.target) && !btn.contains(e.target)) {
-        d.remove();
+        dismiss();
         document.removeEventListener('click', close);
         document.removeEventListener('touchend', close);
       }
     };
     document.addEventListener('click', close);
     document.addEventListener('touchend', close);
-  }, 50);
+  }, 60);
 }
 
 // ── Item Search ───────────────────────────────────────────────────────────────
@@ -284,16 +288,31 @@ function pmRenderSuggestions(items, query, showRecentHdr) {
     ));
   });
 
-  // Show/hide — use inline style directly, no ac-list.open dependency
-  list.style.display = list.children.length ? 'block' : 'none';
-  // Also set border so it's visible
+  // Position fixed below the search input, appended to body — floats over content
   if (list.children.length) {
-    list.style.border = '1px solid var(--accent)';
-    list.style.background = 'var(--surface)';
-    list.style.maxHeight = '280px';
-    list.style.overflowY = 'auto';
-    list.style.width = '100%';
-    list.style.boxShadow = '0 4px 12px rgba(0,0,0,.2)';
+    const searchEl = document.getElementById('pm-search');
+    if (searchEl) {
+      const r = searchEl.getBoundingClientRect();
+      list.style.cssText = [
+        'position:fixed',
+        `top:${r.bottom + 2}px`,
+        `left:${r.left}px`,
+        `width:${r.width}px`,
+        'z-index:9999',
+        'background:var(--surface)',
+        'border:1px solid var(--accent)',
+        'max-height:280px',
+        'overflow-y:auto',
+        'box-shadow:0 6px 20px rgba(0,0,0,.35)',
+        'display:block',
+      ].join(';');
+      // Move to body if not already there
+      if (list.parentElement !== document.body) {
+        document.body.appendChild(list);
+      }
+    }
+  } else {
+    list.style.display = 'none';
   }
 }
 
@@ -305,7 +324,7 @@ function pmSelectItem(id, name, cat) {
 
   document.getElementById('pm-search').value = name;
   document.getElementById('pm-clear-search').style.display = 'block';
-  document.getElementById('pm-suggestions').classList.remove('open');
+  document.getElementById('pm-suggestions').style.display = 'none';
 
   document.getElementById('pm-selected-name').textContent = name;
   document.getElementById('pm-selected-cat').textContent  = cat || '— new item —';

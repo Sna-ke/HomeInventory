@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.6.5
+- **Fixed: dest picker stays open after selecting + pushes content down** — the dropdown was using position:static so it flowed inline in the document, pushing all subsequent content downward. It also was not dismissing on selection because the onChoose callback ran before the dismiss. Rewrote both the destination picker and item suggestions to use position:fixed anchored via getBoundingClientRect() and appended to document.body — completely outside the overlay stacking context. Both now float over content correctly and dismiss immediately on selection
+
 ## 3.6.4
 - **Fixed: packing mode destination picker and item search never showing** — completely abandoned the ac-list CSS class system for packing mode. The ac-list/open pattern relies on display:none toggling via class, but competing specificity from .pm-ac-list overrides and the inline positioning meant the elements either had wrong dimensions or were invisible. Both dropdowns now use fully self-contained inline styles set directly in JS — no CSS class cascade involved. The destination picker builds and inserts its own dropdown div on demand and removes it when dismissed. The item suggestions list sets display/border/background via element.style directly
 
