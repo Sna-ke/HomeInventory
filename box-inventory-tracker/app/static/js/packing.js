@@ -101,63 +101,97 @@ function pmUpdateAddBtnLabel() {
 }
 
 async function openPMDestPicker() {
-  const list = document.getElementById('pm-dest-suggestions');
-  const btn  = document.getElementById('pm-dest-btn');
+  const btn = document.getElementById('pm-dest-btn');
 
-  if (list.classList.contains('open')) {
-    list.classList.remove('open'); return;
-  }
+  // Remove any existing dropdown
+  const existing = document.getElementById('pm-dest-dropdown');
+  if (existing) { existing.remove(); return; }
 
-  list.innerHTML = '<div style="padding:10px 14px;color:#444;font-size:12px;font-family:var(--mono);">Loading…</div>';
-  list.classList.add('open');
+  // Build a fully self-contained dropdown — no ac-list classes, no CSS cascade
+  const drop = document.createElement('div');
+  drop.id = 'pm-dest-dropdown';
+  drop.style.cssText = [
+    'background:var(--surface)',
+    'border:1px solid var(--accent)',
+    'max-height:320px',
+    'overflow-y:auto',
+    'width:100%',
+    'box-shadow:0 4px 16px rgba(0,0,0,.3)',
+    'z-index:9999',
+    'margin-top:2px',
+  ].join(';');
 
-  const [boxes, rooms] = await Promise.all([getBoxesCached(), getRoomsCached()]);
-  list.innerHTML = '';
+  // Loading state
+  const loading = document.createElement('div');
+  loading.style.cssText = 'padding:12px 14px;color:var(--muted);font-family:var(--mono);font-size:12px;';
+  loading.textContent = 'Loading…';
+  drop.appendChild(loading);
 
-  if (rooms.length) {
-    const rHdr = document.createElement('div');
-    rHdr.className = 'recent-hdr';
-    rHdr.textContent = 'Rooms';
-    list.appendChild(rHdr);
-    rooms.forEach(r => {
-      const opt = document.createElement('div');
-      opt.className = 'ac-item';
-      opt.innerHTML = `<span>🏠 ${esc(r.name)}</span><small>${r.box_count||0} boxes</small>`;
-      opt.addEventListener('mousedown', e => {
-        e.preventDefault();
-        pmSetDest('room', r.id, r.name);
-        list.classList.remove('open');
+  // Insert immediately after the button (inline flow)
+  btn.parentNode.insertBefore(drop, btn.nextSibling);
+
+  try {
+    const [boxes, rooms] = await Promise.all([getBoxesCached(), getRoomsCached()]);
+    drop.innerHTML = '';
+
+    const mkHdr = text => {
+      const h = document.createElement('div');
+      h.style.cssText = 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;';
+      h.textContent = text;
+      return h;
+    };
+
+    const mkRow = (icon, primary, secondary, onChoose) => {
+      const row = document.createElement('div');
+      row.style.cssText = [
+        'display:flex','align-items:center','justify-content:space-between',
+        'padding:11px 14px','cursor:pointer','border-bottom:1px solid var(--border)',
+        'font-size:15px','color:var(--text)',
+      ].join(';');
+      row.innerHTML = `<span>${icon} ${esc(primary)}</span><small style="color:var(--muted);font-family:var(--mono);font-size:11px;">${esc(secondary)}</small>`;
+      row.addEventListener('mousedown', e => { e.preventDefault(); onChoose(); drop.remove(); });
+      row.addEventListener('touchstart', e => { e.preventDefault(); onChoose(); drop.remove(); }, {passive:false});
+      row.addEventListener('mouseover',  () => { row.style.background = 'var(--surface2)'; });
+      row.addEventListener('mouseout',   () => { row.style.background = ''; });
+      return row;
+    };
+
+    if (rooms.length) {
+      drop.appendChild(mkHdr('Rooms'));
+      rooms.forEach(r => drop.appendChild(
+        mkRow('🏠', r.name, `${r.box_count||0} boxes`, () => pmSetDest('room', r.id, r.name))
+      ));
+    }
+
+    if (boxes.length) {
+      drop.appendChild(mkHdr('Boxes'));
+      const sorted = sortByRecency(boxes, recentBoxIds, 'id');
+      sorted.forEach(b => {
+        const lbl  = b.label ? ` · ${b.label}` : '';
+        const room = b.room_name ? `${b.room_name}` : '';
+        drop.appendChild(
+          mkRow('📦', `BOX ${b.box_number}${lbl}`, room,
+            () => pmSetDest('box', b.id, `BOX ${b.box_number}${lbl}`))
+        );
       });
-      list.appendChild(opt);
-    });
+    }
+
+    if (!rooms.length && !boxes.length) {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'padding:12px 14px;color:var(--muted);font-size:13px;';
+      empty.textContent = 'No rooms or boxes yet — add one first.';
+      drop.appendChild(empty);
+    }
+  } catch(e) {
+    drop.innerHTML = `<div style="padding:12px;color:#c33;font-size:13px;">Error: ${esc(e.message)}</div>`;
   }
 
-  if (boxes.length) {
-    const bHdr = document.createElement('div');
-    bHdr.className = 'recent-hdr';
-    bHdr.textContent = 'Boxes';
-    list.appendChild(bHdr);
-    const sorted = sortByRecency(boxes, recentBoxIds, 'id');
-    sorted.forEach(b => {
-      const lbl = b.label ? ` · ${b.label}` : '';
-      const room = b.room_name ? ` (${b.room_name})` : '';
-      const opt = document.createElement('div');
-      opt.className = 'ac-item';
-      opt.innerHTML = `<span>📦 BOX ${b.box_number}${esc(lbl)}</span><small>${esc(room)}</small>`;
-      opt.addEventListener('mousedown', e => {
-        e.preventDefault();
-        pmSetDest('box', b.id, `BOX ${b.box_number}${lbl}`);
-        list.classList.remove('open');
-      });
-      list.appendChild(opt);
-    });
-  }
-
-  // Close on outside tap/click
+  // Close on outside click/tap
   setTimeout(() => {
     const close = e => {
-      if (!list.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-        list.classList.remove('open');
+      const d = document.getElementById('pm-dest-dropdown');
+      if (d && !d.contains(e.target) && !btn.contains(e.target)) {
+        d.remove();
         document.removeEventListener('click', close);
         document.removeEventListener('touchend', close);
       }
@@ -198,43 +232,68 @@ function pmRenderSuggestions(items, query, showRecentHdr) {
   const list = document.getElementById('pm-suggestions');
   list.innerHTML = '';
 
-  // Create-new always first when searching
+  const mkRow = (html, onChoose, extraStyle) => {
+    const div = document.createElement('div');
+    div.style.cssText = [
+      'display:flex','align-items:center','justify-content:space-between',
+      'padding:11px 14px','cursor:pointer','border-bottom:1px solid var(--border)',
+      'font-size:15px','color:var(--text)',
+      extraStyle || '',
+    ].join(';');
+    div.innerHTML = html;
+    div.addEventListener('mousedown', e => { e.preventDefault(); onChoose(); });
+    div.addEventListener('touchstart', e => { e.preventDefault(); onChoose(); }, {passive:false});
+    div.addEventListener('mouseover',  () => { div.style.background = 'var(--surface2)'; });
+    div.addEventListener('mouseout',   () => { div.style.background = ''; });
+    return div;
+  };
+
+  const mkHdr = text => {
+    const h = document.createElement('div');
+    h.style.cssText = 'font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;';
+    h.textContent = text;
+    return h;
+  };
+
+  // ＋ Add new item
   if (query && query.trim()) {
-    const create = document.createElement('div');
-    create.className = 'ac-item ac-create';
-    create.innerHTML = `<span>＋ Add "<strong>${esc(query.trim())}</strong>"</span><small style="color:var(--accent)">new item</small>`;
-    create.addEventListener('mousedown', e => { e.preventDefault(); pmSelectItem(null, query.trim(), ''); });
-    list.appendChild(create);
+    list.appendChild(mkRow(
+      `<span>＋ Add "<strong>${esc(query.trim())}</strong>"</span><small style="color:var(--accent);font-family:var(--mono);font-size:11px;">new item</small>`,
+      () => pmSelectItem(null, query.trim(), ''),
+      'color:var(--accent)'
+    ));
   }
 
-  if (showRecentHdr && items.length) {
-    const hdr = document.createElement('div');
-    hdr.className = 'recent-hdr';
-    hdr.textContent = 'Recently packed';
-    list.appendChild(hdr);
-  }
+  if (showRecentHdr && items.length) list.appendChild(mkHdr('Recently packed'));
 
   items.forEach(i => {
-    const div = document.createElement('div');
-    div.className = 'ac-item';
+    let nameHtml = esc(i.name);
     if (query) {
       const lq = query.toLowerCase();
       const ln = i.name.toLowerCase();
       const idx = ln.indexOf(lq);
-      div.innerHTML = `<span>${idx>=0
-        ? esc(i.name.slice(0,idx))+'<mark style="background:var(--accent);color:#000;padding:0 1px;">'+esc(i.name.slice(idx,idx+query.length))+'</mark>'+esc(i.name.slice(idx+query.length))
-        : esc(i.name)}</span><small>${esc(i.category||'')}</small>`;
-    } else {
-      div.innerHTML = `<span>${esc(i.name)}</span><small>${esc(i.category||'')}</small>`;
+      if (idx >= 0) {
+        nameHtml = esc(i.name.slice(0, idx))
+          + `<mark style="background:var(--accent);color:#000;padding:0 1px;">${esc(i.name.slice(idx, idx + query.length))}</mark>`
+          + esc(i.name.slice(idx + query.length));
+      }
     }
-    div.addEventListener('mousedown', e => { e.preventDefault(); pmSelectItem(i.id, i.name, i.category||''); });
-    list.appendChild(div);
+    list.appendChild(mkRow(
+      `<span>${nameHtml}</span><small style="color:var(--muted);font-family:var(--mono);font-size:11px;">${esc(i.category||'')}</small>`,
+      () => pmSelectItem(i.id, i.name, i.category||'')
+    ));
   });
 
+  // Show/hide — use inline style directly, no ac-list.open dependency
+  list.style.display = list.children.length ? 'block' : 'none';
+  // Also set border so it's visible
   if (list.children.length) {
-    list.classList.add('open');
-  } else {
-    list.classList.remove('open');
+    list.style.border = '1px solid var(--accent)';
+    list.style.background = 'var(--surface)';
+    list.style.maxHeight = '280px';
+    list.style.overflowY = 'auto';
+    list.style.width = '100%';
+    list.style.boxShadow = '0 4px 12px rgba(0,0,0,.2)';
   }
 }
 
@@ -267,7 +326,7 @@ function pmClearSearch() {
   const clr = document.getElementById('pm-clear-search');
   if (clr) clr.style.display = 'none';
   const list = document.getElementById('pm-suggestions');
-  if (list) list.classList.remove('open');
+  if (list) { list.style.display = 'none'; list.innerHTML = ''; }
   pmClearConfirm();
 }
 

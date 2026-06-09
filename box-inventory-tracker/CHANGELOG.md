@@ -1,5 +1,8 @@
 # Changelog
 
+## 3.6.4
+- **Fixed: packing mode destination picker and item search never showing** — completely abandoned the ac-list CSS class system for packing mode. The ac-list/open pattern relies on display:none toggling via class, but competing specificity from .pm-ac-list overrides and the inline positioning meant the elements either had wrong dimensions or were invisible. Both dropdowns now use fully self-contained inline styles set directly in JS — no CSS class cascade involved. The destination picker builds and inserts its own dropdown div on demand and removes it when dismissed. The item suggestions list sets display/border/background via element.style directly
+
 ## 3.6.2
 - **Fixed: packing mode dropdowns not visible** — root cause was two compounding issues: (1) .pm-body has overflow-y:auto which creates a stacking/clipping context that clips any absolutely-positioned children that escape its bounds; (2) the dropdowns were using position:absolute with top:100% which relied on an ancestor with position:relative, but .pm-body clips them before they can render. Solution: switched both #pm-suggestions and #pm-dest-suggestions to position:static so they render inline in the document flow below their trigger element. No overflow clipping possible, no z-index conflicts, works on all devices
 
